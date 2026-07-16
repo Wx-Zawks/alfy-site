@@ -1,0 +1,8 @@
+# Historical source materials and generated binary assets are retained locally.
+# They can be regenerated/imported from the reviewed source package and must not
+# be added to normal Git history (GitHub rejects files over 100 MiB).
+docs/奥飞网站/
+docs/content-import-draft/assets/
+
+# Python bytecode
+scripts/__pycache__/

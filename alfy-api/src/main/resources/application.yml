@@ -31,3 +31,11 @@ logging:
   level:
     root: info
     com.alfy.api: debug
+
+alfy:
+  content-import:
+    # 只能通过显式环境变量或启动参数启用，避免正常启动时误导入。
+    enabled: ${ALFY_CONTENT_IMPORT_ENABLED:false}
+    package-path: ${ALFY_CONTENT_IMPORT_PACKAGE:../docs/content-import-draft}
+    source-root: ${ALFY_CONTENT_IMPORT_SOURCE_ROOT:../docs/奥飞网站}
+    storage-root: ${ALFY_CONTENT_STORAGE_ROOT:./data/alfy/uploads}

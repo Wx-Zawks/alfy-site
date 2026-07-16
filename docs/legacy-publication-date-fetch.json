@@ -1,0 +1,1354 @@
+{
+  "generated_at": "2026-07-14T12:19:24.566203+00:00",
+  "input_report": "docs\\content-import-preflight.json",
+  "scope": "only_articles_without_docx_candidate_source_dates",
+  "summary": {
+    "target_count": 134,
+    "processed": 134,
+    "found": 134,
+    "missing_metadata": 0,
+    "failed": 0
+  },
+  "records": [
+    {
+      "source_file": "新闻动态/公司新闻/2024年奥飞新材年度总结 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "2024年奥飞新材年度总结",
+      "url": "https://alfy.cn/1430.html",
+      "status": "FOUND",
+      "published_at": "2024-12-30T18:39:23+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/C919国产大飞机产业链 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "C919国产大飞机产业链",
+      "url": "https://alfy.cn/3664.html",
+      "status": "FOUND",
+      "published_at": "2025-05-16T11:41:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/从隔热原理到隔热效果计算，一文带你全面把控建筑气凝胶隔热涂料的卓越能力！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "从隔热原理到隔热效果计算，一文带你全面把控建筑气凝胶隔热涂料的卓越能力！",
+      "url": "https://alfy.cn/3467.html",
+      "status": "FOUND",
+      "published_at": "2023-09-10T16:09:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/住房和城乡建设部党组书记、部长部长倪虹发文，房地产发展方向明确！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "住房和城乡建设部党组书记、部长部长倪虹发文，房地产发展方向明确！",
+      "url": "https://alfy.cn/3677.html",
+      "status": "FOUND",
+      "published_at": "2025-12-16T11:03:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/南大学孙正明、张培根、苏州纳米所王锦ChemSusChem：具有优异热稳定性和固有阻燃性的超轻M5气凝胶 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "南大学孙正明、张培根、苏州纳米所王锦ChemSusChem：具有优异热稳定性和固有阻燃性的超轻M5气凝胶",
+      "url": "https://alfy.cn/2219.html",
+      "status": "FOUND",
+      "published_at": "2025-04-18T09:20:24+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/可燃、难燃、易燃材料的燃烧等级划分为四个等级 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "可燃、难燃、易燃材料的燃烧等级划分为四个等级",
+      "url": "https://alfy.cn/2233.html",
+      "status": "FOUND",
+      "published_at": "2023-04-21T13:44:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/告别传统保温建材的烦恼，气凝胶保温材料为绿色建筑“撑腰”！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "告别传统保温建材的烦恼，气凝胶保温材料为绿色建筑“撑腰”！",
+      "url": "https://alfy.cn/2202.html",
+      "status": "FOUND",
+      "published_at": "2025-04-15T06:28:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/回南天终结者！奥飞气凝胶涂料让墙面从此告别“流汗发霉” - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "回南天终结者！奥飞气凝胶涂料让墙面从此告别“流汗发霉”",
+      "url": "https://alfy.cn/1940.html",
+      "status": "FOUND",
+      "published_at": "2025-03-12T16:50:21+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材宋淼教授与张丁日博士亮相2025建筑低碳涂料产业发展大会，推动建筑行业绿色转型 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材宋淼教授与张丁日博士亮相2025建筑低碳涂料产业发展大会，推动建筑行业绿色转型",
+      "url": "https://alfy.cn/2937.html",
+      "status": "FOUND",
+      "published_at": "2025-04-28T15:58:38+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材已部署人工智能大模型办公系统，助推企业数字化智能化转型 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材已部署人工智能大模型办公系统，助推企业数字化智能化转型",
+      "url": "https://alfy.cn/3534.html",
+      "status": "FOUND",
+      "published_at": "2025-10-12T12:45:38+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材携手中南大学、立邦中国、三一筑工共同打造气凝胶产业化应用深度融合新范式 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材携手中南大学、立邦中国、三一筑工共同打造气凝胶产业化应用深度融合新范式",
+      "url": "https://alfy.cn/3933.html",
+      "status": "FOUND",
+      "published_at": "2026-01-28T09:45:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材携手中建八局南方公司开展气凝胶技术专题交流 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材携手中建八局南方公司开展气凝胶技术专题交流",
+      "url": "https://alfy.cn/3050.html",
+      "status": "FOUND",
+      "published_at": "2025-05-16T09:53:23+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材聚焦“好房子”建设方向，以气凝胶创新材料引领建筑品质升级 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材聚焦“好房子”建设方向，以气凝胶创新材料引领建筑品质升级",
+      "url": "https://alfy.cn/3536.html",
+      "status": "FOUND",
+      "published_at": "2025-10-13T09:27:49+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞新材：依托中南大学产学研协同，共建气凝胶全产业链生态 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材：依托中南大学产学研协同，共建气凝胶全产业链生态",
+      "url": "https://alfy.cn/1857.html",
+      "status": "FOUND",
+      "published_at": "2025-02-07T16:25:57+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞气凝胶保温隔热卷材：柔性科技赋能全场景保温升级 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞气凝胶保温隔热卷材：柔性科技赋能全场景保温升级",
+      "url": "https://alfy.cn/1907.html",
+      "status": "FOUND",
+      "published_at": "2025-03-07T14:40:03+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/奥飞气凝胶涂料：以创新科技助力好房子建设新赛道 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞气凝胶涂料：以创新科技助力好房子建设新赛道",
+      "url": "https://alfy.cn/1901.html",
+      "status": "FOUND",
+      "published_at": "2025-03-10T12:48:46+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/建筑防火不容忽视：从香港大火看气凝胶涂料的重要性 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "建筑防火不容忽视：从香港大火看气凝胶涂料的重要性",
+      "url": "https://alfy.cn/3593.html",
+      "status": "FOUND",
+      "published_at": "2025-11-28T11:02:48+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/感谢气凝胶：守护电动车安全，奥飞新材引领低成本创新 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "感谢气凝胶：守护电动车安全，奥飞新材引领低成本创新",
+      "url": "https://alfy.cn/3552.html",
+      "status": "FOUND",
+      "published_at": "2025-10-15T15:55:22+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/探秘气凝胶：建筑领域的“绿色新宠”，奥飞新材气凝胶涂料助力绿色建筑 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "探秘气凝胶：建筑领域的“绿色新宠”，奥飞新材气凝胶涂料助力绿色建筑",
+      "url": "https://alfy.cn/2157.html",
+      "status": "FOUND",
+      "published_at": "2025-04-11T23:55:23+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/无机涂料系统介绍 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "无机涂料系统介绍",
+      "url": "https://alfy.cn/3259.html",
+      "status": "FOUND",
+      "published_at": "2021-07-09T14:20:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶如何推动节能环保？——湖南奥飞新材料 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶如何推动节能环保？——湖南奥飞新材料",
+      "url": "https://alfy.cn/3478.html",
+      "status": "FOUND",
+      "published_at": "2021-09-16T16:35:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料 地下室防潮防结露终极解决方案【权威解析】 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料 地下室防潮防结露终极解决方案【权威解析】",
+      "url": "https://alfy.cn/1871.html",
+      "status": "FOUND",
+      "published_at": "2025-02-24T16:03:06+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料产品的优势及应用 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料产品的优势及应用",
+      "url": "https://alfy.cn/3686.html",
+      "status": "FOUND",
+      "published_at": "2021-12-30T17:03:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料在旧房改造与“优质住宅”建设中的创新应用研究 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料在旧房改造与“优质住宅”建设中的创新应用研究",
+      "url": "https://alfy.cn/3485.html",
+      "status": "FOUND",
+      "published_at": "2025-09-16T17:00:53+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料如何在建筑领域领跑！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料如何在建筑领域领跑！",
+      "url": "https://alfy.cn/1883.html",
+      "status": "FOUND",
+      "published_at": "2025-03-01T08:22:35+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料能否替代聚苯板？全方位解析节能保温新选择 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料能否替代聚苯板？全方位解析节能保温新选择",
+      "url": "https://alfy.cn/2073.html",
+      "status": "FOUND",
+      "published_at": "2025-04-07T21:17:10+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/气凝胶涂料：尖端科技还是市场噱头的智商税？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料：尖端科技还是市场噱头的智商税？",
+      "url": "https://alfy.cn/3452.html",
+      "status": "FOUND",
+      "published_at": "2025-09-01T06:23:37+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/水凝胶与气凝胶的制作和区别 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水凝胶与气凝胶的制作和区别",
+      "url": "https://alfy.cn/2974.html",
+      "status": "FOUND",
+      "published_at": "2025-05-06T14:14:21+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/水泥自流平砂浆施工指南  垫层水泥自流平地坪完整施工作业书 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水泥自流平砂浆施工指南  垫层水泥自流平地坪完整施工作业书",
+      "url": "https://alfy.cn/4169.html",
+      "status": "FOUND",
+      "published_at": "2022-03-01T09:53:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/湖南奥飞新材料有限公司入选湖南省动力工程学会候选理事单位，助力行业创新发展 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "湖南奥飞新材料有限公司入选湖南省动力工程学会候选理事单位，助力行业创新发展",
+      "url": "https://alfy.cn/3548.html",
+      "status": "FOUND",
+      "published_at": "2025-10-18T13:45:14+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/湖南奥飞新材料：以低成本气凝胶技术驱动AI与新能源未来 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "湖南奥飞新材料：以低成本气凝胶技术驱动AI与新能源未来",
+      "url": "https://alfy.cn/1859.html",
+      "status": "FOUND",
+      "published_at": "2025-02-17T16:33:09+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/硅酸钾与硅酸锂——性能解析与应用前景 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "硅酸钾与硅酸锂——性能解析与应用前景",
+      "url": "https://alfy.cn/3257.html",
+      "status": "FOUND",
+      "published_at": "2023-07-09T14:12:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/突破2000℃极限：奥飞新材寻求3000℃高温测试气凝胶合作 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "突破2000℃极限：奥飞新材寻求3000℃高温测试气凝胶合作",
+      "url": "https://alfy.cn/2205.html",
+      "status": "FOUND",
+      "published_at": "2024-04-19T11:48:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/筑牢城防屏障——奥飞AFJZ-WGF-B2外墙耐候隔热涂料确保安全度过极端大风天气 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "筑牢城防屏障——奥飞AFJZ-WGF-B2外墙耐候隔热涂料确保安全度过极端大风天气",
+      "url": "https://alfy.cn/2172.html",
+      "status": "FOUND",
+      "published_at": "2025-04-14T11:59:17+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/羽盾新材——新型隔热降噪 SiO2气凝胶柔性复合涂料获奖 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "羽盾新材——新型隔热降噪 SiO2气凝胶柔性复合涂料获奖",
+      "url": "https://alfy.cn/3454.html",
+      "status": "FOUND",
+      "published_at": "2025-09-01T06:25:48+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/耐高温涂料 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "耐高温涂料",
+      "url": "https://alfy.cn/3283.html",
+      "status": "FOUND",
+      "published_at": "2022-07-15T15:27:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/耐高温防腐涂料的介绍 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "耐高温防腐涂料的介绍",
+      "url": "https://alfy.cn/3004.html",
+      "status": "FOUND",
+      "published_at": "2025-05-07T14:04:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/辐射制冷涂料的研究进展 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "辐射制冷涂料的研究进展",
+      "url": "https://alfy.cn/2235.html",
+      "status": "FOUND",
+      "published_at": "2025-03-11T14:07:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/公司新闻/采购气凝胶隔热涂料，导热系数是唯一标准吗？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "采购气凝胶隔热涂料，导热系数是唯一标准吗？",
+      "url": "https://alfy.cn/3480.html",
+      "status": "FOUND",
+      "published_at": "2025-08-16T16:43:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/2025年中国涂料行业发展展望：稳中求进，绿色创新引领未来 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "2025年中国涂料行业发展展望：稳中求进，绿色创新引领未来",
+      "url": "https://alfy.cn/3490.html",
+      "status": "FOUND",
+      "published_at": "2025-04-17T16:45:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/2025年中国路标漆行业发展现状及趋势分析：下游市场需求稳定增长，行业发展前景广阔 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "2025年中国路标漆行业发展现状及趋势分析：下游市场需求稳定增长，行业发展前景广阔",
+      "url": "https://alfy.cn/3487.html",
+      "status": "FOUND",
+      "published_at": "2025-05-05T16:37:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/2025年第一届岳麓先进材料论坛暨湖南省研究生创新论坛顺利举办 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "2025年第一届岳麓先进材料论坛暨湖南省研究生创新论坛顺利举办",
+      "url": "https://alfy.cn/3337.html",
+      "status": "FOUND",
+      "published_at": "2025-07-22T13:38:25+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/2030年前碳达峰行动方案 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "2030年前碳达峰行动方案",
+      "url": "https://alfy.cn/1884.html",
+      "status": "FOUND",
+      "published_at": "2021-10-24T08:01:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/AI与其他行业的融合 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "AI与其他行业的融合",
+      "url": "https://alfy.cn/2254.html",
+      "status": "FOUND",
+      "published_at": "2024-01-21T16:01:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/DMF催化反应的机理 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "DMF催化反应的机理",
+      "url": "https://alfy.cn/2247.html",
+      "status": "FOUND",
+      "published_at": "2023-09-17T15:54:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/HPLC、GC-MS与LC-MS的区别 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "HPLC、GC-MS与LC-MS的区别",
+      "url": "https://alfy.cn/2843.html",
+      "status": "FOUND",
+      "published_at": "2025-04-20T16:50:39+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/SiO₂气凝胶复合材料在航空航天领域的研究进展与应用前景 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "SiO₂气凝胶复合材料在航空航天领域的研究进展与应用前景",
+      "url": "https://alfy.cn/3751.html",
+      "status": "FOUND",
+      "published_at": "2024-04-21T11:08:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/一文带你了解气凝胶涂料 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "一文带你了解气凝胶涂料",
+      "url": "https://alfy.cn/3299.html",
+      "status": "FOUND",
+      "published_at": "2025-05-09T11:33:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/中南大学与中建集团签署战略合作框架协议 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "中南大学与中建集团签署战略合作框架协议",
+      "url": "https://alfy.cn/3102.html",
+      "status": "FOUND",
+      "published_at": "2025-05-29T21:38:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/中国材料大会2025在厦门举办 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "中国材料大会2025在厦门举办",
+      "url": "https://alfy.cn/3303.html",
+      "status": "FOUND",
+      "published_at": "2025-07-08T11:47:10+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/中国科大研制超弹性硬碳气凝胶 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "中国科大研制超弹性硬碳气凝胶",
+      "url": "https://alfy.cn/3744.html",
+      "status": "FOUND",
+      "published_at": "2019-05-20T10:57:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/为什么 pH 里的「p」是小写？pH 到底是什么的缩写呢？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "为什么 pH 里的「p」是小写？pH 到底是什么的缩写呢？",
+      "url": "https://alfy.cn/2259.html",
+      "status": "FOUND",
+      "published_at": "2024-12-05T16:19:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/为什么有些材料传热那么慢？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "为什么有些材料传热那么慢？",
+      "url": "https://alfy.cn/2239.html",
+      "status": "FOUND",
+      "published_at": "2025-04-03T14:29:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/亚纳米孔疏水超薄膜：低温膜蒸馏淡化中的一种新路径 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "亚纳米孔疏水超薄膜：低温膜蒸馏淡化中的一种新路径",
+      "url": "https://alfy.cn/4161.html",
+      "status": "FOUND",
+      "published_at": "2026-03-24T16:07:22+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/什么是“吸附”？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "什么是“吸附”？",
+      "url": "https://alfy.cn/3556.html",
+      "status": "FOUND",
+      "published_at": "2025-10-14T10:30:07+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/从水凝胶到干凝胶：干燥过程中的结构崩塌与热质演变 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "从水凝胶到干凝胶：干燥过程中的结构崩塌与热质演变",
+      "url": "https://alfy.cn/2732.html",
+      "status": "FOUND",
+      "published_at": "2024-10-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/会“流”的固体？水凝胶中的热量怎么传导 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "会“流”的固体？水凝胶中的热量怎么传导",
+      "url": "https://alfy.cn/2704.html",
+      "status": "FOUND",
+      "published_at": "2024-04-14T09:47:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/传质、传热与传导：物质与能量的传递机制 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "传质、传热与传导：物质与能量的传递机制",
+      "url": "https://alfy.cn/2531.html",
+      "status": "FOUND",
+      "published_at": "2025-02-21T16:41:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/全国人大代表莫鼎革加快气凝胶材料推广应用 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "全国人大代表莫鼎革加快气凝胶材料推广应用",
+      "url": "https://alfy.cn/3200.html",
+      "status": "FOUND",
+      "published_at": "2025-03-04T06:54:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/具有超低反射性能的非对称结构MXenePBO气凝胶用于高性能电磁干扰屏蔽 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "具有超低反射性能的非对称结构MXenePBO气凝胶用于高性能电磁干扰屏蔽",
+      "url": "https://alfy.cn/1270.html",
+      "status": "FOUND",
+      "published_at": "2024-12-22T09:27:50+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/具有超低反射的高性能电磁干扰屏蔽用不对称结构MXenePBO气凝胶 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "具有超低反射的高性能电磁干扰屏蔽用不对称结构MXenePBO气凝胶",
+      "url": "https://alfy.cn/1227.html",
+      "status": "FOUND",
+      "published_at": "2024-12-05T11:22:13+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/具有超大拉伸性和拉伸不敏感隔热性能的高屈曲纳米纤维陶瓷气凝胶 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "具有超大拉伸性和拉伸不敏感隔热性能的高屈曲纳米纤维陶瓷气凝胶",
+      "url": "https://alfy.cn/450.html",
+      "status": "FOUND",
+      "published_at": "2024-12-05T15:16:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/凝胶成型过程中的界面能调节与形貌定向导控方法 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "凝胶成型过程中的界面能调节与形貌定向导控方法",
+      "url": "https://alfy.cn/2759.html",
+      "status": "FOUND",
+      "published_at": "2023-04-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/刚度、强度、硬度、挠度、弹性、韧性、刚性、塑性等材料力学核心性能指标详解 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "刚度、强度、硬度、挠度、弹性、韧性、刚性、塑性等材料力学核心性能指标详解",
+      "url": "https://alfy.cn/3188.html",
+      "status": "FOUND",
+      "published_at": "2024-06-23T13:53:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/化学键的原子物理学本质是什么？｜从量子力学揭示分子结构的奥秘！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "化学键的原子物理学本质是什么？｜从量子力学揭示分子结构的奥秘！",
+      "url": "https://alfy.cn/2257.html",
+      "status": "FOUND",
+      "published_at": "2021-11-09T16:11:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/周科朝：培养创新型人才把握好3个环节 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "周科朝：培养创新型人才把握好3个环节",
+      "url": "https://alfy.cn/3281.html",
+      "status": "FOUND",
+      "published_at": "2013-08-23T21:35:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/响应性凝胶材料的多尺度结构控制策略 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "响应性凝胶材料的多尺度结构控制策略",
+      "url": "https://alfy.cn/2752.html",
+      "status": "FOUND",
+      "published_at": "2024-04-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/在微重力环境下，表面张力变成了主角 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "在微重力环境下，表面张力变成了主角",
+      "url": "https://alfy.cn/2779.html",
+      "status": "FOUND",
+      "published_at": "2024-04-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/基于专利信息的水性聚氨酯全球发展现状及对策分析 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "基于专利信息的水性聚氨酯全球发展现状及对策分析",
+      "url": "https://alfy.cn/3374.html",
+      "status": "FOUND",
+      "published_at": "2025-08-07T15:53:05+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/声波强化传热传质与蒸发冷凝 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "声波强化传热传质与蒸发冷凝",
+      "url": "https://alfy.cn/3151.html",
+      "status": "FOUND",
+      "published_at": "2025-06-09T15:23:32+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/多功能各向异性碳气凝胶用于智能电磁波吸收 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "多功能各向异性碳气凝胶用于智能电磁波吸收",
+      "url": "https://alfy.cn/1218.html",
+      "status": "FOUND",
+      "published_at": "2024-12-07T11:19:38+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/多孔液体是什么？它们能做什么？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "多孔液体是什么？它们能做什么？",
+      "url": "https://alfy.cn/2831.html",
+      "status": "FOUND",
+      "published_at": "2025-04-12T16:50:40+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/多孔液体的制备和应用 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "多孔液体的制备和应用",
+      "url": "https://alfy.cn/2825.html",
+      "status": "FOUND",
+      "published_at": "2025-04-16T16:50:41+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/大寒，是我国大部分地区一年中最冷的时候。那它是如何影响2026经济？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "大寒，是我国大部分地区一年中最冷的时候。那它是如何影响2026经济？",
+      "url": "https://alfy.cn/3733.html",
+      "status": "FOUND",
+      "published_at": "2026-01-21T10:42:01+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/奥飞新材关注：气凝胶耐2000℃+万次回弹，气凝胶涂料迎来规模化新时代 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材关注：气凝胶耐2000℃+万次回弹，气凝胶涂料迎来规模化新时代",
+      "url": "https://alfy.cn/3742.html",
+      "status": "FOUND",
+      "published_at": "2025-09-01T10:42:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/奥飞新材宋淼教授与张丁日博士亮相2025建筑低碳涂料产业发展大会，推动建筑行业绿色转型 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材宋淼教授与张丁日博士亮相2025建筑低碳涂料产业发展大会，推动建筑行业绿色转型",
+      "url": "https://alfy.cn/2937.html",
+      "status": "FOUND",
+      "published_at": "2025-04-28T15:58:38+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/奥飞新材携手中南大学、立邦中国、三一筑工共同打造气凝胶产业化应用深度融合新范式 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材携手中南大学、立邦中国、三一筑工共同打造气凝胶产业化应用深度融合新范式",
+      "url": "https://alfy.cn/3933.html",
+      "status": "FOUND",
+      "published_at": "2026-01-28T09:45:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/奥飞气凝胶技术节能降碳贡献大，降本增效效果好 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞气凝胶技术节能降碳贡献大，降本增效效果好",
+      "url": "https://alfy.cn/3201.html",
+      "status": "FOUND",
+      "published_at": "2025-06-25T07:03:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/宋淼：靶向狙击的J人导师 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "宋淼：靶向狙击的J人导师",
+      "url": "https://alfy.cn/3393.html",
+      "status": "FOUND",
+      "published_at": "2025-08-17T08:34:49+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/接触角从哪里来？表面张力与界面能的几何平衡 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "接触角从哪里来？表面张力与界面能的几何平衡",
+      "url": "https://alfy.cn/2806.html",
+      "status": "FOUND",
+      "published_at": "2025-04-13T16:50:43+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/有机气凝胶材料的界面太阳能光热蒸发研究进展 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "有机气凝胶材料的界面太阳能光热蒸发研究进展",
+      "url": "https://alfy.cn/1236.html",
+      "status": "FOUND",
+      "published_at": "2024-12-07T11:30:34+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/望城与中南大学粉末冶金全国重点实验室、立邦中国签订合作协议 共同推动相关项目建设 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "望城与中南大学粉末冶金全国重点实验室、立邦中国签订合作协议 共同推动相关项目建设",
+      "url": "https://alfy.cn/3354.html",
+      "status": "FOUND",
+      "published_at": "2025-07-31T14:27:46+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/极端环境下的多孔液体：挑战与潜力 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "极端环境下的多孔液体：挑战与潜力",
+      "url": "https://alfy.cn/2819.html",
+      "status": "FOUND",
+      "published_at": "2025-03-31T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/毛细现象是怎么产生的？从液柱上升到毛细驱动器 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "毛细现象是怎么产生的？从液柱上升到毛细驱动器",
+      "url": "https://alfy.cn/2799.html",
+      "status": "FOUND",
+      "published_at": "2025-03-31T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶与水凝胶如何“应对湿气” - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶与水凝胶如何“应对湿气”",
+      "url": "https://alfy.cn/2739.html",
+      "status": "FOUND",
+      "published_at": "2024-09-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶为什么是绝热之王？从微孔结构看热量如何被卡住 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶为什么是绝热之王？从微孔结构看热量如何被卡住",
+      "url": "https://alfy.cn/2662.html",
+      "status": "FOUND",
+      "published_at": "2026-01-01T16:10:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶为什么这么“绝热”？从多孔结构看热流如何被限制 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶为什么这么“绝热”？从多孔结构看热流如何被限制",
+      "url": "https://alfy.cn/2725.html",
+      "status": "FOUND",
+      "published_at": "2024-12-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶保温材料：建筑节能领域的“隐形战神” - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶保温材料：建筑节能领域的“隐形战神”",
+      "url": "https://alfy.cn/2198.html",
+      "status": "FOUND",
+      "published_at": "2025-01-15T06:16:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶在潮湿环境下的热质性能演变 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶在潮湿环境下的热质性能演变",
+      "url": "https://alfy.cn/2711.html",
+      "status": "FOUND",
+      "published_at": "2024-04-15T09:54:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶在纳米通道里的传质行为解析 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶在纳米通道里的传质行为解析",
+      "url": "https://alfy.cn/2718.html",
+      "status": "FOUND",
+      "published_at": "2025-04-21T13:59:37+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶复合材料在建筑领域的应用 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶复合材料在建筑领域的应用",
+      "url": "https://alfy.cn/4146.html",
+      "status": "FOUND",
+      "published_at": "2026-03-20T15:51:36+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶是什么材料 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶是什么材料",
+      "url": "https://alfy.cn/1865.html",
+      "status": "FOUND",
+      "published_at": "2022-02-22T11:10:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶涂料在乡村别墅与自建房中的系统应用方案 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料在乡村别墅与自建房中的系统应用方案",
+      "url": "https://alfy.cn/2971.html",
+      "status": "FOUND",
+      "published_at": "2025-04-06T13:25:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶确实能防寒 说是“神器”夸张了 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶确实能防寒 说是“神器”夸张了",
+      "url": "https://alfy.cn/3748.html",
+      "status": "FOUND",
+      "published_at": "2025-01-21T11:01:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶行业迎来发展新机遇，高效隔热材料契合碳中和趋势 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶行业迎来发展新机遇，高效隔热材料契合碳中和趋势",
+      "url": "https://alfy.cn/2159.html",
+      "status": "FOUND",
+      "published_at": "2025-04-10T16:37:52+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶赋能大数据中心：打造高效节能冷却新模式 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶赋能大数据中心：打造高效节能冷却新模式",
+      "url": "https://alfy.cn/2185.html",
+      "status": "FOUND",
+      "published_at": "2025-01-14T15:54:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气凝胶：能改变世界的多功能材料 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶：能改变世界的多功能材料",
+      "url": "https://alfy.cn/3730.html",
+      "status": "FOUND",
+      "published_at": "2024-01-21T09:30:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/气相二氧化硅在涂料中的应用及相关标准简介 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气相二氧化硅在涂料中的应用及相关标准简介",
+      "url": "https://alfy.cn/3378.html",
+      "status": "FOUND",
+      "published_at": "2025-08-04T15:53:55+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/水凝胶与气凝胶是怎样制作的？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水凝胶与气凝胶是怎样制作的？",
+      "url": "https://alfy.cn/2766.html",
+      "status": "FOUND",
+      "published_at": "2024-03-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/水凝胶与气凝胶的区别 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水凝胶与气凝胶的区别",
+      "url": "https://alfy.cn/2746.html",
+      "status": "FOUND",
+      "published_at": "2024-01-21T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/水凝胶中的温度驱动传质现象 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水凝胶中的温度驱动传质现象",
+      "url": "https://alfy.cn/2697.html",
+      "status": "FOUND",
+      "published_at": "2023-04-14T09:47:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/水凝胶电解质传导微观机制 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "水凝胶电解质传导微观机制",
+      "url": "https://alfy.cn/2690.html",
+      "status": "FOUND",
+      "published_at": "2025-03-28T09:47:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/永清集团聘任中南大学副校长周科朝为专家顾问 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "永清集团聘任中南大学副校长周科朝为专家顾问",
+      "url": "https://alfy.cn/3295.html",
+      "status": "FOUND",
+      "published_at": "2021-06-16T10:19:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/浅析热反射涂料的机理、组成与发展方向 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "浅析热反射涂料的机理、组成与发展方向",
+      "url": "https://alfy.cn/3110.html",
+      "status": "FOUND",
+      "published_at": "2025-05-21T11:13:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/涂料中APEO的风险与环保标准要求 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "涂料中APEO的风险与环保标准要求",
+      "url": "https://alfy.cn/3546.html",
+      "status": "FOUND",
+      "published_at": "2025-10-01T15:46:58+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/涂料拉开法附着力检测标准简介 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "涂料拉开法附着力检测标准简介",
+      "url": "https://alfy.cn/3236.html",
+      "status": "FOUND",
+      "published_at": "2025-07-07T15:41:16+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/涂料玻璃化转变温度及其标准简介 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "涂料玻璃化转变温度及其标准简介",
+      "url": "https://alfy.cn/3106.html",
+      "status": "FOUND",
+      "published_at": "2025-06-01T11:07:59+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/涂料结皮性及标准简介 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "涂料结皮性及标准简介",
+      "url": "https://alfy.cn/3121.html",
+      "status": "FOUND",
+      "published_at": "2025-05-25T11:28:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/液滴为什么成球？——从表面张力到最小表面积原理 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "液滴为什么成球？——从表面张力到最小表面积原理",
+      "url": "https://alfy.cn/2786.html",
+      "status": "FOUND",
+      "published_at": "2025-04-05T16:50:44+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/深度解读两会科技政策：告别“科技产业两张皮”，五大维度重构创新底层逻辑 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "深度解读两会科技政策：告别“科技产业两张皮”，五大维度重构创新底层逻辑",
+      "url": "https://alfy.cn/4139.html",
+      "status": "FOUND",
+      "published_at": "2026-03-06T14:07:29+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/湖北“老改好”引领旧房改造 —— 科技创新助力绿色改造 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "湖北“老改好”引领旧房改造 —— 科技创新助力绿色改造",
+      "url": "https://alfy.cn/2180.html",
+      "status": "FOUND",
+      "published_at": "2025-04-14T15:46:19+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/热界面材料市场规模 - 按材料类型、热导率、应用，未来10年预测 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "热界面材料市场规模 - 按材料类型、热导率、应用，未来10年预测",
+      "url": "https://alfy.cn/2997.html",
+      "status": "FOUND",
+      "published_at": "2025-05-04T09:35:54+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/特大地磁暴发生！ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "特大地磁暴发生！",
+      "url": "https://alfy.cn/3763.html",
+      "status": "FOUND",
+      "published_at": "2026-01-21T16:55:21+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/离子液体 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "离子液体",
+      "url": "https://alfy.cn/2252.html",
+      "status": "FOUND",
+      "published_at": "2024-02-25T15:57:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/科研显微镜全景对比：光学、电子到原子级别 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "科研显微镜全景对比：光学、电子到原子级别",
+      "url": "https://alfy.cn/2849.html",
+      "status": "FOUND",
+      "published_at": "2025-04-04T10:10:08+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/红外光谱和拉曼光谱的区别 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "红外光谱和拉曼光谱的区别",
+      "url": "https://alfy.cn/2837.html",
+      "status": "FOUND",
+      "published_at": "2025-04-19T16:50:40+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/耐高温隔热氧化物气凝胶研究进展 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "耐高温隔热氧化物气凝胶研究进展",
+      "url": "https://alfy.cn/1248.html",
+      "status": "FOUND",
+      "published_at": "2024-12-11T21:00:51+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/表面张力与界面张力的区别：从微观机制到宏观现象 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "表面张力与界面张力的区别：从微观机制到宏观现象",
+      "url": "https://alfy.cn/2793.html",
+      "status": "FOUND",
+      "published_at": "2025-04-09T16:50:44+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/表面张力大或小，有什么影响？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "表面张力大或小，有什么影响？",
+      "url": "https://alfy.cn/2813.html",
+      "status": "FOUND",
+      "published_at": "2025-03-01T16:50:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/表面活性剂是怎么工作的？ - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "表面活性剂是怎么工作的？",
+      "url": "https://alfy.cn/2772.html",
+      "status": "FOUND",
+      "published_at": "2024-08-29T14:32:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/让飞机不再结冰：基于微界面能调控的智能抗冰涂层解决方案 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "让飞机不再结冰：基于微界面能调控的智能抗冰涂层解决方案",
+      "url": "https://alfy.cn/3095.html",
+      "status": "FOUND",
+      "published_at": "2025-05-27T14:02:16+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/锂离子电池材料介绍 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "锂离子电池材料介绍",
+      "url": "https://alfy.cn/2245.html",
+      "status": "FOUND",
+      "published_at": "2023-08-29T15:52:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/长沙新政推动绿色建材应用，气凝胶涂料成建筑节能新宠 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "长沙新政推动绿色建材应用，气凝胶涂料成建筑节能新宠",
+      "url": "https://alfy.cn/3719.html",
+      "status": "FOUND",
+      "published_at": "2025-12-27T09:40:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/阻燃剂标准及其在涂料中的应用简介 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "阻燃剂标准及其在涂料中的应用简介",
+      "url": "https://alfy.cn/4109.html",
+      "status": "FOUND",
+      "published_at": "2026-02-25T17:10:27+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "新闻动态/行业新闻/高强度高韧性的透明芳纶纳米纤维气凝胶薄膜用于被动加热节能窗户 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "高强度高韧性的透明芳纶纳米纤维气凝胶薄膜用于被动加热节能窗户",
+      "url": "https://alfy.cn/1210.html",
+      "status": "FOUND",
+      "published_at": "2024-12-07T11:14:32+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "研发成果/SiO₂气凝胶柔性复合材料的制备及性能研究 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "SiO₂气凝胶柔性复合材料的制备及性能研究",
+      "url": "https://alfy.cn/4124.html",
+      "status": "FOUND",
+      "published_at": "2026-01-15T10:03:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "研发成果/奥飞新材宋淼教授分享高性能低成本硅基气凝胶常压干燥技术，推动产业化发展 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "奥飞新材宋淼教授分享高性能低成本硅基气凝胶常压干燥技术，推动产业化发展",
+      "url": "https://alfy.cn/3576.html",
+      "status": "FOUND",
+      "published_at": "2025-10-31T11:32:59+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "研发成果/气凝胶柔性复合材料技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶柔性复合材料技术",
+      "url": "https://alfy.cn/1669.html",
+      "status": "FOUND",
+      "published_at": "2022-02-07T15:32:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "研发成果/湖南奥飞新材料：以低成本气凝胶技术领航中国民用节能市场 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "湖南奥飞新材料：以低成本气凝胶技术领航中国民用节能市场",
+      "url": "https://alfy.cn/1854.html",
+      "status": "FOUND",
+      "published_at": "2024-02-17T15:38:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "研发成果/金属气凝胶技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "金属气凝胶技术",
+      "url": "https://alfy.cn/1644.html",
+      "status": "FOUND",
+      "published_at": "2021-05-07T15:23:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "应用技术/SiO₂气凝胶分散体制备产业化技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "SiO₂气凝胶分散体制备产业化技术",
+      "url": "https://alfy.cn/1635.html",
+      "status": "FOUND",
+      "published_at": "2023-02-07T16:26:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "应用技术/SiO₂气凝胶固废产品处理产业化技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "SiO₂气凝胶固废产品处理产业化技术",
+      "url": "https://alfy.cn/1637.html",
+      "status": "FOUND",
+      "published_at": "2023-12-07T16:30:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "应用技术/气凝胶涂料产业化技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "气凝胶涂料产业化技术",
+      "url": "https://alfy.cn/1672.html",
+      "status": "FOUND",
+      "published_at": "2019-06-07T15:37:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    },
+    {
+      "source_file": "应用技术/高性能SiO₂气凝胶产业化技术 - 湖南奥飞新材料有限公司_20260713.docx",
+      "title": "高性能SiO₂气凝胶产业化技术",
+      "url": "https://alfy.cn/1641.html",
+      "status": "FOUND",
+      "published_at": "2023-02-07T15:21:00+08:00",
+      "published_at_source": "article:published_time",
+      "http_status": 200,
+      "error": null
+    }
+  ]
+}
