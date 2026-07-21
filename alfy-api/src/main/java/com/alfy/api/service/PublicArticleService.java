@@ -82,7 +82,7 @@ public class PublicArticleService {
         Map<Long, String> coverUrls = coverUrls(articlePage.getRecords());
         List<ArticleListItemResponse> records = articlePage.getRecords().stream()
                 .map(article -> new ArticleListItemResponse(
-                        article.getId(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
+                        article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
                         article.getSourcePublishedAt(), article.getPublishedAt(),
                         categoriesByArticle.getOrDefault(article.getId(), List.of())
                 ))
@@ -92,10 +92,30 @@ public class PublicArticleService {
         return responsePage;
     }
 
-    public ArticleDetailResponse getArticle(Long articleId) {
-        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
-                .eq(Article::getId, articleId)
-                .eq(Article::getStatus, PUBLISHED));
+    /** 首页只读取后台配置了首页展示位的已发布新闻，避免把普通列表内容误展示到首页。 */
+    public List<ArticleListItemResponse> listHomeArticles(int limit) {
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, PUBLISHED)
+                .isNotNull(Article::getHomeSlot)
+                .orderByAsc(Article::getHomeSortOrder)
+                .orderByDesc(Article::getPublishedAt)
+                .last("LIMIT " + Math.max(1, Math.min(limit, 12))));
+        Map<Long, List<ArticleCategoryResponse>> categoriesByArticle = categoriesByArticle(articles);
+        Map<Long, String> coverUrls = coverUrls(articles);
+        return articles.stream().map(article -> new ArticleListItemResponse(
+                article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
+                article.getSourcePublishedAt(), article.getPublishedAt(),
+                categoriesByArticle.getOrDefault(article.getId(), List.of()))).toList();
+    }
+
+    public ArticleDetailResponse getArticle(String identifier) {
+        LambdaQueryWrapper<Article> query = new LambdaQueryWrapper<Article>().eq(Article::getStatus, PUBLISHED);
+        if (identifier.matches("\\d+")) {
+            query.eq(Article::getId, Long.parseLong(identifier));
+        } else {
+            query.eq(Article::getSlug, identifier);
+        }
+        Article article = articleMapper.selectOne(query);
         if (article == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "文章不存在或尚未发布");
         }
@@ -106,7 +126,7 @@ public class PublicArticleService {
                 (first, ignored) -> first
         ));
         return new ArticleDetailResponse(
-                article.getId(), article.getTitle(), article.getSummary(),
+                article.getId(), article.getSlug(), article.getTitle(), article.getSummary(),
                 replaceInlineMediaUrls(article.getContentHtml(), urlByStorageKey), article.getSourceUrl(),
                 article.getSourcePublishedAt(), article.getPublishedAt(),
                 categoriesByArticle(List.of(article)).getOrDefault(article.getId(), List.of()), media

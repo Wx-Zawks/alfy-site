@@ -6,6 +6,7 @@ import java.util.List;
 /** 前台已发布文章详情。 */
 public record ArticleDetailResponse(
         Long id,
+        String slug,
         String title,
         String summary,
         String contentHtml,

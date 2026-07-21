@@ -33,9 +33,21 @@ logging:
     com.alfy.api: debug
 
 alfy:
+  security:
+    # 生产环境必须通过 ALFY_SECURITY_JWT_SECRET 注入至少 32 字符的随机密钥。
+    jwt-secret: ${ALFY_SECURITY_JWT_SECRET:local-development-secret-must-be-overridden-2026}
+    access-token-ttl: ${ALFY_SECURITY_ACCESS_TOKEN_TTL:PT30M}
+    refresh-token-ttl: ${ALFY_SECURITY_REFRESH_TOKEN_TTL:P14D}
+  admin-bootstrap:
+    # 仅在管理员表为空且同时设置用户名与密码环境变量时创建首个账号；密码绝不写入配置文件。
+    username: ${ALFY_INITIAL_ADMIN_USERNAME:}
+    password: ${ALFY_INITIAL_ADMIN_PASSWORD:}
   content-import:
     # 只能通过显式环境变量或启动参数启用，避免正常启动时误导入。
     enabled: ${ALFY_CONTENT_IMPORT_ENABLED:false}
     package-path: ${ALFY_CONTENT_IMPORT_PACKAGE:../docs/content-import-draft}
     source-root: ${ALFY_CONTENT_IMPORT_SOURCE_ROOT:../docs/奥飞网站}
     storage-root: ${ALFY_CONTENT_STORAGE_ROOT:./data/alfy/uploads}
+  web:
+    # 生产环境请改为实际官网与管理后台域名，多个地址以英文逗号分隔。
+    allowed-origins: ${ALFY_WEB_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

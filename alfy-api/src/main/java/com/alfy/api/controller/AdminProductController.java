@@ -1,0 +1,11 @@
+package com.alfy.api.controller;
+import com.alfy.api.common.*; import com.alfy.api.dto.*; import com.alfy.api.security.AdminPrincipal; import com.alfy.api.service.AdminProductService; import com.baomidou.mybatisplus.extension.plugins.pagination.Page; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import lombok.RequiredArgsConstructor; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/v1/admin/products") @RequiredArgsConstructor
+public class AdminProductController { private final AdminProductService service;
+ @GetMapping public ApiResponse<PageResponse<AdminProductResponse>> list(@RequestParam(required=false)String status,@RequestParam(required=false)Long categoryId,@RequestParam(required=false)String keyword,@RequestParam(defaultValue="1")@Min(1)long page,@RequestParam(defaultValue="10")@Min(1)@Max(100)long size){Page<AdminProductResponse> r=service.list(status,categoryId,keyword,page,size);return ApiResponse.success(PageResponse.from(r));}
+ @GetMapping("/{id}") public ApiResponse<AdminProductResponse> get(@PathVariable @Min(1)Long id){return ApiResponse.success(service.get(id));}
+ @PostMapping public ApiResponse<AdminProductResponse> create(@Valid @RequestBody AdminProductUpsertRequest r,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.create(r,p));}
+ @PutMapping("/{id}") public ApiResponse<AdminProductResponse> update(@PathVariable @Min(1)Long id,@Valid @RequestBody AdminProductUpsertRequest r,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.update(id,r,p));}
+ @PostMapping("/{id}/publish") public ApiResponse<AdminProductResponse> publish(@PathVariable @Min(1)Long id,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.publish(id,p));}
+ @PostMapping("/{id}/offline") public ApiResponse<AdminProductResponse> offline(@PathVariable @Min(1)Long id,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.offline(id,p));}
+ @DeleteMapping("/{id}") public ApiResponse<Void> delete(@PathVariable @Min(1)Long id,@AuthenticationPrincipal AdminPrincipal p){service.delete(id,p);return ApiResponse.success();}}

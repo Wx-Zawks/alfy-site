@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.alfy.com.cn/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/products</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/applications</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/technology</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/cooperation</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/news</loc>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.alfy.com.cn/about</loc>
+    <priority>0.6</priority>
+  </url>
+</urlset>

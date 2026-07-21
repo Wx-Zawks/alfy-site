@@ -1,0 +1,9 @@
+package com.alfy.api.controller;
+import com.alfy.api.common.*; import com.alfy.api.dto.*; import com.alfy.api.security.AdminPrincipal; import com.alfy.api.service.AdminProductCategoryService; import com.baomidou.mybatisplus.extension.plugins.pagination.Page; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import lombok.RequiredArgsConstructor; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/v1/admin/product-categories") @RequiredArgsConstructor
+public class AdminProductCategoryController { private final AdminProductCategoryService service;
+ @GetMapping public ApiResponse<PageResponse<AdminProductCategoryResponse>> list(@RequestParam(required=false)String keyword,@RequestParam(defaultValue="1")@Min(1)long page,@RequestParam(defaultValue="10")@Min(1)@Max(100)long size){Page<AdminProductCategoryResponse> r=service.list(keyword,page,size);return ApiResponse.success(PageResponse.from(r));}
+ @GetMapping("/{id}") public ApiResponse<AdminProductCategoryResponse> get(@PathVariable @Min(1)Long id){return ApiResponse.success(service.get(id));}
+ @PostMapping public ApiResponse<AdminProductCategoryResponse> create(@Valid @RequestBody AdminProductCategoryUpsertRequest r,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.create(r,p));}
+ @PutMapping("/{id}") public ApiResponse<AdminProductCategoryResponse> update(@PathVariable @Min(1)Long id,@Valid @RequestBody AdminProductCategoryUpsertRequest r,@AuthenticationPrincipal AdminPrincipal p){return ApiResponse.success(service.update(id,r,p));}
+ @DeleteMapping("/{id}") public ApiResponse<Void> delete(@PathVariable @Min(1)Long id,@AuthenticationPrincipal AdminPrincipal p){service.delete(id,p);return ApiResponse.success();}}

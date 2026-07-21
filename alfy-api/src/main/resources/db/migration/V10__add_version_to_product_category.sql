@@ -1,0 +1,1 @@
+ALTER TABLE product_category ADD COLUMN version BIGINT NOT NULL DEFAULT 0 AFTER status;

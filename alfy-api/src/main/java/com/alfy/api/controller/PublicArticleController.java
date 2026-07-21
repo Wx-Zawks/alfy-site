@@ -41,8 +41,8 @@ public class PublicArticleController {
         return ApiResponse.success(PageResponse.from(result));
     }
 
-    @GetMapping("/articles/{articleId}")
-    public ApiResponse<ArticleDetailResponse> getArticle(@PathVariable @Min(1) Long articleId) {
-        return ApiResponse.success(publicArticleService.getArticle(articleId));
+    @GetMapping("/articles/{identifier}")
+    public ApiResponse<ArticleDetailResponse> getArticle(@PathVariable String identifier) {
+        return ApiResponse.success(publicArticleService.getArticle(identifier));
     }
 }

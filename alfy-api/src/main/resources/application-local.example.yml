@@ -4,3 +4,11 @@ spring:
     url: jdbc:mysql://localhost:3306/alfy_site_dev?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: your_username
     password: your_password
+
+# 仅本机首次初始化管理员时设置；不要提交真实密码或生产 JWT 密钥。
+alfy:
+  security:
+    jwt-secret: replace-with-at-least-32-random-characters
+  admin-bootstrap:
+    username: admin
+    password: replace-with-a-strong-one-time-password

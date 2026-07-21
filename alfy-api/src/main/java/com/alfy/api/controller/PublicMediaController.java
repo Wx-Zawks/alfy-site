@@ -1,7 +1,7 @@
 package com.alfy.api.controller;
 
 import com.alfy.api.entity.MediaAsset;
-import com.alfy.api.service.PublicArticleService;
+import com.alfy.api.service.PublicMediaService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,20 +20,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-/** 只输出已发布文章所关联的媒体文件。 */
+/** 只输出已发布文章、产品等公开内容所关联的媒体文件。 */
 @RestController
 @RequestMapping("/api/v1/public/media")
 @RequiredArgsConstructor
 public class PublicMediaController {
 
-    private final PublicArticleService publicArticleService;
+    private final PublicMediaService publicMediaService;
 
     @Value("${alfy.content-import.storage-root:./data/alfy/uploads}")
     private String storageRoot;
 
     @GetMapping("/{mediaId}")
     public ResponseEntity<Resource> getMedia(@PathVariable @Min(1) Long mediaId) throws IOException {
-        MediaAsset media = publicArticleService.getPublicMedia(mediaId);
+        MediaAsset media = publicMediaService.getPublicMedia(mediaId);
         Path root = Path.of(storageRoot).toAbsolutePath().normalize();
         Path target = root.resolve(media.getStorageKey()).normalize();
         if (!target.startsWith(root) || !Files.isRegularFile(target)) {
