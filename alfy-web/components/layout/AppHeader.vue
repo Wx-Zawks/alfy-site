@@ -2,10 +2,10 @@
 const route = useRoute()
 const { open } = useInquiryDialog()
 const menuOpen = ref(false)
+const overlayHeader = computed(() => ['/technology', '/about'].includes(route.path))
 
 const navItems = [
   { label: '首页', to: '/' },
-  { label: '产品', to: '/products' },
   { label: '应用与案例', to: '/applications' },
   { label: '技术', to: '/technology' },
   { label: '新闻', to: '/news' },
@@ -19,9 +19,10 @@ watch(() => route.fullPath, () => { menuOpen.value = false })
 </script>
 
 <template>
-  <header class="site-header">
+  <header class="site-header" :class="{ 'is-overlay': overlayHeader, 'is-open': menuOpen }">
     <NuxtLink class="brand" to="/" aria-label="奥飞新材首页">
-      <img class="brand-logo" src="/images/alfy-logo.png" alt="奥飞新材 ALFY">
+      <span class="brand-glyph" aria-hidden="true"><img src="/images/alfy-logo.png" alt=""></span>
+      <span class="brand-word">ALFY</span>
     </NuxtLink>
 
     <button class="menu-toggle" type="button" :aria-expanded="menuOpen" aria-label="打开导航" @click="menuOpen = !menuOpen">

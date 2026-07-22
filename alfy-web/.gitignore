@@ -1,7 +1,38 @@
-.nuxt
-.output
-node_modules
+# Dependencies
+node_modules/
+
+# Nuxt build and generated files
+.nuxt/
+.output/
+.data/
+dist/
+.cache/
+
+# Environment files (keep templates in Git)
 .env
-dist
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test output
+coverage/
+.vitest/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
+Thumbs.db

@@ -3,18 +3,18 @@ export default {
     'prettier --cache --ignore-unknown  --write',
     'eslint --cache --fix',
   ],
-  '*.{scss,less,styl,html,vue,css}': [
+  '*.{scss,less,styl,html,css}': [
     'prettier --cache --ignore-unknown --write',
     'stylelint --fix --allow-empty-input',
   ],
   '*.md': ['prettier --cache --ignore-unknown --write'],
   '*.vue': [
     'prettier --write',
-    'eslint --cache --fix',
+    'eslint --cache --fix --rule "prettier/prettier: off"',
     'stylelint --fix --allow-empty-input',
   ],
   '{!(package)*.json,*.code-snippets,.!(browserslist)*rc}': [
-    'prettier --cache --write--parser json',
+    'prettier --cache --write --parser json',
   ],
   'package.json': ['prettier --cache --write'],
 };

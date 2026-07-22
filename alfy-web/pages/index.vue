@@ -1,24 +1,34 @@
 <script setup lang="ts">
-import { products } from '~/data/products'
 import { applicationScenes, cases } from '~/data/applications'
 import { articles } from '~/data/articles'
 
 useSeoMeta({ title: '新一代气凝胶及其复合产品技术', description: '奥飞新材面向建筑节能、工业节能等场景提供气凝胶材料、复合产品与应用方案。' })
 
 const { open } = useInquiryDialog()
-const activeScene = ref(applicationScenes[0]?.key || '')
-const currentScene = computed(() => applicationScenes.find(item => item.key === activeScene.value) || applicationScenes[0])
-const nextScene = computed(() => {
-  const currentIndex = applicationScenes.findIndex(item => item.key === activeScene.value)
-  return applicationScenes[(currentIndex + 1) % applicationScenes.length]
-})
-const featuredProduct = products.find(item => item.slug === 'exterior-coating') || products[0]
-const productTiles = products.filter(item => item.id !== featuredProduct?.id).slice(0, 4)
+const sceneRail = ref<HTMLElement | null>(null)
+const activeSceneKey = ref(applicationScenes[0]?.key || '')
 const featuredCase = cases[0]
-const secondaryCases = cases.slice(1, 3)
+const caseCards = cases.slice(0, 3)
 const featuredArticle = articles[0]
 const secondaryArticle = articles[1]
 const newsList = articles.slice(2, 4)
+
+const scrollScenes = (direction: -1 | 1) => {
+  const currentIndex = applicationScenes.findIndex(scene => scene.key === activeSceneKey.value)
+  const nextIndex = Math.min(applicationScenes.length - 1, Math.max(0, currentIndex + direction))
+  const nextScene = applicationScenes[nextIndex]
+  if (nextScene) selectScene(nextScene.key)
+}
+
+const selectScene = (key: string) => {
+  const rail = sceneRail.value
+  activeSceneKey.value = key
+  if (!rail) return
+  const card = Array.from(rail.querySelectorAll<HTMLElement>('[data-scene-key]')).find(item => item.dataset.sceneKey === key)
+  if (!card) return
+  const targetLeft = card.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft
+  rail.scrollTo({ left: targetLeft, behavior: 'smooth' })
+}
 
 const heroSlides = [
   {
@@ -76,7 +86,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>
+  <div class="home-page">
     <section class="home-hero" @mouseenter="heroPaused = true" @mouseleave="heroPaused = false" @focusin="heroPaused = true" @focusout="heroPaused = false" @touchstart.passive="startHeroTouch" @touchend.passive="endHeroTouch">
       <div class="hero-slides" aria-hidden="true">
         <div v-for="(slide, index) in heroSlides" :key="slide.image" class="hero-slide" :class="{ active: index === activeHeroSlide }" :style="{ backgroundImage: `url(${slide.image})` }" />
@@ -97,18 +107,130 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <section class="proof-strip"><div class="container proof-grid"><article><span>01</span><div><small>技术来源</small><b>中南大学粉末冶金<br>全国重点实验室</b></div></article><article><span>02</span><div><small>核心技术</small><b>新一代气凝胶<br>常压干燥技术</b></div></article><article><span>03</span><div><small>客户验证</small><b>以真实项目推动<br>材料性能验证</b></div></article><article><span>04</span><div><small>全链服务</small><b>从材料研发到<br>复合开发与交付</b></div></article></div></section>
+    <section class="proof-strip">
+      <div class="container proof-grid">
+        <article><span>01</span><div><small>技术来源</small><b>中南大学粉末冶金<br>全国重点实验室</b></div></article>
+        <article><span>02</span><div><small>核心技术</small><b>新一代气凝胶<br>常压干燥技术</b></div></article>
+        <article><span>03</span><div><small>全链服务</small><b>从研发到交付的<br>完整闭环</b></div></article>
+        <article><span>04</span><div><small>客户验证</small><b>头部企业认可的<br>可靠供应商</b></div></article>
+      </div>
+    </section>
 
-    <section class="section about-section"><div class="container split about-split"><div><p class="eyebrow">关于奥飞</p><h2>中南大学气凝胶<br><em>成果转化核心平台</em></h2><p class="lead">奥飞新材聚焦气凝胶材料与复合产品技术，推动科研成果走向规模化产业应用。</p><div class="button-row"><NuxtLink class="button button-primary" to="/about">企业介绍 ↗</NuxtLink><NuxtLink class="button button-outline" to="/technology">研发与技术 ↗</NuxtLink></div><div class="stats"><article><b>材料</b><span>粉体 / 分散体</span></article><article><b>复合</b><span>涂料、毡板及配套</span></article><article><b>应用</b><span>多行业真实场景</span></article></div></div><figure class="media-frame about-media"><img src="/images/university.jpeg" alt="中南大学粉末冶金学院"><figcaption>科研源头与成果转化平台</figcaption></figure></div></section>
+    <section class="section about-section">
+      <div class="container split about-split">
+        <div>
+          <p class="eyebrow">关于我们</p>
+          <h2>中南大学气凝胶<br><em>成果转化核心平台</em></h2>
+          <p class="lead">源自中南大学粉末冶金全国重点实验室，十余年技术积淀，新一代常压干燥技术的产业化践行者。拥有国家级专家、博士等科研开发人才，团队在气凝胶常压干燥制备技术、气凝胶复合材料技术等方面具有深厚的研发实力，产品已经推向市场并获得成功。</p>
+          <div class="about-actions">
+            <NuxtLink class="button button-primary" to="/about">企业介绍 ↗</NuxtLink>
+            <NuxtLink class="button button-outline" to="/about#team">研发团队 ↗</NuxtLink>
+            <NuxtLink class="button button-outline" to="/technology">气凝胶技术 ↗</NuxtLink>
+            <NuxtLink class="button button-outline" to="/technology">复合材料技术 ↗</NuxtLink>
+          </div>
+        </div>
+        <figure class="media-frame about-media"><img src="/images/university.jpeg" alt="中南大学粉末冶金学院"></figure>
+      </div>
+    </section>
 
-    <section class="section section-muted"><div class="container"><div class="section-heading section-heading-tabs"><div><p class="eyebrow">应用场景</p><h2>让材料进入真实场景</h2></div><div class="tabs"><button v-for="scene in applicationScenes" :key="scene.key" :class="{ active: activeScene === scene.key }" @click="activeScene = scene.key">{{ scene.name }}</button></div></div><div v-if="currentScene" class="scene-showcase"><NuxtLink class="scene-feature scene-primary" :to="`/applications?category=${currentScene.key}`"><img :src="currentScene.image" :alt="currentScene.name"><div class="scene-copy"><p class="eyebrow eyebrow-light">{{ currentScene.name }}</p><h2>{{ currentScene.slogan }}</h2><p>{{ currentScene.summary }}</p><span class="inline-arrow">查看解决方案 ↗</span></div></NuxtLink><NuxtLink v-if="nextScene" class="scene-feature scene-secondary" :to="`/applications?category=${nextScene.key}`"><img :src="nextScene.image" :alt="nextScene.name"><div class="scene-copy"><p class="eyebrow eyebrow-light">下一场景</p><h3>{{ nextScene.name }}</h3><p>{{ nextScene.summary }}</p><span class="inline-arrow">查看 ↗</span></div></NuxtLink></div></div></section>
+    <section class="section section-muted applications-section">
+      <div class="container">
+        <div class="section-heading application-heading">
+          <div><p class="eyebrow">应用场景</p><h2>让材料进入真实场景</h2></div>
+          <div class="application-category-bar" aria-label="应用场景分类">
+            <div class="application-category-scroll">
+              <button v-for="scene in applicationScenes" :key="scene.key" type="button" :class="{ active: activeSceneKey === scene.key }" :aria-pressed="activeSceneKey === scene.key" @click="selectScene(scene.key)">{{ scene.name }}</button>
+            </div>
+            <NuxtLink to="/applications">查看更多 ↗</NuxtLink>
+          </div>
+        </div>
+        <div ref="sceneRail" class="application-rail" aria-label="应用场景横向列表">
+          <NuxtLink v-for="scene in applicationScenes" :key="scene.key" class="application-card" :data-scene-key="scene.key" :to="`/applications?category=${scene.key}`">
+            <img :src="scene.image" :alt="scene.name">
+            <div class="application-card-copy">
+              <span>{{ scene.name }}</span>
+              <h3>{{ scene.slogan }}</h3>
+              <p>{{ scene.summary }}</p>
+              <b>查看场景 ↗</b>
+            </div>
+          </NuxtLink>
+          <span class="application-rail-spacer" aria-hidden="true" />
+        </div>
+        <div class="application-controls" aria-label="切换应用场景">
+          <button type="button" aria-label="向前浏览应用场景" @click="scrollScenes(-1)">←</button>
+          <button type="button" aria-label="向后浏览应用场景" @click="scrollScenes(1)">→</button>
+        </div>
+      </div>
+    </section>
 
-    <section class="section"><div class="container"><div class="section-heading"><div><p class="eyebrow">产品中心</p><h2>全系列气凝胶复合产品</h2></div><NuxtLink class="text-link" to="/products">查看全部产品 ↗</NuxtLink></div><div class="product-showcase"><NuxtLink v-if="featuredProduct" class="product-feature" :to="`/products/${featuredProduct.slug}`" :style="{ '--product-image': `url(${featuredProduct.image})` }"><div><span>{{ featuredProduct.categoryName }}</span><h3>{{ featuredProduct.name }}</h3><p>{{ featuredProduct.summary }}</p><b>查看产品 ↗</b></div></NuxtLink><div class="product-tiles"><NuxtLink v-for="product in productTiles" :key="product.id" class="product-tile" :to="`/products/${product.slug}`"><img :src="product.image" :alt="product.name"><div><small>{{ product.categoryName }}</small><h3>{{ product.name }}</h3><span>产品详情 ↗</span></div></NuxtLink></div></div></div></section>
+    <section class="section section-muted case-section">
+      <div class="container">
+        <div class="section-heading"><div><p class="eyebrow">典型案例</p><h2>用数据说话的标杆项目</h2></div><NuxtLink class="text-link" to="/applications">查看更多 ↗</NuxtLink></div>
+        <div v-if="featuredCase" class="case-prototype-feature">
+          <NuxtLink class="case-main-image" :to="`/cases/${featuredCase.slug}`"><img :src="featuredCase.image" :alt="featuredCase.title"></NuxtLink>
+          <article class="case-detail">
+            <p class="eyebrow">合作伙伴 / 绿色建造</p>
+            <h3>三一筑工</h3>
+            <p>2026年1月，奥飞新材与三一筑工签署战略合作协议，共同推动气凝胶技术在绿色建筑、工程机械涂装等领域的工程应用。同年，双方合作打造三一云谷项目，将气凝胶应用于装配式建筑外墙外保温及夹层，实现保温隔热、防火轻质一体化，助力装配式建筑节能升级。</p>
+            <div class="case-products"><b>核心产品</b><span>气凝胶外墙涂料</span><span>气凝胶水泥</span></div>
+            <p class="case-summary">项目采用气凝胶外墙外保温系统及气凝胶水泥，应用于装配式建筑夹层，实现保温、隔热、防水一体化。</p>
+            <NuxtLink class="button button-outline" :to="`/cases/${featuredCase.slug}`">查看案例 ↗</NuxtLink>
+          </article>
+        </div>
+        <div class="case-card-grid">
+          <NuxtLink v-for="item in caseCards" :key="item.id" class="case-card" :to="`/cases/${item.slug}`">
+            <img :src="item.image" :alt="item.title">
+            <div><h3>{{ item.title }}</h3><span>查看案例 ↗</span></div>
+          </NuxtLink>
+        </div>
+        <div class="partner-matrix">
+          <h3>奥飞新材与立邦、三一、中化学、中国建筑等头部企业已建立深度合作</h3>
+          <div class="partner-grid-scroll"><img src="/images/partners-grid.png" alt="奥飞新材合作企业：立邦、三一、中国化学、中国船舶、中国电信、中国建科、中国建筑、中国重汽、中国铁建、比亚迪、深铁置业、吉利汽车、美的、TCL、中国移动"></div>
+        </div>
+      </div>
+    </section>
 
-    <section class="section section-muted"><div class="container"><div class="section-heading"><div><p class="eyebrow">典型案例</p><h2>用数据说话的标杆项目</h2></div><NuxtLink class="text-link" to="/applications">查看全部案例 ↗</NuxtLink></div><div class="case-showcase"><NuxtLink v-if="featuredCase" class="case-feature" :to="`/cases/${featuredCase.slug}`"><img :src="featuredCase.image" :alt="featuredCase.title"><div><span>{{ featuredCase.category }}</span><h3>{{ featuredCase.title }}</h3><p>{{ featuredCase.summary }}</p><b>查看项目 ↗</b></div></NuxtLink><div class="case-side"><NuxtLink v-for="item in secondaryCases" :key="item.id" :to="`/cases/${item.slug}`"><img :src="item.image" :alt="item.title"><div><span>{{ item.category }}</span><h3>{{ item.title }}</h3><b>查看 ↗</b></div></NuxtLink></div></div><div class="partner-block"><p>奥飞新材与高校、行业伙伴和工程企业建立深度合作</p><div><span>中南大学</span><span>三一筑工</span><span>立邦中国</span><span>产学研联合创新</span></div></div></div></section>
+    <section class="section section-dark technology-section">
+      <div class="container">
+        <div class="technology-head">
+          <div>
+            <p class="eyebrow eyebrow-light">技术研发</p>
+            <h2>新一代常压<br><em>干燥技术</em></h2>
+            <p class="lead">突破传统超临界工艺的高投入、高能耗、难连续生产瓶颈，让气凝胶实现绿色、低成本、规模化生产。</p>
+            <NuxtLink class="button button-outline" to="/technology">与技术团队交流 ↗</NuxtLink>
+          </div>
+          <div class="technology-table">
+            <div><span>技术栏目</span><span>研发内容</span><span>查看方向</span></div>
+            <div><b>气凝胶材料技术</b><span>常压干燥、粉体、分散体</span><em>材料技术 →</em></div>
+            <div><b>气凝胶复合产品技术</b><span>涂料、板材、水泥、布料</span><em>复合技术 →</em></div>
+            <div><b>其他技术</b><span>固废处理与产业化设备</span><em>技术成果 →</em></div>
+            <div><b>工艺对比</b><span>传统超临界干燥</span><em>常压设备 ↓60%+</em></div>
+            <p class="technology-table-note">PCT 国际专利 1 件 · 发明专利 11 件（已授权 6 件）· 参与多项国家、行业及团体标准制定</p>
+          </div>
+        </div>
+        <h3 class="technology-cooperation-title">奥飞新材本着开放共赢的心态，愿与伙伴构建气凝胶产业合作生态</h3>
+        <div class="technology-pillars">
+          <article><h3>经销商合作</h3><p>区域渠道、项目资源与品牌共建，拓展建筑节能和工业节能市场。</p><NuxtLink to="/cooperation">成为合作伙伴 →</NuxtLink></article>
+          <article><h3>复合产品开发模式</h3><p>提供改性浆料、复合母粒等气凝胶功能模块，协助快速开发新产品。</p><NuxtLink to="/cooperation">联合开发 →</NuxtLink></article>
+          <article><h3>产业链合作模式</h3><p>为领军企业提供定制材料、专属配方与全流程研发支持，共同定义行业标准。</p><NuxtLink to="/cooperation">项目合作 →</NuxtLink></article>
+        </div>
+      </div>
+    </section>
 
-    <section class="section section-dark technology-section"><div class="container"><div class="technology-head"><div><p class="eyebrow eyebrow-light">技术研发</p><h2>新一代常压<br><em>干燥技术</em></h2><p class="lead">围绕材料制备、分散改性和复合产品开发形成持续研发能力。</p><NuxtLink class="button button-light" to="/technology">进入技术中心 ↗</NuxtLink></div><div class="technology-table"><div><span>研发方向</span><span>技术阶段</span><span>开放方式</span></div><div><b>气凝胶粉体制备</b><span>产业化验证</span><em>技术咨询 ↗</em></div><div><b>水性分散体系</b><span>产品开发</span><em>联合开发 ↗</em></div><div><b>复合材料体系</b><span>场景验证</span><em>项目合作 ↗</em></div><div><b>应用解决方案</b><span>持续迭代</span><em>获取方案 ↗</em></div></div></div><div class="technology-pillars"><article><span>01 / 材料制备</span><h3>粉体与颗粒</h3><p>关注孔结构、工艺稳定性与规模化制备。</p><NuxtLink to="/technology">技术详情 ↗</NuxtLink></article><article><span>02 / 分散改性</span><h3>进入复合体系</h3><p>面向涂料、浆料和多元基材设计分散路径。</p><NuxtLink to="/technology">技术详情 ↗</NuxtLink></article><article><span>03 / 场景开发</span><h3>从工况反推产品</h3><p>通过样品、小试与项目数据持续验证。</p><NuxtLink to="/technology">技术详情 ↗</NuxtLink></article></div></div></section>
-
-    <section class="section"><div class="container"><div class="section-heading"><div><p class="eyebrow">新闻资讯</p><h2>关注气凝胶产业最新进展</h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 ↗</NuxtLink></div><div class="news-showcase"><NuxtLink v-if="featuredArticle" class="news-feature" :to="`/news/${featuredArticle.slug}`"><img :src="featuredArticle.image" :alt="featuredArticle.title"><div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3>{{ featuredArticle.title }}</h3><p>{{ featuredArticle.summary }}</p><b>阅读全文 ↗</b></div></NuxtLink><NuxtLink v-if="secondaryArticle" class="news-highlight" :to="`/news/${secondaryArticle.slug}`"><span>{{ secondaryArticle.categoryName }} · {{ secondaryArticle.date }}</span><h3>{{ secondaryArticle.title }}</h3><p>{{ secondaryArticle.summary }}</p><b>阅读全文 ↗</b></NuxtLink><div class="news-list"><NuxtLink v-for="item in newsList" :key="item.id" :to="`/news/${item.slug}`"><small>{{ item.date }}</small><h3>{{ item.title }}</h3><span>查看 ↗</span></NuxtLink></div></div></div></section>
+    <section class="section news-section">
+      <div class="container">
+        <div class="section-heading"><div><p class="eyebrow">新闻资讯</p><h2>关注气凝胶产业最新进展</h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 ↗</NuxtLink></div>
+        <div class="news-showcase">
+          <NuxtLink v-if="featuredArticle" class="news-feature" :to="`/news/${featuredArticle.slug}`">
+            <img :src="featuredArticle.image" :alt="featuredArticle.title">
+            <div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3>{{ featuredArticle.title }}</h3><b>了解更多 ↗</b></div>
+          </NuxtLink>
+          <NuxtLink v-if="secondaryArticle" class="news-highlight" :to="`/news/${secondaryArticle.slug}`"><span>{{ secondaryArticle.categoryName }} · {{ secondaryArticle.date }}</span><h3>{{ secondaryArticle.title }}</h3><p>{{ secondaryArticle.summary }}</p><b>了解更多 ↗</b></NuxtLink>
+          <div class="news-list">
+            <NuxtLink v-for="item in newsList" :key="item.id" :to="`/news/${item.slug}`"><img :src="item.image" :alt="item.title"><div><small>活动回顾 · {{ item.date }}</small><h3>{{ item.title }}</h3><span>查看案例 ↗</span></div></NuxtLink>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>

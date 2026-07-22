@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ eyebrow: string; title: string; highlight?: string; description: string; image: string }>()
+defineProps<{ eyebrow: string; title: string; highlight?: string; description?: string; image: string }>()
 </script>
 
 <template>
@@ -7,7 +7,7 @@ defineProps<{ eyebrow: string; title: string; highlight?: string; description: s
     <div class="container page-hero-content">
       <p class="eyebrow eyebrow-light">{{ eyebrow }}</p>
       <h1>{{ title }}<br><em v-if="highlight">{{ highlight }}</em></h1>
-      <p>{{ description }}</p>
+      <p v-if="description">{{ description }}</p>
       <slot />
     </div>
   </section>
