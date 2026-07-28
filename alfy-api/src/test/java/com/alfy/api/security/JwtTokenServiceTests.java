@@ -24,7 +24,8 @@ class JwtTokenServiceTests {
     @Test
     void rejectsModifiedToken() {
         String token = tokenService.issueAccessToken(new AdminPrincipal(7L, "editor", "content_admin"));
-        String modified = token.substring(0, token.length() - 1) + "x";
+        char replacement = token.charAt(token.length() - 1) == 'x' ? 'y' : 'x';
+        String modified = token.substring(0, token.length() - 1) + replacement;
 
         assertThatThrownBy(() -> tokenService.parseAccessToken(modified))
                 .isInstanceOf(IllegalArgumentException.class);

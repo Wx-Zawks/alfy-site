@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class ContentPage {
     @TableId(value = "id", type = IdType.AUTO) private Long id;
     private String pageKey; private String title; private String category; private String summary; private String contentHtml;
+    private String contentJson;
     private Long coverMediaId; private Integer isFeatured; private Integer sortOrder; private String status;
     private String seoTitle; private String seoDescription; private String seoKeywords; private LocalDateTime publishedAt;
     private LocalDateTime createdAt; private LocalDateTime updatedAt; @TableLogic private Integer deleted; @Version private Long version;

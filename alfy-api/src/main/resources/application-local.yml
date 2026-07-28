@@ -2,5 +2,5 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/alfy_site_dev?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: 123123
+    username: ${ALFY_DB_USERNAME:root}
+    password: ${ALFY_DB_PASSWORD:}

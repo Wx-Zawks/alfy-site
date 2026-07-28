@@ -26,6 +26,8 @@ public class PublicHomeController {
 
     @GetMapping("/hero-slides") public ApiResponse<List<HeroSlideResponse>> heroSlides() { return ApiResponse.success(heroSlideService.listPublic()); }
     @GetMapping("/pages/technology") public ApiResponse<TechnologyPageResponse> technology() { return ApiResponse.success(technologyPageService.getPublic()); }
+    @GetMapping("/technologies") public ApiResponse<List<TechnologyPageResponse>> technologies() { return ApiResponse.success(technologyPageService.listPublicDetails()); }
+    @GetMapping("/technologies/{pageKey}") public ApiResponse<TechnologyPageResponse> technologyPage(@org.springframework.web.bind.annotation.PathVariable String pageKey) { return ApiResponse.success(technologyPageService.getPublic(pageKey)); }
     @GetMapping("/home") public ApiResponse<HomeResponse> home() {
         return ApiResponse.success(new HomeResponse(heroSlideService.listPublic(), applicationCaseService.listScenes(),
                 applicationCaseService.listCases(null, null, true, 1, 4).getRecords(), technologyPageService.findPublic(),

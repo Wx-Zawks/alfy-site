@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue';
+import { reactive } from 'vue';
 
 export type ContentResource =
   | 'articles'
@@ -29,16 +29,25 @@ export interface HomeSection {
   eyebrow: string;
   highlight: string;
   image: string;
+  imageMediaId?: number;
+  id?: number;
   key: HomeSectionKey;
   label: string;
   mobileImage: string;
+  mobileMediaId?: number;
+  sortOrder?: number;
   title: string;
   updatedAt: string;
+  version?: number;
 }
 
 export interface ContentItem {
+  categoryId?: number;
+  categoryIds?: number[];
   category: string;
+  contentHtml?: string;
   cover: string;
+  coverMediaId?: number;
   createdAt: string;
   eyebrow: string;
   featured: boolean;
@@ -47,6 +56,7 @@ export interface ContentItem {
   homeSortOrder: number;
   id: number;
   mobileCover: string;
+  mobileMediaId?: number;
   primaryActionLabel: string;
   primaryActionLink: string;
   resource: ContentResource;
@@ -62,6 +72,8 @@ export interface ContentItem {
   summary: string;
   title: string;
   updatedAt: string;
+  version?: number;
+  raw?: Record<string, any>;
 }
 
 export interface Inquiry {
@@ -71,11 +83,21 @@ export interface Inquiry {
   email: string;
   followUp: string;
   id: number;
+  inquiryNo?: string;
   message: string;
   name: string;
   phone: string;
   source: string;
-  status: 'completed' | 'following' | 'invalid' | 'pending';
+  status:
+    | 'CLOSED'
+    | 'completed'
+    | 'CONTACTED'
+    | 'following'
+    | 'invalid'
+    | 'NEW'
+    | 'pending'
+    | 'QUALIFIED'
+    | 'SPAM';
   type: string;
 }
 
@@ -85,6 +107,7 @@ export interface MediaAsset {
   id: number;
   name: string;
   size: string;
+  sourceUrl?: string;
   type: 'document' | 'image' | 'video';
   url: string;
 }
@@ -95,6 +118,7 @@ export interface RedirectRule {
   source: string;
   target: string;
   updatedAt: string;
+  version?: number;
 }
 
 export interface CmsState {
@@ -664,87 +688,32 @@ const seedState: CmsState = {
   },
 };
 
-const STORAGE_KEY = 'alfy-admin-cms-v1';
-
 function cloneSeed(): CmsState {
   return structuredClone(seedState);
 }
 
 function loadState(): CmsState {
-  if (typeof window === 'undefined') return cloneSeed();
-  try {
-    const cached = window.localStorage.getItem(STORAGE_KEY);
-    if (!cached) return cloneSeed();
-    const parsed = JSON.parse(cached) as Partial<CmsState>;
-    const defaults = cloneSeed();
-    const cachedSections = parsed.homePage?.sections || [];
-    const migrateNewsHomePlacement = (parsed.schemaVersion || 1) < 2;
-    return {
-      ...defaults,
-      ...parsed,
-      content: (parsed.content || defaults.content).map((item) => ({
-        ...item,
-        eyebrow: item.eyebrow ?? '',
-        highlightTitle: item.highlightTitle ?? '',
-        homePinned:
-          migrateNewsHomePlacement && item.resource === 'articles'
-            ? item.featured
-            : (item.homePinned ??
-              ((item.resource === 'articles' || item.resource === 'cases') &&
-                item.featured)),
-        homeSortOrder: item.homeSortOrder ?? item.sortOrder ?? 0,
-        mobileCover: item.mobileCover ?? '',
-        primaryActionLabel: item.primaryActionLabel ?? '',
-        primaryActionLink: item.primaryActionLink ?? '',
-        secondaryActionLabel: item.secondaryActionLabel ?? '',
-        secondaryActionLink: item.secondaryActionLink ?? '',
-        showOnHome:
-          migrateNewsHomePlacement && item.resource === 'articles'
-            ? item.featured
-            : (item.showOnHome ??
-              ((item.resource === 'articles' || item.resource === 'cases') &&
-                item.featured)),
-      })),
-      homePage: {
-        sections: defaults.homePage.sections.map((section) => ({
-          ...section,
-          ...cachedSections.find((candidate) => candidate.key === section.key),
-        })),
-        updatedAt: parsed.homePage?.updatedAt || defaults.homePage.updatedAt,
-      },
-      schemaVersion: 2,
-      settings: { ...defaults.settings, ...parsed.settings },
-    };
-  } catch {
-    return cloneSeed();
-  }
+  const defaults = cloneSeed();
+  return {
+    content: [],
+    homePage: {
+      // 空库首次配置时保留固定首页区块模板；保存后立即以 API 数据为准。
+      sections: defaults.homePage.sections,
+      updatedAt: '',
+    },
+    inquiries: [],
+    media: [],
+    redirects: [],
+    schemaVersion: 3,
+    settings: {
+      address: '',
+      email: '',
+      icp: '',
+      phone: '',
+      siteDescription: '',
+      siteName: '',
+    },
+  };
 }
 
 export const cmsState = reactive<CmsState>(loadState());
-
-if (typeof window !== 'undefined') {
-  watch(
-    cmsState,
-    (value) => window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value)),
-    { deep: true },
-  );
-}
-
-export function resetCmsState() {
-  const fresh = cloneSeed();
-  cmsState.content.splice(0, cmsState.content.length, ...fresh.content);
-  cmsState.homePage.sections.splice(
-    0,
-    cmsState.homePage.sections.length,
-    ...fresh.homePage.sections,
-  );
-  cmsState.homePage.updatedAt = fresh.homePage.updatedAt;
-  cmsState.inquiries.splice(0, cmsState.inquiries.length, ...fresh.inquiries);
-  cmsState.media.splice(0, cmsState.media.length, ...fresh.media);
-  cmsState.redirects.splice(0, cmsState.redirects.length, ...fresh.redirects);
-  Object.assign(cmsState.settings, fresh.settings);
-}
-
-export function nextId(items: Array<{ id: number }>) {
-  return Math.max(0, ...items.map((item) => item.id)) + 1;
-}

@@ -33,7 +33,7 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
 
-    @Value("${alfy.web.allowed-origins:http://localhost:3000,http://localhost:5173}")
+    @Value("${alfy.web.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:5777,http://127.0.0.1:5777}")
     private String allowedOrigins;
 
     @Bean
@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/api/v1/public/**", "/error").permitAll()
                         .requestMatchers("/api/v1/admin/auth/login", "/api/v1/admin/auth/refresh").permitAll()
+                        .requestMatchers("/api/v1/admin/users/**", "/api/v1/admin/operation-logs/**",
+                                "/api/v1/admin/not-found-logs/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("SUPER_ADMIN", "CONTENT_ADMIN")
                         // 服务对外 API 均在 /api/v1 下；保留非 API 路径供错误页和测试控制器处理。
                         .anyRequest().permitAll())

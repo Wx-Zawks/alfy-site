@@ -1,5 +1,12 @@
 <script setup lang="ts">
-useSeoMeta({ title: '关于我们', description: '了解湖南奥飞新材料有限公司、气凝胶研发历程、核心团队与产业布局。' })
+import type { ApiContentPage } from '~/types/api'
+
+const { data: content } = await useApi<ApiContentPage>('public-page-about', '/public/pages/about', { optional: true })
+useSeoMeta({
+  title: () => content.value?.seoTitle || content.value?.title || '关于我们',
+  description: () => content.value?.seoDescription || content.value?.summary || '了解湖南奥飞新材料有限公司、气凝胶研发历程、核心团队与产业布局。',
+  keywords: () => content.value?.seoKeywords || ''
+})
 
 const timelineTrack = ref<HTMLElement | null>(null)
 const teamTrack = ref<HTMLElement | null>(null)
@@ -31,8 +38,13 @@ const facilities = [
 
 <template>
   <div class="brief-page about-page">
-    <PageHero class="brief-hero" eyebrow="关于我们" title="中南大学气凝胶成果转化核心平台" image="/images/aerogel-powder.jpg" />
+    <PageHero class="brief-hero" page-key="about" eyebrow="关于我们" title="中南大学气凝胶成果转化核心平台" image="/images/aerogel-powder.jpg" />
 
+    <section v-if="content?.contentHtml" class="brief-section">
+      <article class="container article cms-rich-text" v-html="content.contentHtml" />
+    </section>
+
+    <template v-else>
     <section class="brief-section company-intro-section">
       <div class="container company-intro-grid">
         <div class="company-intro-copy">
@@ -110,5 +122,6 @@ const facilities = [
         </div>
       </div>
     </section>
+    </template>
   </div>
 </template>

@@ -6,6 +6,10 @@ const manager = () => import('#/views/content/manager.vue');
 const homeSections = () => import('#/views/content/home-sections.vue');
 const homeCases = () => import('#/views/content/home-cases.vue');
 const homeNews = () => import('#/views/content/home-news.vue');
+const productCategories = () =>
+  import('#/views/content/product-categories.vue');
+const technologyPages = () => import('#/views/content/technology-pages.vue');
+const cooperationPages = () => import('#/views/content/cooperation-pages.vue');
 
 const routes: RouteRecordRaw[] = [
   {
@@ -58,6 +62,12 @@ const routes: RouteRecordRaw[] = [
     path: '/content',
     children: [
       {
+        component: productCategories,
+        meta: { icon: 'lucide:tags', title: '产品分类' },
+        name: 'ProductCategories',
+        path: '/content/product-categories',
+      },
+      {
         component: manager,
         meta: { icon: 'lucide:package', title: '产品列表' },
         name: 'Products',
@@ -105,11 +115,10 @@ const routes: RouteRecordRaw[] = [
     path: '/technology-content',
     children: [
       {
-        component: manager,
+        component: technologyPages,
         meta: { icon: 'lucide:microscope', title: '技术内容' },
         name: 'Technologies',
         path: '/technology-content/list',
-        props: { resource: 'technologies' },
       },
     ],
   },
@@ -144,6 +153,12 @@ const routes: RouteRecordRaw[] = [
     name: 'PagesContent',
     path: '/pages-content',
     children: [
+      {
+        component: cooperationPages,
+        meta: { icon: 'lucide:handshake', title: '合作页面' },
+        name: 'CooperationPages',
+        path: '/pages-content/cooperation',
+      },
       {
         component: manager,
         meta: { icon: 'lucide:building-2', title: '合作伙伴' },

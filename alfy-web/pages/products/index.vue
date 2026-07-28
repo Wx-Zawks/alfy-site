@@ -1,38 +1,44 @@
 <script setup lang="ts">
-import { products } from '~/data/products'
-
-definePageMeta({ redirect: '/applications' })
+import type { ApiProductCategory, ApiProductListItem, PageResult } from '~/types/api'
+import { useApiClient } from '~/composables/useApi'
+import { useContentMapper } from '~/composables/useContentMapper'
 
 useSeoMeta({ title: '产品中心', description: '奥飞新材气凝胶材料、气凝胶涂料、气凝胶毡板及配套复合产品。' })
 
 const route = useRoute()
 const router = useRouter()
-const categories = [
+const { resolveMediaUrl } = useApiClient()
+const { mapProduct } = useContentMapper()
+const [{ data: categoryData }, { data: productData }] = await Promise.all([
+  useApi<ApiProductCategory[]>('public-product-categories', '/public/product-categories'),
+  useApi<PageResult<ApiProductListItem>>('public-products', '/public/products?page=1&size=100')
+])
+
+const categories = computed(() => [
   { key: 'all', name: '所有产品' },
-  { key: 'coating', name: '气凝胶涂料' },
-  { key: 'blanket', name: '气凝胶毡/板' },
-  { key: 'support', name: '气凝胶配套' },
-  { key: 'raw', name: '气凝胶粉体' }
-]
+  ...(categoryData.value ?? []).map(item => ({ key: item.slug, name: item.name }))
+])
+const products = computed(() => (productData.value?.records ?? []).map(item => mapProduct(item, resolveMediaUrl)))
+const initialCategory = typeof route.query.category === 'string' ? route.query.category : 'all'
+const activeCategory = ref(initialCategory)
+const filteredProducts = computed(() => activeCategory.value === 'all'
+  ? products.value
+  : products.value.filter(item => item.category === activeCategory.value))
 
-const routeCategory = typeof route.query.category === 'string' ? route.query.category : 'all'
-const activeCategory = ref(categories.some(item => item.key === routeCategory) ? routeCategory : 'all')
-const filteredProducts = computed(() => activeCategory.value === 'all' ? products : products.filter(item => item.category === activeCategory.value))
-
-const changeCategory = (key: string) => {
+function changeCategory(key: string) {
   activeCategory.value = key
   router.replace({ query: key === 'all' ? {} : { category: key } })
 }
 
-watch(() => route.query.category, (category) => {
-  const next = typeof category === 'string' && categories.some(item => item.key === category) ? category : 'all'
+watch([() => route.query.category, categories], ([category]) => {
+  const next = typeof category === 'string' && categories.value.some(item => item.key === category) ? category : 'all'
   activeCategory.value = next
-})
+}, { immediate: true })
 </script>
 
 <template>
   <div class="brief-page products-page">
-    <PageHero class="brief-hero" eyebrow="核心产品" title="中南大学气凝胶成果转化核心平台" image="/images/aerogel-powder.jpg" />
+    <PageHero class="brief-hero" page-key="products" eyebrow="核心产品" title="中南大学气凝胶成果转化核心平台" image="/images/aerogel-powder.jpg" />
 
     <section class="brief-section product-catalog-section">
       <div class="container">
@@ -57,9 +63,10 @@ watch(() => route.query.category, (category) => {
           <span class="product-result-count">共 {{ filteredProducts.length }} 款产品</span>
         </div>
 
-        <TransitionGroup name="catalog-list" tag="div" class="listing-grid client-product-grid">
+        <TransitionGroup v-if="filteredProducts.length" name="catalog-list" tag="div" class="listing-grid client-product-grid">
           <ProductCard v-for="product in filteredProducts" :key="product.id" :product="product" />
         </TransitionGroup>
+        <div v-else class="empty-state">当前分类暂无已发布产品。</div>
 
         <div class="catalog-note">
           <span>没有找到对应产品？</span>

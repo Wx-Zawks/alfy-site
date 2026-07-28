@@ -5,21 +5,25 @@ import com.alfy.api.entity.Article;
 import com.alfy.api.entity.ArticleMedia;
 import com.alfy.api.entity.ApplicationScene;
 import com.alfy.api.entity.CaseProject;
+import com.alfy.api.entity.ContentPage;
 import com.alfy.api.entity.MediaAsset;
 import com.alfy.api.entity.Product;
 import com.alfy.api.entity.HeroSlide;
 import com.alfy.api.entity.PageHero;
 import com.alfy.api.entity.SiteSetting;
+import com.alfy.api.entity.TechnologyPage;
 import com.alfy.api.exception.BusinessException;
 import com.alfy.api.mapper.ArticleMapper;
 import com.alfy.api.mapper.ArticleMediaMapper;
 import com.alfy.api.mapper.ApplicationSceneMapper;
 import com.alfy.api.mapper.CaseProjectMapper;
+import com.alfy.api.mapper.ContentPageMapper;
 import com.alfy.api.mapper.MediaAssetMapper;
 import com.alfy.api.mapper.ProductMapper;
 import com.alfy.api.mapper.HeroSlideMapper;
 import com.alfy.api.mapper.PageHeroMapper;
 import com.alfy.api.mapper.SiteSettingMapper;
+import com.alfy.api.mapper.TechnologyPageMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,18 +48,26 @@ public class PublicMediaService {
     private final HeroSlideMapper heroSlideMapper;
     private final PageHeroMapper pageHeroMapper;
     private final SiteSettingMapper siteSettingMapper;
+    private final TechnologyPageMapper technologyPageMapper;
+    private final ContentPageMapper contentPageMapper;
 
     public MediaAsset getPublicMedia(Long mediaId) {
         MediaAsset media = mediaAssetMapper.selectById(mediaId);
         if (media == null || (!belongsToPublishedArticle(mediaId) && !belongsToPublishedProduct(mediaId)
                 && !belongsToPublishedScene(mediaId) && !belongsToPublishedCase(mediaId) && !belongsToPublishedHeroSlide(mediaId)
-                && !belongsToPublishedPageHero(mediaId) && !belongsToSiteSetting(mediaId))) {
+                && !belongsToPublishedPageHero(mediaId) && !belongsToPublishedTechnologyPage(mediaId)
+                && !belongsToPublishedContentPage(mediaId) && !belongsToSiteSetting(mediaId))) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "媒体资源不存在或尚未公开");
         }
         return media;
     }
 
     private boolean belongsToPublishedArticle(Long mediaId) {
+        if (articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                .eq(Article::getCoverMediaId, mediaId)
+                .eq(Article::getStatus, PUBLISHED)) > 0) {
+            return true;
+        }
         Set<Long> articleIds = articleMediaMapper.selectList(new LambdaQueryWrapper<ArticleMedia>()
                         .eq(ArticleMedia::getMediaId, mediaId))
                 .stream().map(ArticleMedia::getArticleId).collect(Collectors.toSet());
@@ -94,6 +106,18 @@ public class PublicMediaService {
         return pageHeroMapper.selectCount(new LambdaQueryWrapper<PageHero>()
                 .and(q -> q.eq(PageHero::getBackgroundMediaId, mediaId).or().eq(PageHero::getMobileBackgroundMediaId, mediaId))
                 .eq(PageHero::getStatus, PUBLISHED)) > 0;
+    }
+
+    private boolean belongsToPublishedTechnologyPage(Long mediaId) {
+        return technologyPageMapper.selectCount(new LambdaQueryWrapper<TechnologyPage>()
+                .eq(TechnologyPage::getHeroMediaId, mediaId)
+                .eq(TechnologyPage::getStatus, PUBLISHED)) > 0;
+    }
+
+    private boolean belongsToPublishedContentPage(Long mediaId) {
+        return contentPageMapper.selectCount(new LambdaQueryWrapper<ContentPage>()
+                .eq(ContentPage::getCoverMediaId, mediaId)
+                .eq(ContentPage::getStatus, PUBLISHED)) > 0;
     }
 
     private boolean belongsToSiteSetting(Long mediaId) {

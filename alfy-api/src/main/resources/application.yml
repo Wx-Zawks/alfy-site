@@ -15,6 +15,11 @@ spring:
     validate-migration-naming: true
     clean-disabled: true
 
+  servlet:
+    multipart:
+      max-file-size: 30MB
+      max-request-size: 35MB
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -31,6 +36,8 @@ logging:
   level:
     root: info
     com.alfy.api: debug
+
+
 
 alfy:
   security:
@@ -50,4 +57,5 @@ alfy:
     storage-root: ${ALFY_CONTENT_STORAGE_ROOT:./data/alfy/uploads}
   web:
     # 生产环境请改为实际官网与管理后台域名，多个地址以英文逗号分隔。
-    allowed-origins: ${ALFY_WEB_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+    # 本地管理端固定使用 5777；同时保留常见的官网/脚手架开发端口。
+    allowed-origins: ${ALFY_WEB_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173,http://localhost:5777,http://127.0.0.1:5777}

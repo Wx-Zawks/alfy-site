@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { ArticleCategoryRecord } from '#/api';
 import type { ContentItem, ContentResource, ContentStatus } from '#/data/cms';
 
 import { computed, reactive, ref, toRaw, watch } from 'vue';
@@ -25,7 +26,23 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { cmsState, nextId, resourceMeta } from '#/data/cms';
+import {
+  changeContentStatus,
+  deleteContent,
+  getContent,
+  getMediaPreviewUrl,
+  listArticleCategories,
+  listContent,
+  listMedia,
+  listProductCategories,
+  saveContent,
+} from '#/api';
+import { cmsState, resourceMeta } from '#/data/cms';
+import {
+  contentFromBackend,
+  contentPayload,
+  mediaIdFromUrl,
+} from '#/data/cms-adapter';
 
 const props = defineProps<{ resource: ContentResource }>();
 
@@ -34,10 +51,23 @@ const status = ref<'all' | ContentStatus>('all');
 const category = ref('all');
 const dialogVisible = ref(false);
 const activeId = ref<null | number>(null);
+const loading = ref(false);
+const saving = ref(false);
+const referenceOptions = ref<Array<{ id: number; name: string }>>([]);
+const relatedOptions = ref<Array<{ id: number; name: string }>>([]);
+const originalStatus = ref<ContentStatus>('draft');
+const featuresText = ref('');
+const specificationsText = ref('');
+const capabilityRowsText = ref('');
+const pillarsText = ref('');
 
 const meta = computed(() => resourceMeta[props.resource]);
-const isHomePlacementResource = computed(() =>
-  ['articles', 'cases'].includes(props.resource),
+const isHomePlacementResource = computed(() => props.resource === 'articles');
+const supportsDelete = computed(() => props.resource !== 'technologies');
+const categoryOptions = computed(() =>
+  referenceOptions.value.length > 0
+    ? referenceOptions.value.map((item) => item.name)
+    : meta.value.categories,
 );
 const resourceItems = computed(() =>
   cmsState.content.filter((item) => item.resource === props.resource),
@@ -62,7 +92,9 @@ const filteredItems = computed(() => {
 const stats = computed(() => ({
   draft: resourceItems.value.filter((item) => item.status === 'draft').length,
   featured: resourceItems.value.filter((item) =>
-    isHomePlacementResource.value ? item.homePinned : item.featured,
+    isHomePlacementResource.value
+      ? item.homePinned || item.showOnHome
+      : item.featured,
   ).length,
   published: resourceItems.value.filter((item) => item.status === 'published')
     .length,
@@ -74,8 +106,12 @@ const imageOptions = computed(() =>
 );
 
 const emptyForm = (): ContentItem => ({
-  category: meta.value.categories[0] || '未分类',
+  category: categoryOptions.value[0] || '未分类',
+  categoryId: undefined,
+  categoryIds: [],
+  contentHtml: '',
   cover: '',
+  coverMediaId: undefined,
   createdAt: '',
   eyebrow: '',
   featured: false,
@@ -84,8 +120,10 @@ const emptyForm = (): ContentItem => ({
   homeSortOrder: resourceItems.value.length + 1,
   id: 0,
   mobileCover: '',
+  mobileMediaId: undefined,
   primaryActionLabel: '',
   primaryActionLink: '',
+  raw: {},
   resource: props.resource,
   secondaryActionLabel: '',
   secondaryActionLink: '',
@@ -99,124 +137,337 @@ const emptyForm = (): ContentItem => ({
   summary: '',
   title: '',
   updatedAt: '',
+  version: undefined,
 });
 
 const form = reactive<ContentItem>(emptyForm());
+const rawForm = computed<Record<string, any>>(() => form.raw || {});
+
+function replaceResource(items: ContentItem[]) {
+  const retained = cmsState.content.filter(
+    (item) => item.resource !== props.resource,
+  );
+  cmsState.content.splice(0, cmsState.content.length, ...retained, ...items);
+}
+
+function readableSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+async function loadReferences() {
+  referenceOptions.value = [];
+  relatedOptions.value = [];
+  const media = await listMedia();
+  const mappedMedia = await Promise.all(
+    media.map(async (item) => ({
+      alt: item.altText || '',
+      createdAt: item.createdAt,
+      id: item.id,
+      name: item.originalFilename,
+      size: readableSize(item.fileSize),
+      sourceUrl: item.adminUrl,
+      type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
+      url:
+        item.mediaType === 'IMAGE'
+          ? await getMediaPreviewUrl(item.adminUrl).catch((error) => {
+              console.warn(`素材 ${item.id} 的预览加载失败`, error);
+              return '';
+            })
+          : item.adminUrl,
+    })),
+  );
+  cmsState.media
+    .filter((item) => item.url.startsWith('blob:'))
+    .forEach((item) => URL.revokeObjectURL(item.url));
+  cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
+
+  switch (props.resource) {
+    case 'articles': {
+      const flatten = (
+        values: ArticleCategoryRecord[],
+      ): ArticleCategoryRecord[] =>
+        values.flatMap((item) => [item, ...flatten(item.children || [])]);
+      const values = flatten(await listArticleCategories());
+      referenceOptions.value = values.map((item) => ({
+        id: item.id,
+        name: item.name,
+      }));
+
+      break;
+    }
+    case 'cases': {
+      const [values, products] = await Promise.all([
+        listContent('scenes'),
+        listContent('products'),
+      ]);
+      referenceOptions.value = values.map((item) => ({
+        id: Number(item.id),
+        name: String(item.name || item.title || item.slug),
+      }));
+      relatedOptions.value = products.map((item) => ({
+        id: Number(item.id),
+        name: String(item.name || item.title || item.slug),
+      }));
+
+      break;
+    }
+    case 'products': {
+      const [values, scenes] = await Promise.all([
+        listProductCategories(),
+        listContent('scenes'),
+      ]);
+      referenceOptions.value = values.map((item) => ({
+        id: item.id,
+        name: item.name,
+      }));
+      relatedOptions.value = scenes.map((item) => ({
+        id: Number(item.id),
+        name: String(item.name || item.title || item.slug),
+      }));
+
+      break;
+    }
+    default: {
+      referenceOptions.value = [];
+      relatedOptions.value = [];
+    }
+  }
+}
+
+async function load() {
+  loading.value = true;
+  try {
+    const values = await listContent(props.resource);
+    // Content is the primary data for this page. Render it before loading
+    // media and category helpers so an auxiliary request cannot blank the list.
+    replaceResource(
+      values.map((item) => contentFromBackend(props.resource, item)),
+    );
+
+    try {
+      await loadReferences();
+      const names = new Map(
+        referenceOptions.value.map((item) => [item.id, item.name]),
+      );
+      replaceResource(
+        values.map((item) => contentFromBackend(props.resource, item, names)),
+      );
+    } catch (error) {
+      console.warn('辅助素材或分类加载失败，内容列表仍保持可用', error);
+    }
+  } finally {
+    loading.value = false;
+  }
+}
 
 watch(
   () => props.resource,
-  () => {
+  async () => {
     keyword.value = '';
     status.value = 'all';
     category.value = 'all';
+    await load();
   },
+  { immediate: true },
 );
 
-function formatNow() {
-  return new Intl.DateTimeFormat('zh-CN', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
-    .format(new Date())
-    .replaceAll('/', '-');
+function applyReference() {
+  if (props.resource === 'articles' && form.categoryIds?.length) {
+    form.categoryId = form.categoryIds[0];
+    form.category =
+      referenceOptions.value.find((item) => item.id === form.categoryId)
+        ?.name || form.category;
+    return;
+  }
+  const selected = referenceOptions.value.find(
+    (item) => item.name === form.category,
+  );
+  form.categoryId = selected?.id;
+  form.categoryIds = selected ? [selected.id] : [];
+}
+
+function resetAdvancedFields() {
+  featuresText.value = '';
+  specificationsText.value = '';
+  capabilityRowsText.value = '';
+  pillarsText.value = '';
+}
+
+function loadAdvancedFields(item: ContentItem) {
+  const raw = item.raw || {};
+  featuresText.value = Array.isArray(raw.features)
+    ? raw.features.join('\n')
+    : '';
+  specificationsText.value = raw.specifications
+    ? JSON.stringify(raw.specifications, null, 2)
+    : '';
+  capabilityRowsText.value = raw.capabilityRows
+    ? JSON.stringify(raw.capabilityRows, null, 2)
+    : '';
+  pillarsText.value = raw.pillars ? JSON.stringify(raw.pillars, null, 2) : '';
+}
+
+function applyAdvancedFields() {
+  if (props.resource === 'products') {
+    rawForm.value.features = featuresText.value
+      .split(/[,，\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  try {
+    if (props.resource === 'products') {
+      rawForm.value.specifications = specificationsText.value.trim()
+        ? JSON.parse(specificationsText.value)
+        : null;
+    }
+    if (props.resource === 'technologies') {
+      rawForm.value.capabilityRows = capabilityRowsText.value.trim()
+        ? JSON.parse(capabilityRowsText.value)
+        : [];
+      rawForm.value.pillars = pillarsText.value.trim()
+        ? JSON.parse(pillarsText.value)
+        : [];
+    }
+  } catch {
+    ElMessage.warning('JSON 字段格式不正确，请检查后重试');
+    return false;
+  }
+  return true;
+}
+
+function previewUrl(value: string) {
+  const id = mediaIdFromUrl(value);
+  return cmsState.media.find((item) => item.id === id)?.url || value;
 }
 
 function openCreate() {
+  const current = resourceItems.value[0];
+  if (props.resource === 'technologies' && current) {
+    void openEdit(current);
+    return;
+  }
   activeId.value = null;
+  originalStatus.value = 'draft';
   Object.assign(form, emptyForm());
+  resetAdvancedFields();
   dialogVisible.value = true;
 }
 
-function openEdit(value: unknown) {
+async function openEdit(value: unknown) {
   const item = value as ContentItem;
   activeId.value = item.id;
-  Object.assign(form, structuredClone(toRaw(item)));
-  dialogVisible.value = true;
+  loading.value = true;
+  try {
+    const detail = await getContent(props.resource, item.id);
+    const names = new Map(
+      referenceOptions.value.map((option) => [option.id, option.name]),
+    );
+    const mapped = contentFromBackend(props.resource, detail, names);
+    originalStatus.value = mapped.status;
+    Object.assign(form, structuredClone(toRaw(mapped)));
+    loadAdvancedFields(mapped);
+    dialogVisible.value = true;
+  } finally {
+    loading.value = false;
+  }
 }
 
-function save() {
-  if (!form.title.trim() || !form.slug.trim()) {
-    ElMessage.warning('请填写标题和 URL slug');
+async function save() {
+  if (
+    !form.title.trim() ||
+    (!['banners', 'technologies'].includes(props.resource) && !form.slug.trim())
+  ) {
+    ElMessage.warning(
+      props.resource === 'banners' || props.resource === 'technologies'
+        ? '请填写标题'
+        : '请填写标题和 URL slug',
+    );
     return;
   }
   const duplicate = resourceItems.value.some(
     (item) => item.slug === form.slug.trim() && item.id !== activeId.value,
   );
-  if (duplicate) {
+  if (!['banners', 'technologies'].includes(props.resource) && duplicate) {
     ElMessage.warning('该 slug 已存在，请更换');
     return;
   }
 
-  if (isHomePlacementResource.value && form.homePinned) {
-    if (form.status !== 'published') {
-      ElMessage.warning(
-        props.resource === 'articles'
-          ? '置顶新闻必须是已发布状态'
-          : '置顶案例必须是已发布状态',
+  applyReference();
+  if (!applyAdvancedFields()) return;
+  if (
+    ['articles', 'cases', 'products'].includes(props.resource) &&
+    !form.categoryId
+  ) {
+    ElMessage.warning('请先创建并选择有效分类');
+    return;
+  }
+
+  saving.value = true;
+  try {
+    const saved = await saveContent(
+      props.resource,
+      activeId.value,
+      contentPayload(props.resource, form),
+    );
+    const savedId = Number(saved.id || activeId.value || 0);
+    if (
+      savedId &&
+      form.status !== originalStatus.value &&
+      form.status !== 'draft'
+    ) {
+      await changeContentStatus(
+        props.resource,
+        savedId,
+        form.status === 'published' ? 'published' : 'offline',
       );
-      return;
     }
-    cmsState.content
-      .filter(
-        (item) =>
-          item.resource === props.resource && item.id !== activeId.value,
-      )
-      .forEach((item) => {
-        item.homePinned = false;
-      });
-    form.showOnHome = true;
+    dialogVisible.value = false;
+    await load();
+    ElMessage.success(activeId.value ? '内容已更新' : '内容已创建');
+  } finally {
+    saving.value = false;
   }
-
-  const time = formatNow();
-  if (activeId.value) {
-    const current = cmsState.content.find((item) => item.id === activeId.value);
-    if (current) Object.assign(current, form, { updatedAt: time });
-  } else {
-    cmsState.content.push({
-      ...structuredClone(toRaw(form)),
-      createdAt: time,
-      id: nextId(cmsState.content),
-      resource: props.resource,
-      updatedAt: time,
-    });
-  }
-  dialogVisible.value = false;
-  ElMessage.success(activeId.value ? '内容已更新' : '内容已创建');
 }
 
-function changeStatus(value: unknown, next: ContentStatus) {
+async function changeStatus(value: unknown, next: ContentStatus) {
   const item = value as ContentItem;
-  item.status = next;
-  item.updatedAt = formatNow();
-  ElMessage.success(next === 'published' ? '已发布到官网数据源' : '状态已更新');
-}
-
-function remove(value: unknown) {
-  const item = value as ContentItem;
-  const index = cmsState.content.findIndex(
-    (candidate) => candidate.id === item.id,
+  await changeContentStatus(
+    props.resource,
+    item.id,
+    next === 'published' ? 'published' : 'offline',
   );
-  if (index !== -1) cmsState.content.splice(index, 1);
-  ElMessage.success('已移入回收站');
+  await load();
+  ElMessage.success(next === 'published' ? '内容已发布' : '内容已下线');
+}
+
+async function remove(value: unknown) {
+  const item = value as ContentItem;
+  await deleteContent(props.resource, item.id);
+  await load();
+  ElMessage.success('内容已删除');
 }
 
 function statusType(value: ContentStatus) {
-  return value === 'published'
-    ? 'success'
-    : (value === 'draft'
-      ? 'warning'
-      : 'info');
+  if (value === 'published') return 'success';
+  if (value === 'draft') return 'warning';
+  return 'info';
 }
 
 function statusLabel(value: ContentStatus) {
-  return value === 'published'
-    ? '已发布'
-    : (value === 'draft'
-      ? '草稿'
-      : '已下线');
+  if (value === 'published') return '已发布';
+  if (value === 'draft') return '草稿';
+  return '已下线';
+}
+
+function homePlacementLabel(value: unknown) {
+  const item = value as ContentItem;
+  if (props.resource === 'articles') {
+    if (item.homePinned) return '主置顶';
+    if (item.showOnHome) return '首页新闻';
+    return '';
+  }
+  return item.featured ? '推荐' : '';
 }
 </script>
 
@@ -229,12 +480,15 @@ function statusLabel(value: ContentStatus) {
         <p>{{ meta.description }}</p>
       </div>
       <ElButton
+        :loading="loading"
         class="brand-button"
         size="large"
         type="primary"
         @click="openCreate"
       >
-        新建{{ meta.label }}
+        {{
+          props.resource === 'technologies' ? '编辑技术页' : `新建${meta.label}`
+        }}
       </ElButton>
     </section>
 
@@ -256,7 +510,7 @@ function statusLabel(value: ContentStatus) {
       </ElCol>
       <ElCol :lg="6" :sm="12" :xs="24">
         <ElCard shadow="never">
-          <span>{{ isHomePlacementResource ? '首页置顶' : '首页推荐' }}</span><strong>{{ stats.featured }}</strong>
+          <span>{{ isHomePlacementResource ? '首页展示' : '首页推荐' }}</span><strong>{{ stats.featured }}</strong>
         </ElCard>
       </ElCol>
     </ElRow>
@@ -271,7 +525,7 @@ function statusLabel(value: ContentStatus) {
         <ElSelect v-model="category" aria-label="按分类筛选">
           <ElOption label="全部分类" value="all" />
           <ElOption
-            v-for="item in meta.categories"
+            v-for="item in categoryOptions"
             :key="item"
             :label="item"
             :value="item"
@@ -285,14 +539,14 @@ function statusLabel(value: ContentStatus) {
         </ElSelect>
       </div>
 
-      <ElTable :data="filteredItems" row-key="id">
+      <ElTable :data="filteredItems" row-key="id" v-loading="loading">
         <ElTableColumn label="内容" min-width="320">
           <template #default="{ row }">
             <div class="content-cell">
               <ElImage
                 v-if="row.cover"
-                :preview-src-list="[row.cover]"
-                :src="row.cover"
+                :preview-src-list="[previewUrl(row.cover)]"
+                :src="previewUrl(row.cover)"
                 fit="cover"
               />
               <div v-else class="cover-placeholder">
@@ -317,18 +571,8 @@ function statusLabel(value: ContentStatus) {
           width="90"
         >
           <template #default="{ row }">
-            <ElTag
-              v-if="isHomePlacementResource ? row.homePinned : row.featured"
-              effect="plain"
-              type="danger"
-            >
-              {{
-                props.resource === 'articles'
-                  ? '主置顶'
-                  : props.resource === 'cases'
-                    ? '置顶'
-                    : '推荐'
-              }}
+            <ElTag v-if="homePlacementLabel(row)" effect="plain" type="danger">
+              {{ homePlacementLabel(row) }}
 </ElTag><span v-else>-</span>
           </template>
         </ElTableColumn>
@@ -349,6 +593,7 @@ function statusLabel(value: ContentStatus) {
               下线
             </ElButton>
             <ElPopconfirm
+              v-if="supportsDelete"
               title="内容将移入回收站，确定继续？"
               @confirm="remove(row)"
             >
@@ -376,9 +621,23 @@ function statusLabel(value: ContentStatus) {
           </ElCol>
           <ElCol :md="8" :xs="24">
             <ElFormItem label="分类">
-              <ElSelect v-model="form.category" style="width: 100%">
+              <ElSelect
+                v-if="props.resource === 'articles'"
+                v-model="form.categoryIds"
+                multiple
+                placeholder="至少选择一个文章分类"
+                style="width: 100%"
+              >
                 <ElOption
-                  v-for="item in meta.categories"
+                  v-for="item in referenceOptions"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </ElSelect>
+              <ElSelect v-else v-model="form.category" style="width: 100%">
+                <ElOption
+                  v-for="item in categoryOptions"
                   :key="item"
                   :label="item"
                   :value="item"
@@ -439,7 +698,7 @@ function statusLabel(value: ContentStatus) {
                   v-for="asset in imageOptions"
                   :key="asset.id"
                   :label="asset.name"
-                  :value="asset.url"
+                  :value="asset.sourceUrl || asset.url"
                 />
               </ElSelect>
             </ElFormItem>
@@ -458,7 +717,7 @@ function statusLabel(value: ContentStatus) {
                   v-for="asset in imageOptions"
                   :key="asset.id"
                   :label="asset.name"
-                  :value="asset.url"
+                  :value="asset.sourceUrl || asset.url"
                 />
               </ElSelect>
             </ElFormItem>
@@ -466,8 +725,8 @@ function statusLabel(value: ContentStatus) {
           <ElCol v-if="form.cover" :span="24">
             <ElFormItem label="图片预览">
               <ElImage
-                :preview-src-list="[form.cover]"
-                :src="form.cover"
+                :preview-src-list="[previewUrl(form.cover)]"
+                :src="previewUrl(form.cover)"
                 fit="cover"
                 style="width: 220px; height: 120px; border-radius: 10px"
               />
@@ -480,6 +739,186 @@ function statusLabel(value: ContentStatus) {
                 :rows="3"
                 maxlength="240"
                 show-word-limit
+                type="textarea"
+              />
+            </ElFormItem>
+          </ElCol>
+          <template v-if="props.resource === 'products'">
+            <ElCol :span="24">
+              <ElFormItem label="产品特点（每行或逗号分隔一项）">
+                <ElInput v-model="featuresText" :rows="4" type="textarea" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="产品参数 JSON">
+                <ElInput
+                  v-model="specificationsText"
+                  :rows="6"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="关联应用场景">
+                <ElSelect
+                  v-model="rawForm.sceneIds"
+                  clearable
+                  multiple
+                  style="width: 100%"
+                >
+                  <ElOption
+                    v-for="item in relatedOptions"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </ElSelect>
+              </ElFormItem>
+            </ElCol>
+          </template>
+          <template v-if="props.resource === 'scenes'">
+            <ElCol :span="24">
+              <ElFormItem label="场景口号">
+                <ElInput v-model="rawForm.slogan" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="行业痛点">
+                <ElInput
+                  v-model="rawForm.painPoint"
+                  :rows="4"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="解决方案">
+                <ElInput v-model="rawForm.solution" :rows="4" type="textarea" />
+              </ElFormItem>
+            </ElCol>
+          </template>
+          <template v-if="props.resource === 'cases'">
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="客户名称">
+                <ElInput v-model="rawForm.clientName" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="项目地点">
+                <ElInput v-model="rawForm.location" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="项目背景">
+                <ElInput
+                  v-model="rawForm.background"
+                  :rows="3"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="客户需求">
+                <ElInput
+                  v-model="rawForm.customerNeed"
+                  :rows="3"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="解决方案">
+                <ElInput v-model="rawForm.solution" :rows="3" type="textarea" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="实施过程">
+                <ElInput
+                  v-model="rawForm.implementation"
+                  :rows="3"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="成果总结">
+                <ElInput
+                  v-model="rawForm.resultSummary"
+                  :rows="3"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="关联产品">
+                <ElSelect
+                  v-model="rawForm.productIds"
+                  clearable
+                  multiple
+                  style="width: 100%"
+                >
+                  <ElOption
+                    v-for="item in relatedOptions"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </ElSelect>
+              </ElFormItem>
+            </ElCol>
+          </template>
+          <template v-if="props.resource === 'articles'">
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="作者">
+                <ElInput v-model="rawForm.authorName" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="来源链接">
+                <ElInput v-model="rawForm.sourceUrl" />
+              </ElFormItem>
+            </ElCol>
+          </template>
+          <ElCol v-if="props.resource === 'partners'" :span="24">
+            <ElFormItem label="合作伙伴网站">
+              <ElInput v-model="rawForm.websiteUrl" />
+            </ElFormItem>
+          </ElCol>
+          <template v-if="props.resource === 'technologies'">
+            <ElCol :span="24">
+              <ElFormItem label="能力表格 JSON">
+                <ElInput
+                  v-model="capabilityRowsText"
+                  :rows="6"
+                  type="textarea"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :span="24">
+              <ElFormItem label="技术支柱 JSON">
+                <ElInput v-model="pillarsText" :rows="6" type="textarea" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="8" :xs="24">
+              <ElFormItem label="按钮文字">
+                <ElInput v-model="form.primaryActionLabel" />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="16" :xs="24">
+              <ElFormItem label="按钮链接">
+                <ElInput v-model="form.primaryActionLink" />
+              </ElFormItem>
+            </ElCol>
+          </template>
+          <ElCol
+            v-if="!['banners', 'partners'].includes(props.resource)"
+            :span="24"
+          >
+            <ElFormItem label="正文 HTML">
+              <ElInput
+                v-model="form.contentHtml"
+                :rows="8"
+                placeholder="填写正文 HTML；后端保存时会进行安全清洗"
                 type="textarea"
               />
             </ElFormItem>
@@ -514,6 +953,22 @@ function statusLabel(value: ContentStatus) {
                 <ElInput
                   v-model="form.secondaryActionLink"
                   placeholder="/cooperation"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="开始展示时间">
+                <ElInput
+                  v-model="rawForm.startsAt"
+                  placeholder="2026-07-22T08:00:00"
+                />
+              </ElFormItem>
+            </ElCol>
+            <ElCol :md="12" :xs="24">
+              <ElFormItem label="结束展示时间">
+                <ElInput
+                  v-model="rawForm.endsAt"
+                  placeholder="2026-08-22T08:00:00"
                 />
               </ElFormItem>
             </ElCol>
@@ -581,7 +1036,9 @@ function statusLabel(value: ContentStatus) {
       </ElForm>
       <template #footer>
         <ElButton @click="dialogVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="save">保存内容</ElButton>
+        <ElButton :loading="saving" type="primary" @click="save">
+          保存内容
+        </ElButton>
       </template>
     </ElDialog>
   </div>

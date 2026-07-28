@@ -5,6 +5,7 @@ import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
 import { startProgress, stopProgress } from '@vben/utils';
 
+import { clearRefreshToken, getRefreshToken } from '#/api';
 import { accessRoutes, coreRouteNames } from '#/router/routes';
 import { useAuthStore } from '#/store';
 
@@ -50,6 +51,21 @@ function setupAccessGuard(router: Router) {
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
+    const clearInvalidSession = () => {
+      accessStore.setAccessToken(null);
+      accessStore.setRefreshToken(null);
+      accessStore.setAccessCodes([]);
+      accessStore.setIsAccessChecked(false);
+      userStore.setUserInfo(null);
+      clearRefreshToken();
+    };
+
+    // 旧版 Mock 登录可能只残留 accessToken。没有配套 refreshToken 时，
+    // 直接清理本地会话，避免登录页先被重定向后再触发 403。
+    if (accessStore.accessToken && !getRefreshToken()) {
+      clearInvalidSession();
+    }
+
     // 基本路由，这些路由不需要进入权限拦截
     if (coreRouteNames.includes(to.name as string)) {
       if (to.path === LOGIN_PATH && accessStore.accessToken) {
@@ -92,7 +108,22 @@ function setupAccessGuard(router: Router) {
 
     // 生成路由表
     // 当前登录用户拥有的角色标识列表
-    const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
+    let userInfo = userStore.userInfo;
+    if (!userInfo) {
+      try {
+        userInfo = await authStore.fetchUserInfo();
+      } catch {
+        clearInvalidSession();
+        return {
+          path: LOGIN_PATH,
+          query:
+            to.fullPath === DEFAULT_HOME_PATH
+              ? {}
+              : { redirect: encodeURIComponent(to.fullPath) },
+          replace: true,
+        };
+      }
+    }
     const userRoles = userInfo.roles ?? [];
 
     // 生成菜单和路由

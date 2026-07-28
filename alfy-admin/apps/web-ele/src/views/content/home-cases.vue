@@ -16,9 +16,16 @@ import {
   ElTag,
 } from 'element-plus';
 
+import { getMediaPreviewUrl, listContent, listMedia, saveContent } from '#/api';
 import { cmsState } from '#/data/cms';
+import {
+  contentFromBackend,
+  contentPayload,
+  mediaIdFromUrl,
+} from '#/data/cms-adapter';
 
 const sortContainer = ref<HTMLElement | null>(null);
+const loading = ref(false);
 let sortableInstance: { destroy: () => void } | undefined;
 
 const allCases = computed(() =>
@@ -53,52 +60,111 @@ const previewCards = computed(() =>
     .slice(0, 3),
 );
 
+async function load() {
+  loading.value = true;
+  try {
+    const [cases, scenes, media] = await Promise.all([
+      listContent('cases'),
+      listContent('scenes'),
+      listMedia(),
+    ]);
+    const names = new Map(
+      scenes.map((item) => [
+        Number(item.id),
+        String(item.name || item.title || item.slug),
+      ]),
+    );
+    const mapped = cases.map((item) =>
+      contentFromBackend('cases', item, names),
+    );
+    const retained = cmsState.content.filter(
+      (item) => item.resource !== 'cases',
+    );
+    cmsState.content.splice(0, cmsState.content.length, ...retained, ...mapped);
+    const previews = await Promise.all(
+      media
+        .filter((item) => item.mediaType === 'IMAGE')
+        .map(async (item) => ({
+          alt: item.altText || '',
+          createdAt: item.createdAt,
+          id: item.id,
+          name: item.originalFilename,
+          size: '',
+          sourceUrl: item.adminUrl,
+          type: 'image' as const,
+          url: await getMediaPreviewUrl(item.adminUrl),
+        })),
+    );
+    cmsState.media
+      .filter((item) => item.url.startsWith('blob:'))
+      .forEach((item) => URL.revokeObjectURL(item.url));
+    cmsState.media.splice(0, cmsState.media.length, ...previews);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function persist(item: ContentItem) {
+  await saveContent('cases', item.id, contentPayload('cases', item));
+}
+
+function previewUrl(value: string) {
+  const id = mediaIdFromUrl(value);
+  return cmsState.media.find((item) => item.id === id)?.url || value;
+}
+
 function statusLabel(status: ContentItem['status']) {
-  return status === 'published'
-    ? '已发布'
-    : (status === 'draft'
-      ? '草稿'
-      : '已下线');
+  if (status === 'published') return '已发布';
+  if (status === 'draft') return '草稿';
+  return '已下线';
 }
 
 function statusType(status: ContentItem['status']) {
-  return status === 'published'
-    ? 'success'
-    : (status === 'draft'
-      ? 'warning'
-      : 'info');
+  if (status === 'published') return 'success';
+  if (status === 'draft') return 'warning';
+  return 'info';
 }
 
-function setPinned(item: ContentItem) {
+async function setPinned(item: ContentItem) {
   if (item.status !== 'published') {
-    ElMessage.warning('案例发布后才能在首页置顶');
+    ElMessage.warning('案例发布后才能在首页推荐');
     return;
   }
   const shouldCancel = item.homePinned;
-  allCases.value.forEach((candidate) => {
+  for (const candidate of allCases.value) {
     candidate.homePinned = false;
-  });
-  if (shouldCancel) {
-    ElMessage.info('已取消首页置顶，首页将按排序显示第一条案例');
-  } else {
-    item.homePinned = true;
-    item.showOnHome = true;
-    ElMessage.success(`“${item.title}”已设为首页置顶案例`);
+    candidate.showOnHome = false;
+    candidate.featured = false;
+    if (candidate.id === item.id && !shouldCancel) {
+      candidate.homePinned = true;
+      candidate.showOnHome = true;
+      candidate.featured = true;
+    }
+    await persist(candidate);
   }
+  await load();
+  ElMessage.success(
+    shouldCancel ? '已取消首页推荐' : `“${item.title}”已设为首页推荐案例`,
+  );
 }
 
-function handleVisibility(item: ContentItem) {
-  if (!item.showOnHome && item.homePinned) item.homePinned = false;
+async function handleVisibility(item: ContentItem) {
+  item.homePinned = item.showOnHome;
+  item.featured = item.showOnHome;
+  await persist(item);
+  await load();
   ElMessage.success(item.showOnHome ? '已加入首页展示' : '已从首页展示中移除');
 }
 
 function normalizeOrder(items: ContentItem[]) {
   items.forEach((item, index) => {
     item.homeSortOrder = (index + 1) * 10;
+    item.sortOrder = item.homeSortOrder;
   });
 }
 
 onMounted(async () => {
+  await load();
   await nextTick();
   if (!sortContainer.value) return;
   const { initializeSortable } = useSortable(sortContainer.value, {
@@ -106,7 +172,7 @@ onMounted(async () => {
     dragClass: 'case-row-dragging',
     ghostClass: 'case-row-ghost',
     handle: '.drag-handle',
-    onEnd(event) {
+    async onEnd(event) {
       const oldIndex = event.oldIndex;
       const newIndex = event.newIndex;
       if (
@@ -120,7 +186,9 @@ onMounted(async () => {
       if (!moved) return;
       nextOrder.splice(newIndex, 0, moved);
       normalizeOrder(nextOrder);
-      ElMessage.success('首页案例顺序已保存');
+      for (const item of nextOrder) await persist(item);
+      await load();
+      ElMessage.success('首页案例顺序已保存到后端');
     },
   });
   sortableInstance = await initializeSortable();
@@ -158,7 +226,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       type="info"
     />
 
-    <div class="case-layout">
+    <div class="case-layout" v-loading="loading">
       <div class="manager-column">
         <ElCard class="pinned-card" shadow="never">
           <div class="card-title">
@@ -171,7 +239,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
             <ElImage
               v-if="pinnedCase.cover"
               :preview-src-list="[pinnedCase.cover]"
-              :src="pinnedCase.cover"
+              :src="previewUrl(pinnedCase.cover)"
               fit="cover"
             />
             <div v-else class="cover-placeholder">
@@ -226,7 +294,11 @@ onBeforeUnmount(() => sortableInstance?.destroy());
               >
                 <span></span><span></span><span></span>
               </button>
-              <ElImage v-if="item.cover" :src="item.cover" fit="cover" />
+              <ElImage
+                v-if="item.cover"
+                :src="previewUrl(item.cover)"
+                fit="cover"
+              />
               <div v-else class="cover-placeholder">
                 {{ item.title.slice(0, 1) }}
               </div>
@@ -280,7 +352,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
           <article class="feature-preview">
             <ElImage
               v-if="previewPinned.cover"
-              :src="previewPinned.cover"
+              :src="previewUrl(previewPinned.cover)"
               fit="cover"
             />
             <div class="preview-overlay">
@@ -291,7 +363,11 @@ onBeforeUnmount(() => sortableInstance?.destroy());
           </article>
           <div class="card-preview-grid">
             <article v-for="item in previewCards" :key="item.id">
-              <ElImage v-if="item.cover" :src="item.cover" fit="cover" />
+              <ElImage
+                v-if="item.cover"
+                :src="previewUrl(item.cover)"
+                fit="cover"
+              />
               <div>
                 <b>{{ item.title }}</b><span>查看案例 ↗</span>
               </div>

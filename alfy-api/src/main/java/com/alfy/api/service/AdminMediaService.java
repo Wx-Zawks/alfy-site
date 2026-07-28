@@ -60,7 +60,7 @@ public class AdminMediaService {
         if (media == null) throw new BusinessException(ErrorCode.NOT_FOUND, "素材不存在");
         return media;
     }
-    private AdminMediaResponse toResponse(MediaAsset media) { return new AdminMediaResponse(media.getId(), media.getMediaType(), media.getOriginalFilename(), media.getMimeType(), media.getFileSize(), media.getWidth(), media.getHeight(), media.getAltText(), "/api/v1/admin/media/" + media.getId() + "/file", media.getCreatedAt()); }
+    private AdminMediaResponse toResponse(MediaAsset media) { return new AdminMediaResponse(media.getId(), media.getMediaType(), media.getOriginalFilename(), media.getMimeType(), media.getFileSize(), media.getWidth(), media.getHeight(), media.getAltText(), "/admin/media/" + media.getId() + "/file", media.getCreatedAt()); }
     private static String typeOf(String type) { return type.startsWith("image/") ? "IMAGE" : type.startsWith("video/") ? "VIDEO" : "DOCUMENT"; }
     private static String safeFilename(String name) { String safe = name == null ? "upload" : Path.of(name).getFileName().toString().replaceAll("[\\r\\n]", "_"); return safe.isBlank() ? "upload" : safe; }
     private static String extension(String name) { int dot = name.lastIndexOf('.'); return dot < 0 ? "" : name.substring(dot).toLowerCase(); }

@@ -17,45 +17,257 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class TechnologyPageService {
-    private static final String PAGE_KEY = "technology";
+
+    private static final String OVERVIEW_KEY = "technology";
+    private static final List<String> DETAIL_KEYS = List.of(
+            "aerogel-material",
+            "aerogel-composite",
+            "other"
+    );
+    private static final Set<String> SUPPORTED_KEYS = Set.of(
+            OVERVIEW_KEY,
+            "aerogel-material",
+            "aerogel-composite",
+            "other"
+    );
+
     private final TechnologyPageMapper technologyPageMapper;
     private final AdminOperationLogService operationLogService;
     private final HtmlSanitizer htmlSanitizer;
     private final ObjectMapper objectMapper;
 
-    public TechnologyPageResponse getAdmin() { return toResponse(require()); }
-    public TechnologyPageResponse getPublic() {
-        TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>().eq(TechnologyPage::getPageKey, PAGE_KEY).eq(TechnologyPage::getStatus, "PUBLISHED"));
-        if (page == null) throw new BusinessException(ErrorCode.NOT_FOUND, "技术研发内容尚未发布"); return toResponse(page);
+    /** 兼容旧后台接口：无 pageKey 时读写技术总览。 */
+    public TechnologyPageResponse getAdmin() {
+        return getAdmin(OVERVIEW_KEY);
     }
+
+    public TechnologyPageResponse getAdmin(String pageKey) {
+        return toResponse(require(pageKey));
+    }
+
+    public List<TechnologyPageResponse> listAdmin() {
+        return technologyPageMapper.selectList(new LambdaQueryWrapper<TechnologyPage>()
+                        .in(TechnologyPage::getPageKey, SUPPORTED_KEYS)
+                        .orderByAsc(TechnologyPage::getSortOrder)
+                        .orderByAsc(TechnologyPage::getId))
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    /** 技术总览公开接口，保留原有 URL。 */
+    public TechnologyPageResponse getPublic() {
+        return getPublic(OVERVIEW_KEY);
+    }
+
+    public TechnologyPageResponse getPublic(String pageKey) {
+        validatePageKey(pageKey);
+        TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>()
+                .eq(TechnologyPage::getPageKey, pageKey)
+                .eq(TechnologyPage::getStatus, "PUBLISHED"));
+        if (page == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "技术页面不存在或尚未发布");
+        }
+        return toResponse(page);
+    }
+
+    public List<TechnologyPageResponse> listPublicDetails() {
+        return technologyPageMapper.selectList(new LambdaQueryWrapper<TechnologyPage>()
+                        .in(TechnologyPage::getPageKey, DETAIL_KEYS)
+                        .eq(TechnologyPage::getStatus, "PUBLISHED")
+                        .orderByAsc(TechnologyPage::getSortOrder)
+                        .orderByAsc(TechnologyPage::getId))
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public TechnologyPageResponse findPublic() {
-        TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>().eq(TechnologyPage::getPageKey, PAGE_KEY).eq(TechnologyPage::getStatus, "PUBLISHED"));
+        TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>()
+                .eq(TechnologyPage::getPageKey, OVERVIEW_KEY)
+                .eq(TechnologyPage::getStatus, "PUBLISHED"));
         return page == null ? null : toResponse(page);
     }
 
     @Transactional
     public TechnologyPageResponse save(TechnologyPageUpsertRequest request, AdminPrincipal principal) {
-        TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>().eq(TechnologyPage::getPageKey, PAGE_KEY));
-        if (page == null) { page = new TechnologyPage(); page.setPageKey(PAGE_KEY); apply(page, request); page.setStatus("DRAFT"); technologyPageMapper.insert(page); operationLogService.record(principal.id(), "CREATE", "TECHNOLOGY_PAGE", page.getId(), "创建技术研发草稿"); }
-        else { if (request.version() == null || !request.version().equals(page.getVersion())) throw new BusinessException(ErrorCode.CONFLICT, "技术研发内容已被其他管理员修改，请刷新后重试"); apply(page, request); if (technologyPageMapper.updateById(page) != 1) throw new BusinessException(ErrorCode.CONFLICT, "技术研发内容已被其他管理员修改"); operationLogService.record(principal.id(), "UPDATE", "TECHNOLOGY_PAGE", page.getId(), "更新技术研发内容"); }
-        return getAdmin();
+        return save(OVERVIEW_KEY, request, principal);
+    }
+
+    @Transactional
+    public TechnologyPageResponse save(
+            String pageKey,
+            TechnologyPageUpsertRequest request,
+            AdminPrincipal principal
+    ) {
+        validatePageKey(pageKey);
+        TechnologyPage page = find(pageKey);
+        if (page == null) {
+            page = new TechnologyPage();
+            page.setPageKey(pageKey);
+            apply(page, request);
+            page.setStatus("DRAFT");
+            technologyPageMapper.insert(page);
+            operationLogService.record(
+                    principal.id(), "CREATE", "TECHNOLOGY_PAGE", page.getId(), "创建技术页面 " + pageKey
+            );
+        } else {
+            if (request.version() == null || !request.version().equals(page.getVersion())) {
+                throw new BusinessException(ErrorCode.CONFLICT, "技术页面已被其他管理员修改，请刷新后重试");
+            }
+            apply(page, request);
+            if (technologyPageMapper.updateById(page) != 1) {
+                throw new BusinessException(ErrorCode.CONFLICT, "技术页面已被其他管理员修改，请刷新后重试");
+            }
+            operationLogService.record(
+                    principal.id(), "UPDATE", "TECHNOLOGY_PAGE", page.getId(), "更新技术页面 " + pageKey
+            );
+        }
+        return getAdmin(pageKey);
     }
 
     @Transactional
     public TechnologyPageResponse publish(AdminPrincipal principal) {
-        TechnologyPage page = require(); if (page.getTitle() == null || page.getTitle().isBlank() || page.getSummary() == null || page.getSummary().isBlank()) throw new BusinessException(ErrorCode.BAD_REQUEST, "发布前必须填写标题和简介");
-        page.setStatus("PUBLISHED"); if (page.getPublishedAt() == null) page.setPublishedAt(LocalDateTime.now()); technologyPageMapper.updateById(page); operationLogService.record(principal.id(), "PUBLISH", "TECHNOLOGY_PAGE", page.getId(), "发布技术研发内容"); return getAdmin();
+        return publish(OVERVIEW_KEY, principal);
     }
-    @Transactional public TechnologyPageResponse offline(AdminPrincipal principal) { TechnologyPage page = require(); page.setStatus("OFFLINE"); technologyPageMapper.updateById(page); operationLogService.record(principal.id(), "OFFLINE", "TECHNOLOGY_PAGE", page.getId(), "下线技术研发内容"); return getAdmin(); }
 
-    private TechnologyPage require() { TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>().eq(TechnologyPage::getPageKey, PAGE_KEY)); if (page == null) throw new BusinessException(ErrorCode.NOT_FOUND, "技术研发内容尚未创建"); return page; }
-    private void apply(TechnologyPage page, TechnologyPageUpsertRequest r) { page.setEyebrow(trim(r.eyebrow())); page.setTitle(r.title().trim()); page.setHighlightText(trim(r.highlightText())); page.setSummary(trim(r.summary())); page.setCtaLabel(trim(r.ctaLabel())); page.setCtaTarget(trim(r.ctaTarget())); page.setCapabilityRowsJson(write(r.capabilityRows())); page.setPillarsJson(write(r.pillars())); page.setContentHtml(htmlSanitizer.clean(r.contentHtml())); }
-    private TechnologyPageResponse toResponse(TechnologyPage p) { return new TechnologyPageResponse(p.getId(), p.getEyebrow(), p.getTitle(), p.getHighlightText(), p.getSummary(), new ActionResponse(p.getCtaLabel(), p.getCtaTarget()), read(p.getCapabilityRowsJson()), read(p.getPillarsJson()), p.getContentHtml(), p.getStatus(), p.getPublishedAt(), p.getVersion()); }
-    private String write(JsonNode node) { if (node == null || node.isNull()) return null; try { return objectMapper.writeValueAsString(node); } catch (JsonProcessingException e) { throw new BusinessException(ErrorCode.BAD_REQUEST, "技术结构数据格式不正确"); } }
-    private JsonNode read(String json) { if (json == null || json.isBlank()) return objectMapper.createArrayNode(); try { return objectMapper.readTree(json); } catch (JsonProcessingException e) { throw new BusinessException(ErrorCode.INTERNAL_ERROR, "技术结构数据无法读取"); } }
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    @Transactional
+    public TechnologyPageResponse publish(String pageKey, AdminPrincipal principal) {
+        TechnologyPage page = require(pageKey);
+        if (page.getTitle() == null || page.getTitle().isBlank()
+                || page.getSummary() == null || page.getSummary().isBlank()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "发布前必须填写标题和简介");
+        }
+        page.setStatus("PUBLISHED");
+        if (page.getPublishedAt() == null) {
+            page.setPublishedAt(LocalDateTime.now());
+        }
+        if (technologyPageMapper.updateById(page) != 1) {
+            throw new BusinessException(ErrorCode.CONFLICT, "技术页面已被其他管理员修改，请刷新后重试");
+        }
+        operationLogService.record(
+                principal.id(), "PUBLISH", "TECHNOLOGY_PAGE", page.getId(), "发布技术页面 " + pageKey
+        );
+        return getAdmin(pageKey);
+    }
+
+    @Transactional
+    public TechnologyPageResponse offline(AdminPrincipal principal) {
+        return offline(OVERVIEW_KEY, principal);
+    }
+
+    @Transactional
+    public TechnologyPageResponse offline(String pageKey, AdminPrincipal principal) {
+        TechnologyPage page = require(pageKey);
+        page.setStatus("OFFLINE");
+        if (technologyPageMapper.updateById(page) != 1) {
+            throw new BusinessException(ErrorCode.CONFLICT, "技术页面已被其他管理员修改，请刷新后重试");
+        }
+        operationLogService.record(
+                principal.id(), "OFFLINE", "TECHNOLOGY_PAGE", page.getId(), "下线技术页面 " + pageKey
+        );
+        return getAdmin(pageKey);
+    }
+
+    private TechnologyPage find(String pageKey) {
+        return technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>()
+                .eq(TechnologyPage::getPageKey, pageKey));
+    }
+
+    private TechnologyPage require(String pageKey) {
+        validatePageKey(pageKey);
+        TechnologyPage page = find(pageKey);
+        if (page == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "技术页面尚未创建");
+        }
+        return page;
+    }
+
+    private void validatePageKey(String pageKey) {
+        if (!SUPPORTED_KEYS.contains(pageKey)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "不支持的技术页面");
+        }
+    }
+
+    private void apply(TechnologyPage page, TechnologyPageUpsertRequest request) {
+        page.setEyebrow(trim(request.eyebrow()));
+        page.setTitle(request.title().trim());
+        page.setHighlightText(trim(request.highlightText()));
+        page.setSummary(trim(request.summary()));
+        page.setHeroMediaId(request.heroMediaId());
+        page.setCtaLabel(trim(request.ctaLabel()));
+        page.setCtaTarget(trim(request.ctaTarget()));
+        page.setCapabilityRowsJson(write(request.capabilityRows()));
+        page.setPillarsJson(write(request.pillars()));
+        page.setContentHtml(htmlSanitizer.clean(request.contentHtml()));
+        page.setSeoTitle(trim(request.seoTitle()));
+        page.setSeoDescription(trim(request.seoDescription()));
+        page.setSeoKeywords(trim(request.seoKeywords()));
+        page.setSortOrder(
+                request.sortOrder() == null ? defaultSortOrder(page.getPageKey()) : request.sortOrder()
+        );
+    }
+
+    private TechnologyPageResponse toResponse(TechnologyPage page) {
+        return new TechnologyPageResponse(
+                page.getId(),
+                page.getPageKey(),
+                page.getEyebrow(),
+                page.getTitle(),
+                page.getHighlightText(),
+                page.getSummary(),
+                page.getHeroMediaId(),
+                mediaUrl(page.getHeroMediaId()),
+                new ActionResponse(page.getCtaLabel(), page.getCtaTarget()),
+                read(page.getCapabilityRowsJson()),
+                read(page.getPillarsJson()),
+                page.getContentHtml(),
+                page.getSeoTitle(),
+                page.getSeoDescription(),
+                page.getSeoKeywords(),
+                page.getSortOrder(),
+                page.getStatus(),
+                page.getPublishedAt(),
+                page.getUpdatedAt(),
+                page.getVersion()
+        );
+    }
+
+    private int defaultSortOrder(String pageKey) {
+        if (OVERVIEW_KEY.equals(pageKey)) return 0;
+        int index = DETAIL_KEYS.indexOf(pageKey);
+        return index < 0 ? 99 : index + 1;
+    }
+
+    private String write(JsonNode node) {
+        if (node == null || node.isNull()) return null;
+        try {
+            return objectMapper.writeValueAsString(node);
+        } catch (JsonProcessingException exception) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "技术结构数据格式不正确");
+        }
+    }
+
+    private JsonNode read(String json) {
+        if (json == null || json.isBlank()) return objectMapper.createArrayNode();
+        try {
+            return objectMapper.readTree(json);
+        } catch (JsonProcessingException exception) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "技术结构数据无法读取");
+        }
+    }
+
+    private static String mediaUrl(Long mediaId) {
+        return mediaId == null ? null : "/api/v1/public/media/" + mediaId;
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
+    }
 }

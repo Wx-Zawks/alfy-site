@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { HomeSection, HomeSectionKey } from '#/data/cms';
 
-import { computed, reactive, ref, toRaw } from 'vue';
+import { computed, onMounted, reactive, ref, toRaw } from 'vue';
 
 import {
   ElAlert,
@@ -14,17 +14,28 @@ import {
   ElInput,
   ElMessage,
   ElOption,
+  ElPopconfirm,
   ElRow,
   ElSelect,
   ElSwitch,
   ElTag,
 } from 'element-plus';
 
+import {
+  deleteHomeSection,
+  getMediaPreviewUrl,
+  listHomeSections,
+  listMedia,
+  saveHomeSection,
+} from '#/api';
 import { cmsState } from '#/data/cms';
+import { mediaIdFromUrl } from '#/data/cms-adapter';
 
 const cloneSections = () => structuredClone(toRaw(cmsState.homePage.sections));
 
 const activeKey = ref<HomeSectionKey>('about');
+const loading = ref(false);
+const saving = ref(false);
 const draft = reactive<{ sections: HomeSection[] }>({
   sections: cloneSections(),
 });
@@ -39,7 +50,7 @@ const imageOptions = computed(() => {
   const options = new Map<string, string>();
   cmsState.media
     .filter((asset) => asset.type === 'image')
-    .forEach((asset) => options.set(asset.url, asset.name));
+    .forEach((asset) => options.set(asset.sourceUrl || asset.url, asset.name));
   cmsState.content.forEach((item) => {
     if (item.cover && !options.has(item.cover))
       options.set(item.cover, item.title);
@@ -53,39 +64,133 @@ const imageOptions = computed(() => {
   return [...options.entries()].map(([value, label]) => ({ label, value }));
 });
 
-function formatNow() {
-  return new Intl.DateTimeFormat('zh-CN', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date());
+function readableSize(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function save() {
-  if (!activeSection.value.title.trim()) {
+async function load() {
+  loading.value = true;
+  try {
+    const [sections, media] = await Promise.all([
+      listHomeSections(),
+      listMedia(),
+    ]);
+    const mappedMedia = await Promise.all(
+      media.map(async (item) => ({
+        alt: item.altText || '',
+        createdAt: item.createdAt,
+        id: item.id,
+        name: item.originalFilename,
+        size: readableSize(item.fileSize),
+        sourceUrl: item.adminUrl,
+        type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
+        url:
+          item.mediaType === 'IMAGE'
+            ? await getMediaPreviewUrl(item.adminUrl)
+            : item.adminUrl,
+      })),
+    );
+    cmsState.media
+      .filter((item) => item.url.startsWith('blob:'))
+      .forEach((item) => URL.revokeObjectURL(item.url));
+    cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
+    if (sections.length > 0) {
+      const mapped: HomeSection[] = sections.map((item) => ({
+        buttonLink: item.buttonTarget || '',
+        buttonText: item.buttonLabel || '',
+        description: item.description || '',
+        enabled: item.enabled,
+        eyebrow: item.eyebrow || '',
+        highlight: item.highlightText || '',
+        id: item.id,
+        image: item.imageUrl || '',
+        imageMediaId: item.imageMediaId || undefined,
+        key: item.sectionKey as HomeSectionKey,
+        label: item.label,
+        mobileImage: item.mobileImageUrl || '',
+        mobileMediaId: item.mobileMediaId || undefined,
+        sortOrder: item.sortOrder,
+        title: item.title,
+        updatedAt: item.updatedAt,
+        version: item.version,
+      }));
+      cmsState.homePage.sections.splice(
+        0,
+        cmsState.homePage.sections.length,
+        ...mapped,
+      );
+      draft.sections.splice(
+        0,
+        draft.sections.length,
+        ...structuredClone(mapped),
+      );
+      activeKey.value = mapped[0]?.key || 'about';
+    }
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function save() {
+  if (!activeSection.value?.title.trim()) {
     ElMessage.warning('请填写区块标题');
     return;
   }
-  const time = formatNow();
-  draft.sections.forEach((section) => {
-    section.updatedAt = time;
-  });
-  cmsState.homePage.sections.splice(
-    0,
-    cmsState.homePage.sections.length,
-    ...cloneDraft(),
-  );
-  cmsState.homePage.updatedAt = time;
-  ElMessage.success('首页内容配置已保存');
+  saving.value = true;
+  try {
+    for (const [index, section] of draft.sections.entries()) {
+      await saveHomeSection(section.id || null, {
+        buttonLabel: section.buttonText || null,
+        buttonTarget: section.buttonLink || null,
+        description:
+          section.key === 'about' ? section.description || null : null,
+        enabled: section.enabled,
+        eyebrow: section.eyebrow || null,
+        highlightText: section.highlight || null,
+        imageMediaId:
+          section.imageMediaId ?? mediaIdFromUrl(section.image) ?? null,
+        label: section.label,
+        mobileMediaId:
+          section.mobileMediaId ?? mediaIdFromUrl(section.mobileImage) ?? null,
+        sectionKey: section.key,
+        sortOrder: section.sortOrder ?? (index + 1) * 10,
+        title: section.title,
+        version: section.version,
+      });
+    }
+    await load();
+    ElMessage.success('首页内容配置已保存到后端');
+  } finally {
+    saving.value = false;
+  }
 }
 
-function cloneDraft() {
-  return structuredClone(toRaw(draft.sections));
+async function removeActiveSection() {
+  const current = activeSection.value;
+  if (!current?.id) return;
+  await deleteHomeSection(current.id);
+  const index = draft.sections.findIndex((item) => item.id === current.id);
+  if (index !== -1) draft.sections.splice(index, 1);
+  const savedIndex = cmsState.homePage.sections.findIndex(
+    (item) => item.id === current.id,
+  );
+  if (savedIndex !== -1) cmsState.homePage.sections.splice(savedIndex, 1);
+  activeKey.value = draft.sections[0]?.key || 'about';
+  ElMessage.success('首页区块已删除');
 }
 
 function restore() {
   draft.sections.splice(0, draft.sections.length, ...cloneSections());
   ElMessage.info('已恢复到上次保存的内容');
 }
+
+function previewUrl(value: string) {
+  const id = mediaIdFromUrl(value);
+  return cmsState.media.find((item) => item.id === id)?.url || value;
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -94,11 +199,20 @@ function restore() {
       <div>
         <p>HOMEPAGE CONTENT</p>
         <h1>首页内容配置</h1>
-        <span>固定首页版式，甲方可安全替换各区块文字、图片和跳转链接</span>
+        <span>固定首页版式，可维护各区块标题、图片和展示状态</span>
       </div>
       <div class="header-actions">
+        <ElPopconfirm
+          v-if="activeSection?.id"
+          title="确定删除当前首页区块？"
+          @confirm="removeActiveSection"
+        >
+          <template #reference>
+            <ElButton plain size="large" type="danger">删除当前区块</ElButton>
+          </template>
+        </ElPopconfirm>
         <ElButton plain size="large" @click="restore">撤销未保存修改</ElButton>
-        <ElButton size="large" type="primary" @click="save">
+        <ElButton :loading="saving" size="large" type="primary" @click="save">
           保存全部配置
         </ElButton>
       </div>
@@ -108,11 +222,11 @@ function restore() {
       :closable="false"
       class="mode-alert"
       show-icon
-      title="当前为本地演示数据；接入后端后，保存将调用首页配置接口并清除官网首页缓存。"
-      type="warning"
+      title="配置已连接后端；保存时会逐项校验乐观锁版本并写入官网数据源。"
+      type="success"
     />
 
-    <div class="editor-layout">
+    <div class="editor-layout" v-loading="loading">
       <ElCard class="section-nav" shadow="never">
         <div class="nav-title">
           <strong>首页区块</strong>
@@ -182,7 +296,7 @@ function restore() {
                   <ElInput v-model="activeSection.highlight" maxlength="24" />
                 </ElFormItem>
               </ElCol>
-              <ElCol :span="24">
+              <ElCol v-if="activeSection.key === 'about'" :span="24">
                 <ElFormItem label="介绍文字">
                   <ElInput
                     v-model="activeSection.description"
@@ -231,19 +345,6 @@ function restore() {
                   </ElSelect>
                 </ElFormItem>
               </ElCol>
-              <ElCol :md="8" :xs="24">
-                <ElFormItem label="按钮文字">
-                  <ElInput v-model="activeSection.buttonText" maxlength="16" />
-                </ElFormItem>
-              </ElCol>
-              <ElCol :md="16" :xs="24">
-                <ElFormItem label="按钮链接">
-                  <ElInput
-                    v-model="activeSection.buttonLink"
-                    placeholder="例如 /about"
-                  />
-                </ElFormItem>
-              </ElCol>
             </ElRow>
           </ElForm>
         </ElCard>
@@ -269,18 +370,17 @@ function restore() {
                   activeSection.highlight
                 }}</em>
               </h3>
-              <span>{{
-                activeSection.description || '这里显示区块介绍文字。'
-              }}</span>
-              <button v-if="activeSection.buttonText" type="button">
-                {{ activeSection.buttonText }} ↗
-              </button>
+              <span
+                v-if="
+                  activeSection.key === 'about' && activeSection.description
+                "
+                >{{ activeSection.description }}</span>
             </div>
             <div class="preview-media">
               <ElImage
                 v-if="activeSection.image"
-                :preview-src-list="[activeSection.image]"
-                :src="activeSection.image"
+                :preview-src-list="[previewUrl(activeSection.image)]"
+                :src="previewUrl(activeSection.image)"
                 fit="cover"
               />
               <div v-else>此区块暂未配置主图</div>
@@ -561,15 +661,6 @@ function restore() {
   margin-top: 15px;
   line-height: 1.7;
   color: rgb(255 255 255 / 68%);
-}
-
-.preview-copy button {
-  padding: 10px 16px;
-  margin-top: 22px;
-  color: #fff;
-  background: #e85d45;
-  border: 1px solid #e85d45;
-  border-radius: 7px;
 }
 
 .preview-media {

@@ -5,6 +5,7 @@ import com.alfy.api.dto.ArticleCategoryResponse;
 import com.alfy.api.dto.ArticleDetailResponse;
 import com.alfy.api.dto.ArticleListItemResponse;
 import com.alfy.api.dto.ArticleMediaResponse;
+import com.alfy.api.dto.SeoMetaResponse;
 import com.alfy.api.entity.Article;
 import com.alfy.api.entity.ArticleCategory;
 import com.alfy.api.entity.ArticleCategoryRelation;
@@ -83,7 +84,7 @@ public class PublicArticleService {
         List<ArticleListItemResponse> records = articlePage.getRecords().stream()
                 .map(article -> new ArticleListItemResponse(
                         article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
-                        article.getSourcePublishedAt(), article.getPublishedAt(),
+                        article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                         categoriesByArticle.getOrDefault(article.getId(), List.of())
                 ))
                 .toList();
@@ -94,17 +95,21 @@ public class PublicArticleService {
 
     /** 首页只读取后台配置了首页展示位的已发布新闻，避免把普通列表内容误展示到首页。 */
     public List<ArticleListItemResponse> listHomeArticles(int limit) {
-        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+        int resultLimit = Math.max(1, Math.min(limit, 12));
+        List<Article> articles = new ArrayList<>(articleMapper.selectList(new LambdaQueryWrapper<Article>()
                 .eq(Article::getStatus, PUBLISHED)
-                .isNotNull(Article::getHomeSlot)
-                .orderByAsc(Article::getHomeSortOrder)
-                .orderByDesc(Article::getPublishedAt)
-                .last("LIMIT " + Math.max(1, Math.min(limit, 12))));
+                .isNotNull(Article::getHomeSlot)));
+        articles.sort(Comparator
+                .comparingInt((Article article) -> "NEWS_PRIMARY".equals(article.getHomeSlot()) ? 0 : 1)
+                .thenComparing(Article::getHomeSortOrder, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Article::getPublishedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Article::getId, Comparator.reverseOrder()));
+        articles = articles.stream().limit(resultLimit).toList();
         Map<Long, List<ArticleCategoryResponse>> categoriesByArticle = categoriesByArticle(articles);
         Map<Long, String> coverUrls = coverUrls(articles);
         return articles.stream().map(article -> new ArticleListItemResponse(
                 article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
-                article.getSourcePublishedAt(), article.getPublishedAt(),
+                article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                 categoriesByArticle.getOrDefault(article.getId(), List.of()))).toList();
     }
 
@@ -127,9 +132,11 @@ public class PublicArticleService {
         ));
         return new ArticleDetailResponse(
                 article.getId(), article.getSlug(), article.getTitle(), article.getSummary(),
+                article.getCoverMediaId() == null ? null : mediaUrl(article.getCoverMediaId()),
                 replaceInlineMediaUrls(article.getContentHtml(), urlByStorageKey), article.getSourceUrl(),
                 article.getSourcePublishedAt(), article.getPublishedAt(),
-                categoriesByArticle(List.of(article)).getOrDefault(article.getId(), List.of()), media
+                categoriesByArticle(List.of(article)).getOrDefault(article.getId(), List.of()), media,
+                new SeoMetaResponse(article.getSeoTitle(), article.getSeoDescription(), article.getSeoKeywords())
         );
     }
 
@@ -143,6 +150,11 @@ public class PublicArticleService {
     }
 
     private boolean belongsToPublishedArticle(Long mediaId) {
+        if (articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                .eq(Article::getCoverMediaId, mediaId)
+                .eq(Article::getStatus, PUBLISHED)) > 0) {
+            return true;
+        }
         List<ArticleMedia> relations = articleMediaMapper.selectList(
                 new LambdaQueryWrapper<ArticleMedia>().eq(ArticleMedia::getMediaId, mediaId));
         if (relations.isEmpty()) {

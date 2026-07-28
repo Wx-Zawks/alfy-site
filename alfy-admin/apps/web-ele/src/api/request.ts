@@ -16,7 +16,7 @@ import { ElMessage } from 'element-plus';
 
 import { useAuthStore } from '#/store';
 
-import { refreshTokenApi } from './core';
+import { clearRefreshToken, refreshTokenApi } from './core';
 
 // 使用标准 Vite 环境变量，部署时由 .env.production 或服务器构建参数提供。
 const { apiURL } = useAppConfig(import.meta.env, false);
@@ -34,6 +34,7 @@ function createRequestClient(baseURL: string) {
     const accessStore = useAccessStore();
     const authStore = useAuthStore();
     accessStore.setAccessToken(null);
+    clearRefreshToken();
     if (
       preferences.app.loginExpiredMode === 'modal' &&
       accessStore.isAccessChecked
@@ -50,7 +51,7 @@ function createRequestClient(baseURL: string) {
   async function doRefreshToken() {
     const accessStore = useAccessStore();
     const resp = await refreshTokenApi();
-    const newToken = resp.data;
+    const newToken = resp.accessToken;
     accessStore.setAccessToken(newToken);
     return newToken;
   }
@@ -112,3 +113,16 @@ function createRequestClient(baseURL: string) {
 export const requestClient = createRequestClient(apiURL);
 
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+
+export const rawRequestClient = new RequestClient({ baseURL: apiURL });
+rawRequestClient.addRequestInterceptor({
+  fulfilled: async (config) => {
+    const accessStore = useAccessStore();
+    config.headers.Authorization = formatRawToken(accessStore.accessToken);
+    return config;
+  },
+});
+
+function formatRawToken(token: null | string) {
+  return token ? `Bearer ${token}` : undefined;
+}

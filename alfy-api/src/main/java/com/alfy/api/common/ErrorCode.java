@@ -11,6 +11,7 @@ public enum ErrorCode {
     FORBIDDEN(40300, "无权限访问", HttpStatus.FORBIDDEN),
     NOT_FOUND(40400, "数据不存在", HttpStatus.NOT_FOUND),
     CONFLICT(40900, "数据状态冲突", HttpStatus.CONFLICT),
+    PAYLOAD_TOO_LARGE(41300, "上传文件过大", HttpStatus.PAYLOAD_TOO_LARGE),
     INTERNAL_ERROR(50000, "服务器内部错误", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int code;

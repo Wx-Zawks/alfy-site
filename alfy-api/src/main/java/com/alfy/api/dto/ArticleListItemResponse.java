@@ -12,6 +12,7 @@ public record ArticleListItemResponse(
         String coverUrl,
         LocalDateTime sourcePublishedAt,
         LocalDateTime publishedAt,
+        String homeSlot,
         List<ArticleCategoryResponse> categories
 ) {
 }

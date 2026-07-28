@@ -21,11 +21,16 @@ public class TechnologyPage {
     private String title;
     private String highlightText;
     private String summary;
+    private Long heroMediaId;
     private String ctaLabel;
     private String ctaTarget;
     private String capabilityRowsJson;
     private String pillarsJson;
     private String contentHtml;
+    private String seoTitle;
+    private String seoDescription;
+    private String seoKeywords;
+    private Integer sortOrder;
     private String status;
     private LocalDateTime publishedAt;
     @Version private Long version;

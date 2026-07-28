@@ -9,11 +9,13 @@ public record ArticleDetailResponse(
         String slug,
         String title,
         String summary,
+        String coverUrl,
         String contentHtml,
         String sourceUrl,
         LocalDateTime sourcePublishedAt,
         LocalDateTime publishedAt,
         List<ArticleCategoryResponse> categories,
-        List<ArticleMediaResponse> media
+        List<ArticleMediaResponse> media,
+        SeoMetaResponse seo
 ) {
 }
