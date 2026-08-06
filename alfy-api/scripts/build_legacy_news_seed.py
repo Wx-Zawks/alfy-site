@@ -53,6 +53,7 @@ class Asset:
     original_filename: str
     storage_key: str
     resource_path: str
+    display_name_assigned: bool = False
 
 
 @dataclass
@@ -230,6 +231,7 @@ def parse_docx(path: Path, root: Path, output_media: Path, assets: OrderedDict[s
         content_parts: list[str] = []
         article_assets: list[Asset] = []
         seen_assets: set[str] = set()
+        image_index = 0
         skipped_metadata = 0
         list_open = False
         for node in body:
@@ -270,9 +272,11 @@ def parse_docx(path: Path, root: Path, output_media: Path, assets: OrderedDict[s
                 else:
                     html_parts.append(f"<p>{escaped}</p>")
                     content_parts.append(value)
-            for image_index, asset in enumerate(images, start=1):
-                if asset.original_filename.lower().startswith("image"):
+            for asset in images:
+                image_index += 1
+                if not asset.display_name_assigned:
                     asset.original_filename = display_filename(title, "图片", image_index, asset.extension)
+                    asset.display_name_assigned = True
                 if asset.sha256 not in seen_assets:
                     article_assets.append(asset)
                     seen_assets.add(asset.sha256)
@@ -285,7 +289,9 @@ def parse_docx(path: Path, root: Path, output_media: Path, assets: OrderedDict[s
             if VIDEO_BY_MARKER.get(filename) == path.name
         ]
         for video_index, asset in enumerate(videos, start=1):
-            asset.original_filename = display_filename(title, "视频", video_index, asset.extension)
+            if not asset.display_name_assigned:
+                asset.original_filename = display_filename(title, "视频", video_index, asset.extension)
+                asset.display_name_assigned = True
             html_parts.append(f'<figure><video controls preload="metadata" src="{asset.storage_key}"></video></figure>')
         content_text = re.sub(r"\s+", " ", " ".join(content_parts)).strip()
         return Article(
