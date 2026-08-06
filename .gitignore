@@ -1,0 +1,30 @@
+# Dependencies
+**/node_modules/
+
+# Frontend build and cache output
+**/.nuxt/
+**/.output/
+**/dist/
+**/build/
+**/.vite/
+**/.turbo/
+**/coverage/
+
+# Java build output
+**/target/
+
+# Local environment and runtime data
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+**/data/
+**/uploads/
+**/logs/
+
+# Editor and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
