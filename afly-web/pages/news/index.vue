@@ -6,24 +6,27 @@ import { useContentMapper } from '~/composables/useContentMapper'
 useSeoMeta({ title: '新闻资讯', description: '奥飞新材公司新闻、行业新闻与技术动态。' })
 const { request, resolveMediaUrl } = useApiClient()
 const { mapArticle } = useContentMapper()
-const [{ data: categoryData }, { data: articleData }] = await Promise.all([
-  useApi<ApiArticleCategory[]>('public-article-categories', '/public/article-categories'),
-  useApi<PageResult<ApiArticleListItem>>('public-articles', '/public/articles?page=1&size=100')
-])
+const { data: categoryData } = await useApi<ApiArticleCategory[]>('public-article-categories', '/public/article-categories')
+const activeCategory = ref('all')
+const NEWS_PAGE_SIZE = 5
+const newsPage = ref(1)
+const { data: articleData } = await useAsyncData<PageResult<ApiArticleListItem>>(
+  'public-news-articles',
+  () => request<PageResult<ApiArticleListItem>>('/public/articles', {
+    query: {
+      category: activeCategory.value === 'all' ? undefined : activeCategory.value,
+      page: newsPage.value,
+      size: NEWS_PAGE_SIZE
+    }
+  }),
+  { default: () => null, watch: [activeCategory, newsPage] }
+)
 const categories = computed(() => [
   { code: 'all', name: '全部' },
   ...(categoryData.value ?? []).flatMap(item => [item, ...(item.children ?? [])]).map(item => ({ code: item.code, name: item.name }))
 ])
 const articles = computed(() => (articleData.value?.records ?? []).map(item => mapArticle(item, resolveMediaUrl)))
-const activeCategory = ref('all')
-const filtered = computed(() => activeCategory.value === 'all' ? articles.value : articles.value.filter(item => item.category === activeCategory.value))
-const NEWS_PAGE_SIZE = 5
-const newsPage = ref(1)
-const newsPageCount = computed(() => Math.ceil(filtered.value.length / NEWS_PAGE_SIZE))
-const pageArticles = computed(() => {
-  const start = (newsPage.value - 1) * NEWS_PAGE_SIZE
-  return filtered.value.slice(start, start + NEWS_PAGE_SIZE)
-})
+const newsPageCount = computed(() => Math.ceil((articleData.value?.total ?? 0) / NEWS_PAGE_SIZE))
 
 function articleExcerpt(contentHtml: null | string | undefined, title: string) {
   if (!contentHtml) return ''
@@ -47,7 +50,7 @@ function articleExcerpt(contentHtml: null | string | undefined, title: string) {
 const { data: articleExcerpts } = await useAsyncData<Record<string, string>>(
   'public-news-article-excerpts',
   async () => {
-    const excerpts = await Promise.all(pageArticles.value.map(async (article) => {
+    const excerpts = await Promise.all(articles.value.map(async (article) => {
       if (article.summary.trim()) return [article.slug, article.summary.trim()] as const
       const detail = await request<ApiArticleDetail>(
         `/public/articles/${encodeURIComponent(article.slug)}`,
@@ -57,11 +60,11 @@ const { data: articleExcerpts } = await useAsyncData<Record<string, string>>(
     }))
     return Object.fromEntries(excerpts)
   },
-  { default: () => ({}), watch: [activeCategory, newsPage] }
+  { default: () => ({}), watch: [articleData] }
 )
 
 const visibleArticles = computed(() => {
-  return pageArticles.value.map((article) => {
+  return articles.value.map((article) => {
     const [year = '', month = '', day = ''] = article.date.split('-')
     return {
       ...article,
@@ -73,16 +76,17 @@ const visibleArticles = computed(() => {
 })
 
 function selectCategory(category: string) {
-  activeCategory.value = category
+  if (activeCategory.value === category) return
   newsPage.value = 1
+  activeCategory.value = category
 }
 
 function changeNewsPage(nextPage: number) {
   newsPage.value = Math.min(Math.max(nextPage, 1), newsPageCount.value)
 }
 
-watch(filtered, () => {
-  newsPage.value = Math.min(newsPage.value, Math.max(newsPageCount.value, 1))
+watch(newsPageCount, (count) => {
+  newsPage.value = Math.min(newsPage.value, Math.max(count, 1))
 })
 </script>
 
