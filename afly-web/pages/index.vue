@@ -8,20 +8,25 @@ useSeoMeta({ title: '新一代气凝胶及其复合产品技术', description: '
 const { open } = useInquiryDialog()
 const { request, resolveMediaUrl } = useApiClient()
 const { mapArticle, mapCase, mapScene } = useContentMapper()
-const [{ data: home }, { data: sectionData }, { data: caseData }] = await Promise.all([
+const [homeResponse, sectionResponse, caseResponse] = await Promise.all([
   useApi<ApiHome>('public-home', '/public/home'),
   useApi<ApiHomeSection[]>('public-home-sections', '/public/home-sections'),
   useApi<PageResult<ApiCaseListItem>>('public-home-cases', '/public/cases?page=1&size=100')
 ])
+const { data: home, pending: homePending } = homeResponse
+const { data: sectionData } = sectionResponse
+const { data: caseData, pending: casePending } = caseResponse
 
 const sectionMap = computed(() => new Map((sectionData.value ?? []).map(section => [section.sectionKey, section])))
 const homeSection = (key: string) => sectionMap.value.get(key)
 const sectionEnabled = (key: string) => homeSection(key)?.enabled ?? true
 const applicationScenes = computed(() => (home.value?.applicationScenes ?? []).map(item => mapScene(item, resolveMediaUrl)))
+const applicationScenesPending = computed(() => homePending.value)
 const caseEntries = computed(() => (caseData.value?.records ?? []).map(record => ({
   record,
   view: mapCase(record, resolveMediaUrl)
 })))
+const casesPending = computed(() => casePending.value)
 const articles = computed(() => (home.value?.featuredArticles ?? []).map(item => ({
   ...mapArticle(item, resolveMediaUrl),
   homeSlot: item.homeSlot
@@ -95,7 +100,7 @@ const fallbackHero = {
   eyebrow: '气凝胶材料 · 复合产品 · 应用方案',
   title: '奥飞新材料',
   highlight: '连接材料与产业',
-  description: '后台发布首页轮播后，将在这里自动展示最新内容。',
+  description: '以材料创新连接产业需求，为客户提供气凝胶材料及复合产品解决方案。',
   primaryAction: { label: '查看应用案例', target: '/applications' },
   secondaryAction: null
 }
@@ -253,6 +258,10 @@ onBeforeUnmount(() => {
             <button type="button" aria-label="向后浏览应用场景" :disabled="activeSceneKey === applicationScenes[applicationScenes.length - 1]?.key" @click="scrollScenes(1)">›</button>
           </div>
         </div>
+        <div v-else-if="applicationScenesPending" class="content-loading" role="status" aria-live="polite">
+          <span /><span /><span />
+          正在加载应用场景…
+        </div>
         <div v-else class="empty-state">暂无已发布应用场景。</div>
       </div>
     </section>
@@ -276,6 +285,10 @@ onBeforeUnmount(() => {
             <p>{{ featuredCase.summary }}</p>
             <NuxtLink class="button button-outline" :to="`/cases/${featuredCase.slug}`">查看案例 →</NuxtLink>
           </article>
+        </div>
+        <div v-else-if="casesPending" class="content-loading" role="status" aria-live="polite">
+          <span /><span /><span />
+          正在加载推荐案例…
         </div>
         <div v-else class="empty-state">暂无已发布推荐案例。</div>
         <div v-if="caseCards.length" class="case-card-grid">

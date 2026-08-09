@@ -24,7 +24,13 @@ function responseStatus(error: unknown) {
 
 export function useApiClient() {
   const config = useRuntimeConfig()
-  const baseURL = String(config.public.apiBase || '/api/v1')
+  const publicBaseURL = String(config.public.apiBase || '/api/v1')
+  // On the server, a relative /api/v1 URL points back to the Nuxt process,
+  // rather than the Spring Boot container. Use the private Docker-network URL
+  // for SSR, while retaining the public same-origin URL in browsers.
+  const baseURL = import.meta.server && config.apiInternalBase
+    ? String(config.apiInternalBase)
+    : publicBaseURL
 
   async function request<T>(url: string, options: ApiRequestOptions = {}) {
     const { optional, ...fetchOptions } = options
@@ -52,8 +58,8 @@ export function useApiClient() {
     if (!value) return fallback
     if (/^(?:data:|https?:\/\/)/i.test(value)) return value
     if (!value.startsWith('/')) return value
-    if (/^https?:\/\//i.test(baseURL)) {
-      return new URL(value, baseURL).toString()
+    if (/^https?:\/\//i.test(publicBaseURL)) {
+      return new URL(value, publicBaseURL).toString()
     }
     return value
   }
