@@ -19,6 +19,8 @@
 **/.env.*.local
 !**/.env.example
 **/data/
+!alfy-admin/apps/web-ele/src/data/
+!alfy-admin/apps/web-ele/src/data/**
 **/uploads/
 **/logs/
 

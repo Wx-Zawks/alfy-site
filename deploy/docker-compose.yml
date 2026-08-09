@@ -1,0 +1,74 @@
+services:
+  db:
+    image: m.daocloud.io/docker.io/library/mysql:8.4
+    container_name: alfy-db
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: alfy_site
+      MYSQL_USER: alfy
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:?Set MYSQL_APP_PASSWORD in deploy/.env.production}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in deploy/.env.production}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ../alfy-api
+    container_name: alfy-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/alfy_site?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: alfy
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_APP_PASSWORD}
+      ALFY_SECURITY_JWT_SECRET: ${ALFY_SECURITY_JWT_SECRET}
+      ALFY_INITIAL_ADMIN_USERNAME: ${ALFY_INITIAL_ADMIN_USERNAME}
+      ALFY_INITIAL_ADMIN_PASSWORD: ${ALFY_INITIAL_ADMIN_PASSWORD}
+      ALFY_CONTENT_STORAGE_ROOT: /app/data/uploads
+      ALFY_WEB_ALLOWED_ORIGINS: https://alfy.com.cn,https://www.alfy.com.cn,https://admin.alfy.com.cn,http://8.148.14.191:18081
+      LOGGING_LEVEL_COM_ALFY_API: info
+    volumes:
+      - uploads_data:/app/data/uploads
+
+  web:
+    build:
+      context: ../afly-web
+    container_name: alfy-web
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_BASE: /api/v1
+      NUXT_PUBLIC_CONTENT_REFRESH_INTERVAL_MS: 15000
+
+  admin:
+    build:
+      context: ../alfy-admin
+    container_name: alfy-admin
+    restart: unless-stopped
+
+  nginx:
+    image: m.daocloud.io/docker.io/library/nginx:1.30.4-alpine
+    container_name: alfy-nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+      - web
+      - admin
+    ports:
+      - "80:80"
+      # Temporary, restricted-access admin demonstration endpoint. Remove after ICP approval.
+      - "18081:18081"
+    volumes:
+      - ./nginx/http.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  mysql_data:
+  uploads_data:
