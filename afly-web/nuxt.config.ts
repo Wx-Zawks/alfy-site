@@ -2,7 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-07-01',
   devtools: { enabled: true },
   components: [{ path: '~/components', pathPrefix: false }],
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/mobile.css'],
   runtimeConfig: {
     // Production SSR runs inside the Docker network, where the API service is
     // available by its Compose service name. Keep this private: browsers must

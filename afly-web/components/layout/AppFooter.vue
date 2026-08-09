@@ -121,10 +121,26 @@ async function submitInquiry() {
 </script>
 
 <template>
-  <footer class="site-footer">
+  <footer id="site-footer" class="site-footer">
     <div class="container footer-header">
       <NuxtLink class="footer-logo-wrap" to="/" :aria-label="`${companyName}首页`"><img :src="logoUrl" :alt="companyName"></NuxtLink>
       <strong>{{ companyName }}</strong>
+    </div>
+    <div class="container footer-mobile">
+      <div class="footer-mobile-contact">
+        <a :href="`tel:${servicePhone}`"><span>企业电话</span><b>{{ servicePhone }}</b></a>
+        <a :href="`mailto:${serviceEmail}`"><span>企业邮箱</span><b>{{ serviceEmail }}</b></a>
+      </div>
+      <nav class="footer-mobile-nav" aria-label="页脚快捷导航">
+        <NuxtLink
+          v-for="group in footerGroups"
+          :key="group.id"
+          :to="group.target || group.links[0]?.target || '/'"
+        >{{ group.label }} <span>→</span></NuxtLink>
+      </nav>
+      <button class="button button-primary footer-mobile-cta" type="button" @click="open">
+        获取产品资料或项目方案 <span>→</span>
+      </button>
     </div>
     <div class="container footer-main">
       <div class="footer-brand">

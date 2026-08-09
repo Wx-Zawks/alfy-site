@@ -119,7 +119,7 @@ const heroSlides = computed(() => {
   }))
 })
 
-const sceneRail = ref<HTMLElement | null>(null)
+const sceneRail = shallowRef<HTMLElement | null>(null)
 const activeSceneKey = ref('')
 watch(applicationScenes, (items) => {
   if (!items.some(item => item.key === activeSceneKey.value)) activeSceneKey.value = items[0]?.key || ''
