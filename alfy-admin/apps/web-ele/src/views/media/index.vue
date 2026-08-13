@@ -3,7 +3,15 @@ import type { UploadFile, UploadFiles, UploadRawFile } from 'element-plus';
 
 import type { MediaAsset } from '#/data/cms';
 
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue';
 
 import {
   ElButton,
@@ -30,6 +38,7 @@ import {
 import { cmsState } from '#/data/cms';
 
 const MAX_FILE_SIZE = 30 * 1024 * 1024;
+const PREVIEW_CONCURRENCY = 2;
 const ALLOWED_TYPES = new Set([
   'application/pdf',
   'image/gif',
@@ -41,6 +50,14 @@ const ALLOWED_TYPES = new Set([
 const keyword = ref('');
 const loading = ref(false);
 const uploading = ref(false);
+const uploadFileList = ref<UploadFile[]>([]);
+const uploadProgress = ref({ completed: 0, failed: 0, total: 0 });
+let uploadSchedule: undefined | ReturnType<typeof setTimeout>;
+let previewObserver: IntersectionObserver | undefined;
+const previewQueuedIds = new Set<number>();
+const previewQueue: number[] = [];
+const previewStatus = reactive<Record<number, 'failed' | 'loading'>>({});
+let previewInFlight = 0;
 const saving = ref(false);
 const deletingId = ref<number>();
 const editDialogVisible = ref(false);
@@ -90,12 +107,78 @@ function revokePreviewUrls() {
     .forEach((item) => URL.revokeObjectURL(item.url));
 }
 
+function queuePreview(id: number) {
+  const asset = cmsState.media.find((item) => item.id === id);
+  if (
+    !asset ||
+    asset.type !== 'image' ||
+    asset.url ||
+    previewQueuedIds.has(id) ||
+    previewStatus[id] === 'failed' ||
+    previewStatus[id] === 'loading'
+  ) {
+    return;
+  }
+  previewQueuedIds.add(id);
+  previewQueue.push(id);
+  void processPreviewQueue();
+}
+
+async function processPreviewQueue() {
+  while (previewInFlight < PREVIEW_CONCURRENCY && previewQueue.length > 0) {
+    const id = previewQueue.shift();
+    if (id === undefined) continue;
+    previewQueuedIds.delete(id);
+    const asset = cmsState.media.find((item) => item.id === id);
+    if (!asset || asset.type !== 'image' || asset.url) continue;
+
+    previewInFlight += 1;
+    previewStatus[id] = 'loading';
+    void getMediaPreviewUrl(asset.sourceUrl || asset.url)
+      .then((url) => {
+        const current = cmsState.media.find((item) => item.id === id);
+        if (current) current.url = url;
+        delete previewStatus[id];
+      })
+      .catch((error) => {
+        previewStatus[id] = 'failed';
+        console.warn(`素材 ${id} 的预览加载失败`, error);
+      })
+      .finally(() => {
+        previewInFlight -= 1;
+        void processPreviewQueue();
+      });
+  }
+}
+
+function retryPreview(id: number) {
+  delete previewStatus[id];
+  queuePreview(id);
+}
+
+function observeVisiblePreviews() {
+  previewObserver?.disconnect();
+  previewObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const id = Number((entry.target as HTMLElement).dataset.mediaId);
+        previewObserver?.unobserve(entry.target);
+        if (Number.isSafeInteger(id) && id > 0) queuePreview(id);
+      }
+    },
+    { rootMargin: '240px 0px', threshold: 0.01 },
+  );
+  document
+    .querySelectorAll<HTMLElement>('.media-item[data-media-id]')
+    .forEach((element) => previewObserver?.observe(element));
+}
+
 async function load() {
   loading.value = true;
   try {
     const values = await listMedia(keyword.value);
-    const mapped = await Promise.all(
-      values.map(async (item) => ({
+    const mapped = values.map((item) => ({
         alt: item.altText || '',
         createdAt: item.createdAt,
         id: item.id,
@@ -103,34 +186,67 @@ async function load() {
         size: readableSize(item.fileSize),
         sourceUrl: item.adminUrl,
         type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-        url:
-          item.mediaType === 'IMAGE'
-            ? await getMediaPreviewUrl(item.adminUrl).catch((error) => {
-                console.warn(`素材 ${item.id} 的预览加载失败`, error);
-                return '';
-              })
-            : item.adminUrl,
-      })),
-    );
+        // Request the protected binary only when this card approaches the
+        // viewport, rather than downloading the entire library at once.
+        url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
+      }));
     revokePreviewUrls();
+    previewQueue.splice(0);
+    previewQueuedIds.clear();
+    Object.keys(previewStatus).forEach((id) => delete previewStatus[Number(id)]);
     cmsState.media.splice(0, cmsState.media.length, ...mapped);
+    await nextTick();
+    observeVisiblePreviews();
   } finally {
     loading.value = false;
   }
 }
 
-async function addFile(_uploadFile: UploadFile, uploadFiles: UploadFiles) {
-  const latest = uploadFiles.at(-1)?.raw as undefined | UploadRawFile;
-  if (!latest) return;
-  if (!validateFile(latest)) return;
+async function processUploadQueue(uploadFiles: UploadFiles) {
+  const files = uploadFiles
+    .map((item) => item.raw)
+    .filter((item): item is UploadRawFile => Boolean(item))
+    .filter(validateFile);
+  uploadFileList.value = [];
+  if (files.length === 0) return;
+
   uploading.value = true;
+  uploadProgress.value = { completed: 0, failed: 0, total: files.length };
   try {
-    await uploadMedia(latest, latest.name.replace(/\.[^.]+$/, ''));
+    for (const file of files) {
+      try {
+        await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
+        uploadProgress.value.completed += 1;
+      } catch (error) {
+        console.error(`素材 ${file.name} 上传失败`, error);
+        uploadProgress.value.failed += 1;
+      }
+    }
     await load();
-    ElMessage.success('素材已上传到后端');
+    const { completed, failed, total } = uploadProgress.value;
+    if (failed === 0) {
+      ElMessage.success(`已上传 ${completed} 个素材`);
+    } else {
+      ElMessage.warning(
+        `已上传 ${completed}/${total} 个素材，${failed} 个上传失败，请重试失败文件`,
+      );
+    }
   } finally {
     uploading.value = false;
   }
+}
+
+function addFile(_uploadFile: UploadFile, uploadFiles: UploadFiles) {
+  // Element Plus calls `on-change` once per selected file. Wait until the
+  // browser finishes adding this selection, then upload the whole batch once.
+  if (uploading.value) return;
+  if (uploadSchedule) clearTimeout(uploadSchedule);
+  uploadSchedule = setTimeout(() => {
+    uploadSchedule = undefined;
+    if (!uploading.value && uploadFiles.length > 0) {
+      void processUploadQueue(uploadFiles);
+    }
+  }, 0);
 }
 
 function openEdit(item: MediaAsset) {
@@ -205,7 +321,14 @@ async function remove(item: MediaAsset) {
 }
 
 onMounted(load);
-onBeforeUnmount(revokePreviewUrls);
+watch(filtered, () => {
+  void nextTick(observeVisiblePreviews);
+});
+onBeforeUnmount(() => {
+  if (uploadSchedule) clearTimeout(uploadSchedule);
+  previewObserver?.disconnect();
+  revokePreviewUrls();
+});
 </script>
 
 <template>
@@ -218,12 +341,18 @@ onBeforeUnmount(revokePreviewUrls);
       </div>
       <ElUpload
         :auto-upload="false"
+        v-model:file-list="uploadFileList"
+        multiple
         :on-change="addFile"
         :show-file-list="false"
         accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.pdf"
       >
         <ElButton :loading="uploading" size="large" type="primary">
-          上传素材
+          {{
+            uploading
+              ? `正在上传 ${uploadProgress.completed + uploadProgress.failed}/${uploadProgress.total}`
+              : '上传素材'
+          }}
         </ElButton>
       </ElUpload>
     </section>
@@ -233,13 +362,30 @@ onBeforeUnmount(revokePreviewUrls);
         <span>共 {{ filtered.length }} 个文件</span>
       </div>
       <div v-if="filtered.length > 0" class="media-grid">
-        <article v-for="item in filtered" :key="item.id" class="media-item">
+        <article
+          v-for="item in filtered"
+          :key="item.id"
+          :data-media-id="item.id"
+          class="media-item"
+        >
           <ElImage
-            v-if="item.type === 'image'"
+            v-if="item.type === 'image' && item.url"
             :preview-src-list="[item.url]"
             :src="item.url"
             fit="cover"
           />
+          <div
+            v-else-if="item.type === 'image' && previewStatus[item.id] === 'failed'"
+            class="image-preview-failed"
+          >
+            <span>预览加载失败</span>
+            <ElButton link type="primary" @click="retryPreview(item.id)">
+              重试
+            </ElButton>
+          </div>
+          <div v-else-if="item.type === 'image'" class="image-preview-loading">
+            图片加载中…
+          </div>
           <div v-else class="file-preview">
             <b>{{ item.type === 'video' ? 'VIDEO' : 'DOC' }}</b>
             <span>{{ item.name.split('.').pop()?.toUpperCase() }}</span>
@@ -409,7 +555,9 @@ onBeforeUnmount(revokePreviewUrls);
 }
 
 .media-item :deep(.el-image),
-.file-preview {
+.file-preview,
+.image-preview-failed,
+.image-preview-loading {
   width: 100%;
   height: 165px;
 }
@@ -420,6 +568,23 @@ onBeforeUnmount(revokePreviewUrls);
   color: #0f6267;
   text-align: center;
   background: linear-gradient(145deg, #e3f0ef, #f1f5f5);
+}
+
+.image-preview-loading {
+  display: grid;
+  place-content: center;
+  color: #a0adb1;
+  font-size: 13px;
+  background: #f4f6f7;
+}
+
+.image-preview-failed {
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  color: #a0adb1;
+  font-size: 13px;
+  background: #f8f6f6;
 }
 
 .file-preview b {

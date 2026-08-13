@@ -94,7 +94,10 @@ export function contentFromBackend(
 
 function commonPayload(form: ContentItem) {
   return {
-    coverMediaId: form.coverMediaId ?? mediaIdFromUrl(form.cover),
+    // `form.cover` is what the editor actually changes. Keeping the media ID
+    // received when the form was opened here causes the previous image to be
+    // submitted even after an editor selects a different one (or clears it).
+    coverMediaId: mediaIdFromUrl(form.cover) ?? null,
     featured: form.featured,
     seoDescription: form.seoDescription || null,
     seoKeywords: form.seoKeywords || null,
@@ -149,7 +152,7 @@ export function contentPayload(
     case 'banners': {
       return {
         desktopMediaId:
-          form.coverMediaId ?? mediaIdFromUrl(form.cover) ?? undefined,
+          mediaIdFromUrl(form.cover) ?? undefined,
         endsAt: raw.endsAt ?? null,
         eyebrow: form.eyebrow || null,
         highlightText: form.highlightTitle || null,
@@ -204,7 +207,7 @@ export function contentPayload(
       return {
         category: form.category || null,
         featured: form.featured,
-        logoMediaId: form.coverMediaId ?? mediaIdFromUrl(form.cover),
+        logoMediaId: mediaIdFromUrl(form.cover) ?? null,
         name: form.title,
         seoDescription: common.seoDescription,
         seoKeywords: common.seoKeywords,

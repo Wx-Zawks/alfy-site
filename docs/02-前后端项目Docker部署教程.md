@@ -441,3 +441,65 @@ sudo docker compose --env-file .env.production up -d
 - 不要在未理解后果时执行 `docker system prune -a`。
 - 定期做快照、数据库导出、上传文件异地备份，并实际演练恢复。
 - 演示用端口、临时安全组规则和 hosts 记录必须在用完后删除。
+
+## 14. 多仓库协作时的更新与发布
+
+很多团队的前端、后台和后端不在同一个 Git 仓库：例如前端同事维护独立 GitHub 仓库，而后端通过压缩包或另一仓库交付。这种情况下，“代码同步”和“服务器部署”必须分成两个阶段，不能直接把任意仓库拉到生产机。
+
+### 14.1 先确定发布源
+
+团队必须明确一个唯一的发布依据，常见选择是：
+
+1. **单一 monorepo**：官网、后台、后端、部署配置都在同一个仓库，发布最简单。
+2. **多个独立应用仓库 + 一个部署仓库**：部署仓库以 Git submodule、subtree 或构建产物引用应用代码。
+3. **多个独立仓库 + 人工集成仓库**：适合现有项目过渡期，但每次需要明确将哪个目录、哪个提交集成进去。
+
+无论选择哪种，生产服务器只能从“已经构建和测试过的发布源”更新。不要让服务器同时承担代码合并、冲突解决和首次测试。
+
+### 14.2 推荐的日常更新链路
+
+```text
+开发者本地开发
+  -> 提交到 feature 分支并推送
+  -> Pull Request / 代码审查
+  -> 集成环境构建、单元测试和手工验收
+  -> 合并到发布源 main，并记录 commit/tag
+  -> 生产服务器备份、按文件更新、仅重建受影响容器
+  -> 容器/健康接口/网页/后台/移动端验收
+```
+
+若独立仓库与 monorepo 的目录结构不同，不能直接 `git pull` 或 `git merge`。正确做法是：先 `git fetch` 只读获取提交，再在本地集成分支将变更映射到目标子目录、解决冲突、构建测试；最后提交到发布源。服务器只接收已确认的提交。
+
+### 14.3 服务器更新的最小原则
+
+对生产机优先采用“备份 + 精确替换 + 最小重建”：
+
+```bash
+cd /opt/company-site
+git fetch origin main
+git show --stat <commit>
+
+# 仅备份/替换本次涉及的文件，绝不使用 git restore .
+backup_dir="$HOME/site-backup-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup_dir"
+cp --parents path/to/changed-file "$backup_dir"
+git restore --source=<commit> -- path/to/changed-file
+
+cd deploy
+sudo docker compose --env-file .env.production config --quiet
+sudo docker compose --env-file .env.production up -d --build <service>
+```
+
+其中 `<service>` 常为 `web`、`admin`、`api`；只有 Compose 拓扑、Nginx 或环境变量变更才需要额外更新代理服务。API 涉及数据库迁移时，应先备份 MySQL 并审查迁移 SQL，不能仅靠容器回滚。
+
+### 14.4 每次发布的验收清单
+
+- `docker compose ps`：数据库 `healthy`，其余服务 `Up`。
+- `curl` 健康接口返回 HTTP 200。
+- 官网：首屏、CMS 内容、图片/上传素材、桌面和移动端均正常。
+- 后台：可打开、可登录、可读取和编辑 CMS；上传链路正常。
+- 浏览器开发者工具：没有 API 4xx/5xx、跨域或混合内容错误。
+- 查看相关服务最后 200 行日志，确认没有持续报错。
+- 记录本次发布的 Git commit、执行时间、操作者、备份目录和回滚步骤。
+
+这些记录是交接时最有价值的信息：它能让下一位维护者知道“服务器实际运行的是哪个版本”，而不是只知道代码仓库最新是什么。
