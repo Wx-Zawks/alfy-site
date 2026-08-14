@@ -7,6 +7,7 @@ const props = withDefaults(
   defineProps<{
     disabled?: boolean;
     mediaImagePicker?: boolean;
+    mediaPreviewUrls?: Record<number, string>;
     minHeight?: number;
     modelValue?: string;
     placeholder?: string;
@@ -16,6 +17,7 @@ const props = withDefaults(
     disabled: false,
     minHeight: 280,
     mediaImagePicker: false,
+    mediaPreviewUrls: () => ({}),
     modelValue: '',
     placeholder: '请输入正文内容',
     showImageButton: true,
@@ -146,10 +148,45 @@ function normalizeHtml(editor: HTMLElement) {
   return editor.textContent?.trim() || hasMedia ? editor.innerHTML : '';
 }
 
+function renderMediaReferences(html: string) {
+  if (!html) return '';
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  for (const image of template.content.querySelectorAll<HTMLImageElement>(
+    'img[src]',
+  )) {
+    const match = image
+      .getAttribute('src')
+      ?.trim()
+      .match(/^alfy-media:([1-9]\d*)$/i);
+    const mediaId = match?.[1];
+    if (!mediaId) continue;
+    const previewUrl = props.mediaPreviewUrls[Number(mediaId)];
+    if (!previewUrl) continue;
+    image.dataset.alfyMediaId = mediaId;
+    image.setAttribute('src', previewUrl);
+  }
+  return template.innerHTML;
+}
+
+function serializeEditorHtml(editor: HTMLElement) {
+  const clone = editor.cloneNode(true) as HTMLElement;
+  for (const image of clone.querySelectorAll<HTMLImageElement>(
+    'img[data-alfy-media-id]',
+  )) {
+    const mediaId = image.dataset.alfyMediaId;
+    if (mediaId && /^[1-9]\d*$/.test(mediaId)) {
+      image.setAttribute('src', `alfy-media:${mediaId}`);
+    }
+    delete image.dataset.alfyMediaId;
+  }
+  return normalizeHtml(clone);
+}
+
 function emitEditorHtml() {
   const editor = editorRef.value;
   if (!editor) return;
-  const html = normalizeHtml(editor);
+  const html = serializeEditorHtml(editor);
   if (html !== props.modelValue) emit('update:modelValue', html);
   rememberSelection();
 }
@@ -463,7 +500,11 @@ function insertHtml(html: string) {
   if (props.disabled || sourceMode.value) return;
   editorRef.value?.focus();
   restoreSelection();
-  document.execCommand('insertHTML', false, cleanPastedHtml(html));
+  document.execCommand(
+    'insertHTML',
+    false,
+    renderMediaReferences(cleanPastedHtml(html)),
+  );
   normalizeEditorMarkup();
   emitEditorHtml();
 }
@@ -476,14 +517,16 @@ function toggleSourceMode() {
       if (!editorRef.value) return;
       const safeHtml = cleanPastedHtml(sourceValue.value);
       sourceValue.value = safeHtml;
-      editorRef.value.innerHTML = safeHtml;
+      editorRef.value.innerHTML = renderMediaReferences(safeHtml);
       emitEditorHtml();
       editorRef.value.focus();
     });
     return;
   }
 
-  sourceValue.value = editorRef.value?.innerHTML || props.modelValue || '';
+  sourceValue.value = editorRef.value
+    ? serializeEditorHtml(editorRef.value)
+    : props.modelValue || '';
   sourceMode.value = true;
 }
 
@@ -500,14 +543,27 @@ watch(
       if (sourceValue.value !== nextValue) sourceValue.value = nextValue;
       return;
     }
-    if (editorRef.value && editorRef.value.innerHTML !== nextValue) {
-      editorRef.value.innerHTML = nextValue;
+    if (editorRef.value && serializeEditorHtml(editorRef.value) !== nextValue) {
+      editorRef.value.innerHTML = renderMediaReferences(nextValue);
     }
   },
 );
 
+watch(
+  () => props.mediaPreviewUrls,
+  () => {
+    const editor = editorRef.value;
+    if (!editor || sourceMode.value) return;
+    const renderedHtml = renderMediaReferences(serializeEditorHtml(editor));
+    if (editor.innerHTML !== renderedHtml) editor.innerHTML = renderedHtml;
+  },
+  { deep: true },
+);
+
 onMounted(() => {
-  if (editorRef.value) editorRef.value.innerHTML = props.modelValue || '';
+  if (editorRef.value) {
+    editorRef.value.innerHTML = renderMediaReferences(props.modelValue || '');
+  }
   document.addEventListener('selectionchange', rememberSelection);
 });
 

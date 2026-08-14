@@ -100,8 +100,9 @@ async function loadImageOptions() {
     revokePreviewUrls(imageOptions.value);
     imageOptions.value = nextOptions;
     loaded.value = true;
-  } catch {
-    ElMessage.error('素材库图片加载失败，请稍后重试');
+  } catch (error) {
+    // listMedia 和素材预览接口已经展示后端返回的具体错误。
+    console.warn('素材库图片加载失败', error);
   } finally {
     loading.value = false;
   }
@@ -190,8 +191,9 @@ async function uploadInlineImage(
     imageOptions.value.unshift(asset);
     selectImage(asset.id);
     ElMessage.success('图片已上传，请确认说明后插入正文');
-  } catch {
-    ElMessage.error('图片上传失败，请稍后重试');
+  } catch (error) {
+    // uploadMedia 的统一拦截器已经展示后端返回的具体错误。
+    console.warn('图片上传失败', error);
   } finally {
     uploading.value = false;
   }

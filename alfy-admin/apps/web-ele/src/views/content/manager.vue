@@ -2,7 +2,12 @@
 import type { UploadFile, UploadFiles, UploadRawFile } from 'element-plus';
 
 import type { ArticleCategoryRecord } from '#/api';
-import type { ContentItem, ContentResource, ContentStatus } from '#/data/cms';
+import type {
+  ContentItem,
+  ContentResource,
+  ContentStatus,
+  MediaAsset,
+} from '#/data/cms';
 
 import { computed, reactive, ref, toRaw, watch } from 'vue';
 
@@ -73,9 +78,11 @@ const selectedInlineMediaId = ref<number>();
 const inlineImageAlt = ref('');
 const inlineImageCaption = ref('');
 const inlineImageUploading = ref(false);
+const coverImageUploading = ref(false);
+const coverUploadFileList = ref<UploadFile[]>([]);
 
-const MAX_INLINE_IMAGE_SIZE = 30 * 1024 * 1024;
-const ALLOWED_INLINE_IMAGE_TYPES = new Set([
+const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set([
   'image/gif',
   'image/jpeg',
   'image/png',
@@ -84,6 +91,9 @@ const ALLOWED_INLINE_IMAGE_TYPES = new Set([
 
 const meta = computed(() => resourceMeta[props.resource]);
 const isHomePlacementResource = computed(() => props.resource === 'articles');
+const supportsCoverImageUpload = computed(() =>
+  ['articles', 'cases', 'products', 'scenes'].includes(props.resource),
+);
 const supportsDelete = computed(() => props.resource !== 'technologies');
 const categoryOptions = computed(() =>
   referenceOptions.value.length > 0
@@ -125,6 +135,13 @@ const stats = computed(() => ({
 const imageOptions = computed(() =>
   cmsState.media.filter((asset) => asset.type === 'image'),
 );
+const inlineMediaPreviewUrls = computed<Record<number, string>>(() => {
+  const urls: Record<number, string> = {};
+  for (const asset of imageOptions.value) {
+    if (asset.url) urls[asset.id] = asset.url;
+  }
+  return urls;
+});
 const selectedInlineMedia = computed(() =>
   imageOptions.value.find((asset) => asset.id === selectedInlineMediaId.value),
 );
@@ -260,6 +277,48 @@ function openInlineImagePicker() {
   inlineImageDialogVisible.value = true;
 }
 
+function validateImageFile(file: UploadRawFile) {
+  if (file.size > MAX_IMAGE_SIZE) {
+    ElMessage.error('单张图片不能超过 30MB');
+    return false;
+  }
+  if (!ALLOWED_IMAGE_TYPES.has(file.type.toLowerCase())) {
+    ElMessage.error('仅支持 JPG、PNG、WebP 和 GIF 图片');
+    return false;
+  }
+  return true;
+}
+
+async function uploadImageToMediaLibrary(
+  file: UploadRawFile,
+): Promise<MediaAsset> {
+  const saved = await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
+  const preview = await getMediaPreviewUrl(saved.adminUrl).catch((error) => {
+    console.warn(`素材 ${saved.id} 的预览加载失败`, error);
+    return '';
+  });
+  const asset: MediaAsset = {
+    alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
+    createdAt: saved.createdAt,
+    id: saved.id,
+    name: saved.originalFilename,
+    size: readableSize(saved.fileSize),
+    sourceUrl: saved.adminUrl,
+    type: 'image',
+    url: preview,
+  };
+  const existingIndex = cmsState.media.findIndex(
+    (item) => item.id === saved.id,
+  );
+  if (existingIndex !== -1) {
+    const existing = cmsState.media[existingIndex];
+    if (existing?.url.startsWith('blob:')) URL.revokeObjectURL(existing.url);
+    cmsState.media.splice(existingIndex, 1);
+  }
+  cmsState.media.unshift(asset);
+  return asset;
+}
+
 function insertInlineImage() {
   const asset = selectedInlineMedia.value;
   if (!asset) {
@@ -293,46 +352,37 @@ async function uploadInlineImage(
   uploadFiles: UploadFiles,
 ) {
   const latest = uploadFiles.at(-1)?.raw as undefined | UploadRawFile;
-  if (!latest) return;
-  if (latest.size > MAX_INLINE_IMAGE_SIZE) {
-    ElMessage.error('单张图片不能超过 30MB');
-    return;
-  }
-  if (!ALLOWED_INLINE_IMAGE_TYPES.has(latest.type.toLowerCase())) {
-    ElMessage.error('仅支持 JPG、PNG、WebP 和 GIF 图片');
-    return;
-  }
+  if (!latest || !validateImageFile(latest)) return;
 
   inlineImageUploading.value = true;
   try {
-    const saved = await uploadMedia(
-      latest,
-      latest.name.replace(/\.[^.]+$/, ''),
-    );
-    const preview = await getMediaPreviewUrl(saved.adminUrl);
-    const asset = {
-      alt: saved.altText || latest.name.replace(/\.[^.]+$/, ''),
-      createdAt: saved.createdAt,
-      id: saved.id,
-      name: saved.originalFilename,
-      size: readableSize(saved.fileSize),
-      sourceUrl: saved.adminUrl,
-      type: 'image' as const,
-      url: preview,
-    };
-    const existingIndex = cmsState.media.findIndex(
-      (item) => item.id === saved.id,
-    );
-    if (existingIndex !== -1) {
-      const existing = cmsState.media[existingIndex];
-      if (existing?.url.startsWith('blob:')) URL.revokeObjectURL(existing.url);
-      cmsState.media.splice(existingIndex, 1);
-    }
-    cmsState.media.unshift(asset);
+    const asset = await uploadImageToMediaLibrary(latest);
     selectInlineImage(asset.id);
     ElMessage.success('图片已上传，请确认说明后插入正文');
   } finally {
     inlineImageUploading.value = false;
+  }
+}
+
+async function uploadCoverImage(
+  _uploadFile: UploadFile,
+  uploadFiles: UploadFiles,
+) {
+  const latest = uploadFiles.at(-1)?.raw as undefined | UploadRawFile;
+  if (!latest || !validateImageFile(latest)) {
+    coverUploadFileList.value = [];
+    return;
+  }
+
+  coverImageUploading.value = true;
+  try {
+    const asset = await uploadImageToMediaLibrary(latest);
+    form.cover = asset.sourceUrl || asset.url;
+    form.coverMediaId = asset.id;
+    ElMessage.success('封面图片已上传并保存到素材库');
+  } finally {
+    coverImageUploading.value = false;
+    coverUploadFileList.value = [];
   }
 }
 
@@ -572,6 +622,22 @@ async function save() {
         ? '请填写标题'
         : '请填写标题和 URL slug',
     );
+    return;
+  }
+  if (
+    props.resource === 'products' &&
+    (!Array.isArray(rawForm.value.sceneIds) ||
+      rawForm.value.sceneIds.length === 0)
+  ) {
+    ElMessage.warning('请至少选择一个关联应用场景');
+    return;
+  }
+  if (
+    props.resource === 'cases' &&
+    (!Array.isArray(rawForm.value.productIds) ||
+      rawForm.value.productIds.length === 0)
+  ) {
+    ElMessage.warning('请至少选择一个关联产品');
     return;
   }
   const duplicate = resourceItems.value.some(
@@ -878,21 +944,38 @@ function homePlacementLabel(value: unknown) {
                 props.resource === 'banners' ? 'PC 端背景图片' : '封面图片'
               "
             >
-              <ElSelect
-                v-model="form.cover"
-                allow-create
-                clearable
-                filterable
-                placeholder="从素材库选择或粘贴图片地址"
-                style="width: 100%"
-              >
-                <ElOption
-                  v-for="asset in imageOptions"
-                  :key="asset.id"
-                  :label="asset.name"
-                  :value="asset.sourceUrl || asset.url"
-                />
-              </ElSelect>
+              <div class="cover-image-field">
+                <ElSelect
+                  v-model="form.cover"
+                  allow-create
+                  class="cover-image-select"
+                  clearable
+                  filterable
+                  placeholder="从素材库选择或粘贴图片地址"
+                >
+                  <ElOption
+                    v-for="asset in imageOptions"
+                    :key="asset.id"
+                    :label="asset.name"
+                    :value="asset.sourceUrl || asset.url"
+                  />
+                </ElSelect>
+                <ElUpload
+                  v-if="supportsCoverImageUpload"
+                  v-model:file-list="coverUploadFileList"
+                  :auto-upload="false"
+                  :on-change="uploadCoverImage"
+                  :show-file-list="false"
+                  accept=".jpg,.jpeg,.png,.webp,.gif"
+                >
+                  <ElButton :loading="coverImageUploading">
+                    从本地上传
+                  </ElButton>
+                </ElUpload>
+              </div>
+              <p v-if="supportsCoverImageUpload" class="cover-upload-tip">
+                上传成功后会自动设为当前封面，并保存到素材库。
+              </p>
             </ElFormItem>
           </ElCol>
           <ElCol v-if="props.resource === 'banners'" :md="12" :xs="24">
@@ -953,11 +1036,12 @@ function homePlacementLabel(value: unknown) {
               </ElFormItem>
             </ElCol>
             <ElCol :span="24">
-              <ElFormItem label="关联应用场景">
+              <ElFormItem label="关联应用场景" required>
                 <ElSelect
                   v-model="rawForm.sceneIds"
                   clearable
                   multiple
+                  placeholder="请至少选择一个关联应用场景"
                   style="width: 100%"
                 >
                   <ElOption
@@ -993,11 +1077,12 @@ function homePlacementLabel(value: unknown) {
           </template>
           <template v-if="props.resource === 'cases'">
             <ElCol :span="24">
-              <ElFormItem label="关联产品">
+              <ElFormItem label="关联产品" required>
                 <ElSelect
                   v-model="rawForm.productIds"
                   clearable
                   multiple
+                  placeholder="请至少选择一个关联产品"
                   style="width: 100%"
                 >
                   <ElOption
@@ -1072,6 +1157,7 @@ function homePlacementLabel(value: unknown) {
                 ref="contentEditorRef"
                 v-model="form.contentHtml"
                 :media-image-picker="true"
+                :media-preview-urls="inlineMediaPreviewUrls"
                 :min-height="300"
                 placeholder="请输入正文；可设置字体、字号、颜色、对齐方式，并从工具栏插入图片"
                 @request-image="openInlineImagePicker"
@@ -1279,7 +1365,7 @@ function homePlacementLabel(value: unknown) {
       <iframe
         :srcdoc="contentPreviewDocument"
         class="content-preview-frame"
-        sandbox=""
+        sandbox="allow-same-origin"
         title="官网正文预览"
       ></iframe>
     </ElDialog>
@@ -1409,6 +1495,26 @@ function homePlacementLabel(value: unknown) {
   color: #8a979b;
 }
 
+.cover-image-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.cover-image-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.cover-upload-tip {
+  width: 100%;
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7c8b90;
+}
+
 .content-editor-label {
   display: flex;
   gap: 16px;
@@ -1520,6 +1626,16 @@ function homePlacementLabel(value: unknown) {
 
   .filter-row {
     grid-template-columns: 1fr;
+  }
+
+  .cover-image-field {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cover-image-field :deep(.el-upload),
+  .cover-image-field :deep(.el-button) {
+    width: 100%;
   }
 
   .content-editor-label,

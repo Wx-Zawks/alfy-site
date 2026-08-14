@@ -1,6 +1,11 @@
 import type { ContentResource } from '#/data/cms';
 
-import { rawRequestClient, requestClient } from '#/api/request';
+import {
+  getApiErrorCode,
+  rawRequestClient,
+  requestClient,
+  showApiErrorMessage,
+} from '#/api/request';
 
 export interface PageResult<T> {
   page: number;
@@ -234,9 +239,12 @@ export async function listContent(resource: ContentResource) {
       ).data.data;
       return value?.id ? [value] : [];
     } catch (error) {
-      const apiCode = (error as { response?: { data?: { code?: number } } })
-        .response?.data?.code;
-      if (apiCode === 40_400) return [];
+      const apiCode = getApiErrorCode(error);
+      if (apiCode === 40_400) {
+        await showApiErrorMessage(error, '技术页面尚未创建');
+        return [];
+      }
+      await showApiErrorMessage(error, '技术页面加载失败，请稍后重试');
       throw error;
     }
   }
@@ -449,9 +457,15 @@ export async function getMediaPreviewUrl(adminUrl: string) {
     }${mediaUrl.search}${mediaUrl.hash}`;
   }
 
-  const response = await rawRequestClient.get<Blob>(requestUrl, {
-    responseType: 'blob',
-  });
+  let response: unknown;
+  try {
+    response = await rawRequestClient.get<Blob>(requestUrl, {
+      responseType: 'blob',
+    });
+  } catch (error) {
+    await showApiErrorMessage(error, '素材预览加载失败，请稍后重试');
+    throw error;
+  }
   const blob = (response as unknown as { data: Blob }).data;
   return URL.createObjectURL(blob);
 }

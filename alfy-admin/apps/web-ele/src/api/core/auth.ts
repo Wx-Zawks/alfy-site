@@ -1,4 +1,8 @@
-import { baseRequestClient, requestClient } from '#/api/request';
+import {
+  baseRequestClient,
+  loginRequestClient,
+  requestClient,
+} from '#/api/request';
 
 export namespace AuthApi {
   /** 登录接口参数 */
@@ -45,7 +49,10 @@ export function setRefreshToken(value: string) {
  * 登录
  */
 export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/admin/auth/login', data);
+  return loginRequestClient.post<AuthApi.LoginResult>(
+    '/admin/auth/login',
+    data,
+  );
 }
 
 /**
@@ -53,7 +60,11 @@ export async function loginApi(data: AuthApi.LoginParams) {
  */
 export async function refreshTokenApi() {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) throw new Error('缺少刷新令牌，请重新登录');
+  if (!refreshToken) {
+    throw Object.assign(new Error('缺少刷新令牌，请重新登录'), {
+      code: 40_100,
+    });
+  }
 
   const response = await baseRequestClient.post<
     AuthApi.ApiEnvelope<AuthApi.LoginResult>
@@ -63,8 +74,11 @@ export async function refreshTokenApi() {
       data: AuthApi.ApiEnvelope<AuthApi.LoginResult>;
     }
   ).data;
-  if (envelope.code !== 0)
-    throw new Error(envelope.message || '刷新登录状态失败');
+  if (envelope.code !== 0) {
+    throw Object.assign(new Error(envelope.message || '刷新登录状态失败'), {
+      code: envelope.code,
+    });
+  }
   setRefreshToken(envelope.data.refreshToken);
   return envelope.data;
 }
