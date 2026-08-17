@@ -43,6 +43,12 @@ em { color: var(--red); font-style: normal; }
 .button-outline { border-color: #c8ced2; }
 .button-small { min-height: 40px; padding: 8px 15px; font-size: .84rem; }
 .button-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.arrow-up-right-icon { display: block; width: .9em; height: .9em; flex: 0 0 .9em; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.about-actions .button,
+.technology-section-action .button,
+.text-link,
+.home-page .application-category-bar > a,
+.home-page .application-card-copy b { gap: .35em; }
 .text-link { color: var(--red); font-weight: 800; }
 .tag { display: inline-flex; padding: 5px 10px; border-radius: 99px; color: var(--navy); background: #e4eef2; font-size: .72rem; font-weight: 800; }
 

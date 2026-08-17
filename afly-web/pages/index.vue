@@ -220,10 +220,10 @@ onBeforeUnmount(() => {
           <h2>{{ homeSection('about')?.title || '中南大学气凝胶' }}<br><em>{{ homeSection('about')?.highlightText || '成果转化核心平台' }}</em></h2>
           <p v-if="homeSection('about')?.description" class="lead">{{ homeSection('about')?.description }}</p>
           <div class="about-actions">
-            <NuxtLink class="button button-primary" to="/about">企业介绍 ↗</NuxtLink>
-            <NuxtLink class="button button-outline" to="/about#team">研发团队 ↗</NuxtLink>
-            <NuxtLink class="button button-outline" to="/technology">气凝胶技术 ↗</NuxtLink>
-            <NuxtLink class="button button-outline" to="/technology">复合材料技术 ↗</NuxtLink>
+            <NuxtLink class="button button-primary" to="/about">企业介绍 <ArrowUpRightIcon /></NuxtLink>
+            <NuxtLink class="button button-outline" to="/about#team">研发团队 <ArrowUpRightIcon /></NuxtLink>
+            <NuxtLink class="button button-outline" to="/technology">气凝胶技术 <ArrowUpRightIcon /></NuxtLink>
+            <NuxtLink class="button button-outline" to="/technology">复合材料技术 <ArrowUpRightIcon /></NuxtLink>
           </div>
         </div>
         <figure class="media-frame about-media"><img :src="resolveMediaUrl(homeSection('about')?.imageUrl, '/images/university.jpeg')" :alt="homeSection('about')?.title || '中南大学粉末冶金学院'"></figure>
@@ -238,7 +238,7 @@ onBeforeUnmount(() => {
             <div class="application-category-scroll">
               <button v-for="scene in applicationScenes" :key="scene.key" type="button" :class="{ active: activeSceneKey === scene.key }" :aria-pressed="activeSceneKey === scene.key" @click="selectScene(scene.key)">{{ scene.name }}</button>
             </div>
-            <NuxtLink to="/applications">查看更多 ↗</NuxtLink>
+            <NuxtLink to="/applications">查看更多 <ArrowUpRightIcon /></NuxtLink>
           </div>
         </div>
         <div v-if="applicationScenes.length" class="application-stage">
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
               <div class="application-card-copy">
                 <h3>{{ scene.slogan }}</h3>
                 <p>{{ scene.summary }}</p>
-                <b>{{ scene.name }} ↗</b>
+                <b>{{ scene.name }} <ArrowUpRightIcon /></b>
               </div>
             </NuxtLink>
             <span class="application-rail-spacer" aria-hidden="true" />
@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
             <div class="application-category-scroll">
               <button v-for="scene in applicationScenes" :key="scene.key" type="button" :class="{ active: activeCaseSceneKey === scene.key }" :aria-pressed="activeCaseSceneKey === scene.key" @click="activeCaseSceneKey = scene.key">{{ scene.name }}</button>
             </div>
-            <NuxtLink :to="`/applications?category=${activeCaseSceneKey}`">查看更多 ↗</NuxtLink>
+            <NuxtLink :to="`/applications?category=${activeCaseSceneKey}`">查看更多 <ArrowUpRightIcon /></NuxtLink>
           </div>
         </div>
         <div v-if="featuredCase" class="case-prototype-feature">

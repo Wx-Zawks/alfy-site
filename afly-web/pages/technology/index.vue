@@ -171,7 +171,7 @@ watch(compositeProducts, () => nextTick(resetProductTrack))
           </figure>
         </div>
         <div class="technology-section-action">
-          <NuxtLink class="button button-outline" to="/technology/aerogel-material">了解更多 ↗</NuxtLink>
+          <NuxtLink class="button button-outline" to="/technology/aerogel-material">了解更多 <ArrowUpRightIcon /></NuxtLink>
         </div>
       </div>
     </section>
@@ -193,7 +193,7 @@ watch(compositeProducts, () => nextTick(resetProductTrack))
           </article>
         </div>
         <div class="technology-section-action">
-          <NuxtLink class="button button-outline" to="/technology/aerogel-composite">了解更多 ↗</NuxtLink>
+          <NuxtLink class="button button-outline" to="/technology/aerogel-composite">了解更多 <ArrowUpRightIcon /></NuxtLink>
         </div>
       </div>
     </section>
