@@ -445,6 +445,7 @@ void load();
 
     <ElDialog
       v-model="dialogVisible"
+      :close-on-click-modal="false"
       :title="`编辑${definitions.find((item) => item.key === form.pageKey)?.label || '技术页面'}`"
       destroy-on-close
       width="900px"

@@ -340,7 +340,12 @@ onMounted(load);
         </ElTabPane>
       </ElTabs>
     </ElCard>
-    <ElDialog v-model="userDialogVisible" title="新增管理员" width="460px">
+    <ElDialog
+      v-model="userDialogVisible"
+      :close-on-click-modal="false"
+      title="新增管理员"
+      width="460px"
+    >
       <ElForm :model="userForm" label-position="top">
         <ElFormItem label="账号">
           <ElInput v-model="userForm.username" maxlength="50" />

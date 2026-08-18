@@ -430,6 +430,7 @@ onBeforeUnmount(() => {
 
     <ElDialog
       v-model="editDialogVisible"
+      :close-on-click-modal="false"
       destroy-on-close
       title="编辑素材"
       width="560px"

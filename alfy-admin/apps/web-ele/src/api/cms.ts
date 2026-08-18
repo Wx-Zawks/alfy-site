@@ -412,6 +412,8 @@ export function uploadMedia(file: File, altText = '') {
   if (altText) formData.append('altText', altText);
   return requestClient.post<MediaRecord>('/admin/media', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    // 30 MB 图片在生产的 5 Mbps 演示网络下可能超过常规接口超时。
+    timeout: 120_000,
   });
 }
 
@@ -429,6 +431,7 @@ export function updateMedia(
   if (payload.file) formData.append('file', payload.file);
   return requestClient.put<MediaRecord>(`/admin/media/${id}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120_000,
   });
 }
 

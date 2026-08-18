@@ -159,6 +159,7 @@ onMounted(load);
 
     <ElDialog
       v-model="dialogVisible"
+      :close-on-click-modal="false"
       :title="form.id ? '编辑产品分类' : '新建产品分类'"
       width="620px"
     >

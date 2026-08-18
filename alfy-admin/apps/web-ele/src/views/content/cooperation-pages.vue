@@ -513,6 +513,7 @@ void load();
 
     <ElDialog
       v-model="dialogVisible"
+      :close-on-click-modal="false"
       :title="`编辑${currentDefinition?.label || '合作页面'}`"
       destroy-on-close
       width="900px"

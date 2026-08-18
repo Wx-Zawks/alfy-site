@@ -369,6 +369,7 @@ onMounted(load);
 
     <ElDialog
       v-model="navigationDialog"
+      :close-on-click-modal="false"
       :title="navigationForm.id ? '编辑导航' : '新增导航'"
       width="600px"
     >
@@ -415,6 +416,7 @@ onMounted(load);
 
     <ElDialog
       v-model="heroDialog"
+      :close-on-click-modal="false"
       :title="heroForm.id ? '编辑页面首屏' : '新增页面首屏'"
       width="760px"
     >

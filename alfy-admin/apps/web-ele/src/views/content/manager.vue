@@ -78,8 +78,10 @@ const selectedInlineMediaId = ref<number>();
 const inlineImageAlt = ref('');
 const inlineImageCaption = ref('');
 const inlineImageUploading = ref(false);
+const inlineImageUploadQueue = ref<UploadRawFile[]>([]);
 const coverImageUploading = ref(false);
 const coverUploadFileList = ref<UploadFile[]>([]);
+let inlineImageUploadSchedule: ReturnType<typeof setTimeout> | undefined;
 
 const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -275,6 +277,25 @@ function openInlineImagePicker() {
   inlineImageAlt.value = '';
   inlineImageCaption.value = '';
   inlineImageDialogVisible.value = true;
+  void loadInlineImagePreviews();
+}
+
+async function loadInlineImagePreviews() {
+  const waiting = imageOptions.value.filter((asset) => !asset.url);
+  let nextIndex = 0;
+  const loadOne = async () => {
+    while (nextIndex < waiting.length) {
+      const asset = waiting[nextIndex++];
+      if (!asset) continue;
+      try {
+        asset.url = await getMediaPreviewUrl(asset.sourceUrl);
+      } catch (error) {
+        console.warn(`素材 ${asset.id} 的预览加载失败`, error);
+      }
+    }
+  };
+  // 预览文件可能很大；限流避免一次打开图片选择器占满带宽和连接池。
+  await Promise.all(Array.from({ length: 2 }, loadOne));
 }
 
 function validateImageFile(file: UploadRawFile) {
@@ -348,19 +369,49 @@ function insertInlineImage() {
 }
 
 async function uploadInlineImage(
-  _uploadFile: UploadFile,
-  uploadFiles: UploadFiles,
+  uploadFile: UploadFile,
+  _uploadFiles: UploadFiles,
 ) {
-  const latest = uploadFiles.at(-1)?.raw as undefined | UploadRawFile;
-  if (!latest || !validateImageFile(latest)) return;
+  const rawFile = uploadFile.raw;
+  if (!rawFile || inlineImageUploadQueue.value.some((file) => file.uid === rawFile.uid)) {
+    return;
+  }
+  inlineImageUploadQueue.value.push(rawFile);
+  if (inlineImageUploadSchedule) clearTimeout(inlineImageUploadSchedule);
+  // Element Plus 会为同一次多选中的每个文件分别触发 on-change。
+  inlineImageUploadSchedule = setTimeout(() => {
+    inlineImageUploadSchedule = undefined;
+    void processInlineImageUploadQueue();
+  }, 0);
+}
 
+async function processInlineImageUploadQueue() {
+  const files = inlineImageUploadQueue.value.splice(0).filter(validateImageFile);
+  if (files.length === 0) return;
   inlineImageUploading.value = true;
   try {
-    const asset = await uploadImageToMediaLibrary(latest);
-    selectInlineImage(asset.id);
-    ElMessage.success('图片已上传，请确认说明后插入正文');
+    let completed = 0;
+    for (const file of files) {
+      try {
+        const asset = await uploadImageToMediaLibrary(file);
+        selectInlineImage(asset.id);
+        completed += 1;
+      } catch (error) {
+        console.warn(`图片 ${file.name} 上传失败`, error);
+      }
+    }
+    if (completed > 0) {
+      ElMessage.success(
+        files.length === 1
+          ? '图片已上传，请确认说明后插入正文'
+          : `已上传 ${completed}/${files.length} 张图片，请选择后插入正文`,
+      );
+    }
   } finally {
     inlineImageUploading.value = false;
+    if (inlineImageUploadQueue.value.length > 0) {
+      void processInlineImageUploadQueue();
+    }
   }
 }
 
@@ -407,13 +458,8 @@ async function loadReferences() {
       size: readableSize(item.fileSize),
       sourceUrl: item.adminUrl,
       type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-      url:
-        item.mediaType === 'IMAGE'
-          ? await getMediaPreviewUrl(item.adminUrl).catch((error) => {
-              console.warn(`素材 ${item.id} 的预览加载失败`, error);
-              return '';
-            })
-          : item.adminUrl,
+      // 页面初始化不下载所有原图。打开图片选择器时再以小并发加载预览。
+      url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
     })),
   );
   cmsState.media
@@ -866,6 +912,7 @@ function homePlacementLabel(value: unknown) {
 
     <ElDialog
       v-model="dialogVisible"
+      :close-on-click-modal="false"
       :title="activeId ? `编辑${meta.label}` : `新建${meta.label}`"
       destroy-on-close
       width="760px"
@@ -1289,6 +1336,7 @@ function homePlacementLabel(value: unknown) {
     <ElDialog
       v-model="inlineImageDialogVisible"
       append-to-body
+      :close-on-click-modal="false"
       title="插入正文图片"
       width="860px"
     >
@@ -1296,9 +1344,11 @@ function homePlacementLabel(value: unknown) {
         <p>选择素材后可修改图片说明，图片将插入正文当前光标位置。</p>
         <ElUpload
           :auto-upload="false"
+          :disabled="inlineImageUploading"
           :on-change="uploadInlineImage"
           :show-file-list="false"
           accept=".jpg,.jpeg,.png,.webp,.gif"
+          multiple
         >
           <ElButton :loading="inlineImageUploading" type="primary">
             上传新图片
@@ -1359,6 +1409,7 @@ function homePlacementLabel(value: unknown) {
     <ElDialog
       v-model="contentPreviewVisible"
       append-to-body
+      :close-on-click-modal="false"
       title="官网正文预览"
       width="900px"
     >

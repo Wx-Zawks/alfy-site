@@ -236,7 +236,12 @@ onMounted(load);
       </ElTable>
     </ElCard>
 
-    <ElDialog v-model="dialogVisible" title="询盘详情与跟进" width="680px">
+    <ElDialog
+      v-model="dialogVisible"
+      :close-on-click-modal="false"
+      title="询盘详情与跟进"
+      width="680px"
+    >
       <div class="detail-grid">
         <div>
           <span>联系人</span><strong>{{ form.name }} · {{ form.phone }}</strong>

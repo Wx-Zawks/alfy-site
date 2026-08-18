@@ -21,6 +21,7 @@ interface InlineImageOption {
   id: number;
   name: string;
   previewUrl: string;
+  sourceUrl: string;
 }
 
 const props = withDefaults(
@@ -50,10 +51,12 @@ const dialogVisible = ref(false);
 const loading = ref(false);
 const loaded = ref(false);
 const uploading = ref(false);
+const uploadQueue = ref<UploadRawFile[]>([]);
 const imageOptions = ref<InlineImageOption[]>([]);
 const selectedMediaId = ref<number>();
 const imageAlt = ref('');
 const imageCaption = ref('');
+let uploadSchedule: ReturnType<typeof setTimeout> | undefined;
 
 const MAX_INLINE_IMAGE_SIZE = 30 * 1024 * 1024;
 const ALLOWED_INLINE_IMAGE_TYPES = new Set([
@@ -88,24 +91,43 @@ async function loadImageOptions() {
   loading.value = true;
   try {
     const mediaRecords = await listMedia();
-    const images = mediaRecords.filter((item) => item.mediaType === 'IMAGE');
-    const nextOptions = await Promise.all(
-      images.map(async (item) => ({
+    const nextOptions = mediaRecords
+      .filter((item) => item.mediaType === 'IMAGE')
+      .map((item) => ({
         alt: item.altText || '',
         id: item.id,
         name: item.originalFilename,
-        previewUrl: await getMediaPreviewUrl(item.adminUrl).catch(() => ''),
-      })),
-    );
+        previewUrl: '',
+        sourceUrl: item.adminUrl,
+      }));
     revokePreviewUrls(imageOptions.value);
     imageOptions.value = nextOptions;
     loaded.value = true;
+    void loadImagePreviews();
   } catch (error) {
     // listMedia 和素材预览接口已经展示后端返回的具体错误。
     console.warn('素材库图片加载失败', error);
   } finally {
     loading.value = false;
   }
+}
+
+async function loadImagePreviews() {
+  const waiting = imageOptions.value.filter((asset) => !asset.previewUrl);
+  let nextIndex = 0;
+  const loadOne = async () => {
+    while (nextIndex < waiting.length) {
+      const asset = waiting[nextIndex++];
+      if (!asset) continue;
+      try {
+        asset.previewUrl = await getMediaPreviewUrl(asset.sourceUrl);
+      } catch (error) {
+        console.warn(`素材 ${asset.id} 的预览加载失败`, error);
+      }
+    }
+  };
+  // 限制并行预览请求，避免原图较多时拖慢后台的其他接口。
+  await Promise.all(Array.from({ length: 2 }, loadOne));
 }
 
 function selectImage(id: number) {
@@ -152,50 +174,74 @@ function insertImage() {
 }
 
 async function uploadInlineImage(
-  _uploadFile: UploadFile,
-  uploadFiles: UploadFiles,
+  uploadFile: UploadFile,
+  _uploadFiles: UploadFiles,
 ) {
-  const latest = uploadFiles.at(-1)?.raw as undefined | UploadRawFile;
-  if (!latest) return;
-  if (latest.size > MAX_INLINE_IMAGE_SIZE) {
-    ElMessage.error('单张图片不能超过 30MB');
-    return;
-  }
-  if (!ALLOWED_INLINE_IMAGE_TYPES.has(latest.type.toLowerCase())) {
-    ElMessage.error('仅支持 JPG、PNG、WebP 和 GIF 图片');
-    return;
-  }
+  const rawFile = uploadFile.raw;
+  if (!rawFile || uploadQueue.value.some((file) => file.uid === rawFile.uid)) return;
+  uploadQueue.value.push(rawFile);
+  if (uploadSchedule) clearTimeout(uploadSchedule);
+  uploadSchedule = setTimeout(() => {
+    uploadSchedule = undefined;
+    void processUploadQueue();
+  }, 0);
+}
 
+function validateImage(file: UploadRawFile) {
+  if (file.size > MAX_INLINE_IMAGE_SIZE) {
+    ElMessage.error('单张图片不能超过 30MB');
+    return false;
+  }
+  if (!ALLOWED_INLINE_IMAGE_TYPES.has(file.type.toLowerCase())) {
+    ElMessage.error('仅支持 JPG、PNG、WebP 和 GIF 图片');
+    return false;
+  }
+  return true;
+}
+
+async function processUploadQueue() {
+  const files = uploadQueue.value.splice(0).filter(validateImage);
+  if (files.length === 0) return;
   uploading.value = true;
   try {
-    const saved = await uploadMedia(
-      latest,
-      latest.name.replace(/\.[^.]+$/, ''),
-    );
-    const asset: InlineImageOption = {
-      alt: saved.altText || latest.name.replace(/\.[^.]+$/, ''),
-      id: saved.id,
-      name: saved.originalFilename,
-      previewUrl: await getMediaPreviewUrl(saved.adminUrl),
-    };
-    const existingIndex = imageOptions.value.findIndex(
-      (item) => item.id === asset.id,
-    );
-    if (existingIndex !== -1) {
-      const existing = imageOptions.value[existingIndex];
-      if (existing?.previewUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(existing.previewUrl);
+    let completed = 0;
+    for (const file of files) {
+      try {
+        const saved = await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
+        const asset: InlineImageOption = {
+          alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
+          id: saved.id,
+          name: saved.originalFilename,
+          previewUrl: await getMediaPreviewUrl(saved.adminUrl),
+          sourceUrl: saved.adminUrl,
+        };
+        const existingIndex = imageOptions.value.findIndex(
+          (item) => item.id === asset.id,
+        );
+        if (existingIndex !== -1) {
+          const existing = imageOptions.value[existingIndex];
+          if (existing?.previewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(existing.previewUrl);
+          }
+          imageOptions.value.splice(existingIndex, 1);
+        }
+        imageOptions.value.unshift(asset);
+        selectImage(asset.id);
+        completed += 1;
+      } catch (error) {
+        console.warn(`图片 ${file.name} 上传失败`, error);
       }
-      imageOptions.value.splice(existingIndex, 1);
     }
-    imageOptions.value.unshift(asset);
-    selectImage(asset.id);
-    ElMessage.success('图片已上传，请确认说明后插入正文');
-  } catch (error) {
-    // uploadMedia 的统一拦截器已经展示后端返回的具体错误。
-    console.warn('图片上传失败', error);
+    if (completed > 0) {
+      ElMessage.success(
+        files.length === 1
+          ? '图片已上传，请确认说明后插入正文'
+          : `已上传 ${completed}/${files.length} 张图片，请选择后插入正文`,
+      );
+    }
   } finally {
     uploading.value = false;
+    if (uploadQueue.value.length > 0) void processUploadQueue();
   }
 }
 
@@ -221,6 +267,7 @@ onBeforeUnmount(() => revokePreviewUrls(imageOptions.value));
     <ElDialog
       v-model="dialogVisible"
       append-to-body
+      :close-on-click-modal="false"
       title="插入正文图片"
       width="860px"
     >
@@ -228,9 +275,11 @@ onBeforeUnmount(() => revokePreviewUrls(imageOptions.value));
         <p>选择素材后可修改图片说明，图片将插入正文当前光标位置。</p>
         <ElUpload
           :auto-upload="false"
+          :disabled="uploading"
           :on-change="uploadInlineImage"
           :show-file-list="false"
           accept=".jpg,.jpeg,.png,.webp,.gif"
+          multiple
         >
           <ElButton :loading="uploading" type="primary">上传新图片</ElButton>
         </ElUpload>

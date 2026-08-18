@@ -306,6 +306,7 @@ onMounted(load);
     </ElCard>
     <ElDialog
       v-model="dialogVisible"
+      :close-on-click-modal="false"
       :title="form.id ? '编辑 301 规则' : '新增 301 规则'"
       width="560px"
     >

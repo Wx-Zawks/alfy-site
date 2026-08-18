@@ -37,10 +37,11 @@ class RequestClient {
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
       },
-      // 默认超时时间
-      timeout: 10_000,
+      // 后台会读取内容列表并上传媒体文件；10 秒在低带宽网络下过短。
+      timeout: 30_000,
     };
     const { ...axiosConfig } = options;
+    // 调用方仍可针对特定请求覆盖默认配置（例如上传较大的媒体文件）。
     const requestConfig = merge(axiosConfig, defaultConfig);
     this.instance = axios.create(requestConfig);
 
