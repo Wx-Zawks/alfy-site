@@ -35,6 +35,8 @@ const cloneSections = () => structuredClone(toRaw(cmsState.homePage.sections));
 
 const activeKey = ref<HomeSectionKey>('about');
 const loading = ref(false);
+const mediaLoading = ref(false);
+const mediaLoaded = ref(false);
 const saving = ref(false);
 const draft = reactive<{ sections: HomeSection[] }>({
   sections: cloneSections(),
@@ -64,37 +66,12 @@ const imageOptions = computed(() => {
   return [...options.entries()].map(([value, label]) => ({ label, value }));
 });
 
-function readableSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
 async function load() {
   loading.value = true;
   try {
-    const [sections, media] = await Promise.all([
-      listHomeSections(),
-      listMedia(),
-    ]);
-    const mappedMedia = await Promise.all(
-      media.map(async (item) => ({
-        alt: item.altText || '',
-        createdAt: item.createdAt,
-        id: item.id,
-        name: item.originalFilename,
-        size: readableSize(item.fileSize),
-        sourceUrl: item.adminUrl,
-        type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-        url:
-          item.mediaType === 'IMAGE'
-            ? await getMediaPreviewUrl(item.adminUrl)
-            : item.adminUrl,
-      })),
-    );
-    cmsState.media
-      .filter((item) => item.url.startsWith('blob:'))
-      .forEach((item) => URL.revokeObjectURL(item.url));
-    cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
+    // Section data is enough to render the page. Media metadata is loaded only
+    // when an image selector is opened, and never blocks the page overlay.
+    const sections = await listHomeSections();
     if (sections.length > 0) {
       const mapped: HomeSection[] = sections.map((item) => ({
         buttonLink: item.buttonTarget || '',
@@ -130,6 +107,42 @@ async function load() {
   } finally {
     loading.value = false;
   }
+}
+
+async function searchImages(keyword = '') {
+  mediaLoading.value = true;
+  try {
+    const records = await listMedia(keyword, { page: 1, size: 20 });
+    const previous = new Map(cmsState.media.map((item) => [item.id, item]));
+    const images = records
+      .filter((item) => item.mediaType === 'IMAGE')
+      .map((item) => ({
+        alt: item.altText || '',
+        createdAt: item.createdAt,
+        id: item.id,
+        name: item.originalFilename,
+        previewSourceUrl: item.thumbnailUrl || item.adminUrl,
+        size: '',
+        sourceUrl: item.adminUrl,
+        type: 'image' as const,
+        url: previous.get(item.id)?.url || '',
+      }));
+    cmsState.media.splice(0, cmsState.media.length, ...images);
+    mediaLoaded.value = true;
+  } finally {
+    mediaLoading.value = false;
+  }
+}
+
+function handleImageSelector(visible: boolean) {
+  if (visible && !mediaLoaded.value && !mediaLoading.value) void searchImages();
+}
+
+async function ensureSelectedPreview(value: string) {
+  const id = mediaIdFromUrl(value);
+  const asset = cmsState.media.find((item) => item.id === id);
+  if (!asset || asset.url || !asset.previewSourceUrl) return;
+  asset.url = await getMediaPreviewUrl(asset.previewSourceUrl).catch(() => '');
 }
 
 async function save() {
@@ -314,8 +327,13 @@ onMounted(load);
                     allow-create
                     clearable
                     filterable
+                    :loading="mediaLoading"
                     placeholder="从素材库选择或粘贴图片地址"
+                    remote
+                    :remote-method="searchImages"
                     style="width: 100%"
+                    @change="ensureSelectedPreview"
+                    @visible-change="handleImageSelector"
                   >
                     <ElOption
                       v-for="image in imageOptions"
@@ -333,8 +351,13 @@ onMounted(load);
                     allow-create
                     clearable
                     filterable
+                    :loading="mediaLoading"
                     placeholder="不设置时使用 PC 端图片"
+                    remote
+                    :remote-method="searchImages"
                     style="width: 100%"
+                    @change="ensureSelectedPreview"
+                    @visible-change="handleImageSelector"
                   >
                     <ElOption
                       v-for="image in imageOptions"

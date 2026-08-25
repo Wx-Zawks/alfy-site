@@ -96,7 +96,7 @@ useSeoMeta({
         </header>
         <div class="technology-detail-grid">
           <article v-for="(block, index) in capabilityRows" :key="`${block.title}-${index}`">
-            <img v-if="block.imageUrl" :src="block.imageUrl" :alt="block.title">
+            <img v-if="block.imageUrl" :src="block.imageUrl" :alt="block.title" decoding="async" loading="lazy">
             <div>
               <h3>{{ block.title }}</h3>
               <p>{{ block.description }}</p>

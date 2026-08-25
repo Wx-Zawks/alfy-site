@@ -40,6 +40,10 @@ const saving = ref(false);
 const userDialogVisible = ref(false);
 const userSaving = ref(false);
 const mediaOptions = ref<Array<{ label: string; value: string }>>([]);
+const mediaLoading = ref(false);
+const mediaLoaded = ref(false);
+const usersLoaded = ref(false);
+const logsLoaded = ref(false);
 const settings = reactive({
   address: '',
   copyrightText: '',
@@ -63,17 +67,7 @@ const userForm = reactive({
 async function load() {
   loading.value = true;
   try {
-    const [value, media, userRows, logRows] = await Promise.all([
-      getSiteSettings(),
-      listMedia(),
-      listAdminUsers(),
-      listOperationLogs(),
-    ]);
-    users.value = userRows;
-    logs.value = logRows;
-    mediaOptions.value = media
-      .filter((item) => item.mediaType === 'IMAGE')
-      .map((item) => ({ label: item.originalFilename, value: item.adminUrl }));
+    const value = await getSiteSettings();
     Object.assign(settings, {
       address: value.address || '',
       copyrightText: value.copyrightText || '',
@@ -88,6 +82,36 @@ async function load() {
     });
   } finally {
     loading.value = false;
+  }
+}
+
+async function loadTabData(name: number | string) {
+  if (name === 'users' && !usersLoaded.value) {
+    users.value = await listAdminUsers();
+    usersLoaded.value = true;
+  }
+  if (name === 'logs' && !logsLoaded.value) {
+    logs.value = await listOperationLogs();
+    logsLoaded.value = true;
+  }
+}
+
+async function refreshUsers() {
+  users.value = await listAdminUsers();
+  usersLoaded.value = true;
+}
+
+async function ensureMediaOptions(visible = true) {
+  if (!visible || mediaLoaded.value || mediaLoading.value) return;
+  mediaLoading.value = true;
+  try {
+    const media = await listMedia('', { page: 1, size: 100 });
+    mediaOptions.value = media
+      .filter((item) => item.mediaType === 'IMAGE')
+      .map((item) => ({ label: item.originalFilename, value: item.adminUrl }));
+    mediaLoaded.value = true;
+  } finally {
+    mediaLoading.value = false;
   }
 }
 
@@ -135,7 +159,7 @@ async function saveUser() {
       username: userForm.username.trim(),
     });
     userDialogVisible.value = false;
-    await load();
+    await refreshUsers();
     ElMessage.success('管理员已创建');
   } finally {
     userSaving.value = false;
@@ -149,10 +173,10 @@ async function saveUserAccess(value: unknown) {
       enabled: user.enabled,
       role: user.role,
     });
-    await load();
+    await refreshUsers();
     ElMessage.success('管理员权限已更新');
   } catch (error) {
-    await load();
+    await refreshUsers();
     throw error;
   }
 }
@@ -170,7 +194,11 @@ onMounted(load);
       </div>
     </section>
     <ElCard class="settings-card" shadow="never" v-loading="loading">
-      <ElTabs v-model="activeTab" tab-position="left">
+      <ElTabs
+        v-model="activeTab"
+        tab-position="left"
+        @tab-change="loadTabData"
+      >
         <ElTabPane label="站点设置" name="site">
           <div class="section-title">
             <strong>官网基础信息</strong><span>这些信息将由公开 API 提供给官网页头、页脚和联系页面</span>
@@ -203,7 +231,9 @@ onMounted(load);
                     v-model="settings.logoUrl"
                     clearable
                     filterable
+                    :loading="mediaLoading"
                     style="width: 100%"
+                    @visible-change="ensureMediaOptions"
                   >
                     <ElOption
                       v-for="item in mediaOptions"
@@ -220,7 +250,9 @@ onMounted(load);
                     v-model="settings.wechatQrImageUrl"
                     clearable
                     filterable
+                    :loading="mediaLoading"
                     style="width: 100%"
+                    @visible-change="ensureMediaOptions"
                   >
                     <ElOption
                       v-for="item in mediaOptions"

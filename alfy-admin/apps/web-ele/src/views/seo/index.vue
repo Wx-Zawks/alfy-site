@@ -21,7 +21,6 @@ import {
 
 import {
   deleteRedirect,
-  getContent,
   listContent,
   listNotFoundLogs,
   listRedirects,
@@ -79,12 +78,7 @@ async function load() {
     ] as const;
     const groups = await Promise.all(
       resources.map(async (resource) => {
-        let values = await listContent(resource);
-        if (resource === 'articles') {
-          values = await Promise.all(
-            values.map((item) => getContent(resource, Number(item.id))),
-          );
-        }
+        const values = await listContent(resource);
         return values.map((item) => contentFromBackend(resource, item));
       }),
     );

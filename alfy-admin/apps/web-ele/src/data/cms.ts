@@ -106,6 +106,7 @@ export interface MediaAsset {
   createdAt: string;
   id: number;
   name: string;
+  previewSourceUrl?: string;
   size: string;
   sourceUrl?: string;
   type: 'document' | 'image' | 'video';

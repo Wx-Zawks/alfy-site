@@ -60,7 +60,7 @@ const facilities = [
             <article><strong>40%</strong><small>以上</small><span>气凝胶生产成本减低</span></article>
           </div>
         </div>
-        <figure class="company-intro-media"><img src="/images/about-company.webp" alt="湖南奥飞新材料有限公司办公环境"></figure>
+        <figure class="company-intro-media"><img src="/images/about-company.webp" alt="湖南奥飞新材料有限公司办公环境" decoding="async" loading="lazy"></figure>
       </div>
     </section>
 
@@ -81,7 +81,7 @@ const facilities = [
             <p class="milestone-title">{{ item.title }}</p>
             <h3>{{ item.date }}</h3>
             <p>{{ item.text }}</p>
-            <img :src="item.image" :alt="item.title">
+            <img :src="item.image" :alt="item.title" decoding="async" loading="lazy">
           </article>
         </div>
       </div>
@@ -101,7 +101,7 @@ const facilities = [
         </div>
         <div ref="teamTrack" class="brief-carousel-track team-track">
           <article v-for="member in team" :key="member.name" class="team-profile-card">
-            <img :src="member.image" :alt="member.name">
+            <img :src="member.image" :alt="member.name" decoding="async" loading="lazy">
             <div><span>{{ member.role }}</span><h3>{{ member.name }}</h3><p>{{ member.text }}</p></div>
           </article>
         </div>
@@ -116,7 +116,7 @@ const facilities = [
         </header>
         <div class="facility-grid">
           <article v-for="facility in facilities" :key="facility.name" class="facility-card">
-            <img :src="facility.image" :alt="facility.name">
+            <img :src="facility.image" :alt="facility.name" decoding="async" loading="lazy">
             <div><h3>{{ facility.name }}</h3><p>地址：{{ facility.address }}</p></div>
           </article>
         </div>

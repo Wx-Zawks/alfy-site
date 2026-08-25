@@ -6,6 +6,7 @@ import com.alfy.api.dto.AdminMediaResponse;
 import com.alfy.api.entity.MediaAsset;
 import com.alfy.api.security.AdminPrincipal;
 import com.alfy.api.service.AdminMediaService;
+import com.alfy.api.service.MediaThumbnailService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -17,17 +18,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/v1/admin/media")
 @RequiredArgsConstructor
 public class AdminMediaController {
     private final AdminMediaService service;
+    private final MediaThumbnailService mediaThumbnailService;
     @Value("${alfy.content-import.storage-root:./data/alfy/uploads}") private String storageRoot;
     @GetMapping public ApiResponse<PageResponse<AdminMediaResponse>> list(@RequestParam(required = false) String keyword, @RequestParam(defaultValue = "1") @Min(1) long page, @RequestParam(defaultValue = "20") @Min(1) @Max(100) long size) { Page<AdminMediaResponse> result = service.list(keyword, page, size); return ApiResponse.success(PageResponse.from(result)); }
     @PostMapping(consumes = "multipart/form-data") public ApiResponse<AdminMediaResponse> upload(@RequestPart("file") MultipartFile file, @RequestParam(required = false) String altText, @AuthenticationPrincipal AdminPrincipal principal) { return ApiResponse.success(service.upload(file, altText, principal)); }
@@ -55,6 +59,21 @@ public class AdminMediaController {
         Path root = Path.of(storageRoot).toAbsolutePath().normalize(); Path target = root.resolve(media.getStorageKey()).normalize();
         if (!target.startsWith(root) || !Files.isRegularFile(target)) throw new IOException("媒体文件不存在");
         MediaType type = media.getMimeType() == null ? MediaType.APPLICATION_OCTET_STREAM : MediaType.parseMediaType(media.getMimeType());
-        return ResponseEntity.ok().contentType(type).body(new FileSystemResource(target));
+        return ResponseEntity.ok()
+                .contentType(type)
+                .contentLength(Files.size(target))
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePrivate())
+                .body(new FileSystemResource(target));
+    }
+
+    @GetMapping("/{id}/thumbnail")
+    public ResponseEntity<Resource> thumbnail(@PathVariable @Min(1) Long id) throws IOException {
+        MediaThumbnailService.ThumbnailResource thumbnail = mediaThumbnailService.get(service.getAsset(id));
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(thumbnail.mimeType()))
+                .contentLength(Files.size(thumbnail.path()))
+                .cacheControl(CacheControl.maxAge(1, TimeUnit.DAYS).cachePrivate())
+                .eTag(thumbnail.etag())
+                .body(new FileSystemResource(thumbnail.path()));
     }
 }

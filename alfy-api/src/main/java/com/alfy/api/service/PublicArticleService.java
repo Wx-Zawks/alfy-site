@@ -83,7 +83,7 @@ public class PublicArticleService {
         Map<Long, String> coverUrls = coverUrls(articlePage.getRecords());
         List<ArticleListItemResponse> records = articlePage.getRecords().stream()
                 .map(article -> new ArticleListItemResponse(
-                        article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
+                        article.getId(), article.getSlug(), article.getTitle(), summaryOf(article), coverUrls.get(article.getId()),
                         article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                         categoriesByArticle.getOrDefault(article.getId(), List.of())
                 ))
@@ -108,7 +108,7 @@ public class PublicArticleService {
         Map<Long, List<ArticleCategoryResponse>> categoriesByArticle = categoriesByArticle(articles);
         Map<Long, String> coverUrls = coverUrls(articles);
         return articles.stream().map(article -> new ArticleListItemResponse(
-                article.getId(), article.getSlug(), article.getTitle(), article.getSummary(), coverUrls.get(article.getId()),
+                article.getId(), article.getSlug(), article.getTitle(), summaryOf(article), coverUrls.get(article.getId()),
                 article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                 categoriesByArticle.getOrDefault(article.getId(), List.of()))).toList();
     }
@@ -136,7 +136,7 @@ public class PublicArticleService {
                 (first, ignored) -> first
         ));
         return new ArticleDetailResponse(
-                article.getId(), article.getSlug(), article.getTitle(), article.getSummary(),
+                article.getId(), article.getSlug(), article.getTitle(), summaryOf(article),
                 article.getCoverMediaId() == null ? null : mediaUrl(article.getCoverMediaId()),
                 replaceInlineMediaUrls(article.getContentHtml(), urlByStorageKey, urlByMediaId), article.getSourceUrl(),
                 article.getSourcePublishedAt(), article.getPublishedAt(),
@@ -325,5 +325,22 @@ public class PublicArticleService {
 
     private static String mediaUrl(Long mediaId) {
         return "/api/v1/public/media/" + mediaId;
+    }
+
+    /** Keep list endpoints self-contained so clients never need one detail request per article. */
+    static String summaryOf(Article article) {
+        if (article.getSummary() != null && !article.getSummary().isBlank()) {
+            return article.getSummary().trim();
+        }
+        if (article.getContentText() == null || article.getContentText().isBlank()) {
+            return "";
+        }
+        String content = article.getContentText().replaceAll("\\s+", " ").trim();
+        String title = article.getTitle() == null ? "" : article.getTitle().trim();
+        if (!title.isEmpty() && content.startsWith(title)) {
+            content = content.substring(title.length()).trim();
+        }
+        int limit = 160;
+        return content.length() > limit ? content.substring(0, limit).trim() + "…" : content;
     }
 }

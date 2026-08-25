@@ -80,6 +80,8 @@ const inlineImageCaption = ref('');
 const inlineImageUploading = ref(false);
 const inlineImageUploadQueue = ref<UploadRawFile[]>([]);
 const coverImageUploading = ref(false);
+const mediaOptionsLoading = ref(false);
+const mediaOptionsLoaded = ref(false);
 const coverUploadFileList = ref<UploadFile[]>([]);
 let inlineImageUploadSchedule: ReturnType<typeof setTimeout> | undefined;
 
@@ -277,25 +279,7 @@ function openInlineImagePicker() {
   inlineImageAlt.value = '';
   inlineImageCaption.value = '';
   inlineImageDialogVisible.value = true;
-  void loadInlineImagePreviews();
-}
-
-async function loadInlineImagePreviews() {
-  const waiting = imageOptions.value.filter((asset) => !asset.url);
-  let nextIndex = 0;
-  const loadOne = async () => {
-    while (nextIndex < waiting.length) {
-      const asset = waiting[nextIndex++];
-      if (!asset) continue;
-      try {
-        asset.url = await getMediaPreviewUrl(asset.sourceUrl);
-      } catch (error) {
-        console.warn(`素材 ${asset.id} 的预览加载失败`, error);
-      }
-    }
-  };
-  // 预览文件可能很大；限流避免一次打开图片选择器占满带宽和连接池。
-  await Promise.all(Array.from({ length: 2 }, loadOne));
+  void loadMediaOptions('', true);
 }
 
 function validateImageFile(file: UploadRawFile) {
@@ -314,7 +298,9 @@ async function uploadImageToMediaLibrary(
   file: UploadRawFile,
 ): Promise<MediaAsset> {
   const saved = await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
-  const preview = await getMediaPreviewUrl(saved.adminUrl).catch((error) => {
+  const preview = await getMediaPreviewUrl(
+    saved.thumbnailUrl || saved.adminUrl,
+  ).catch((error) => {
     console.warn(`素材 ${saved.id} 的预览加载失败`, error);
     return '';
   });
@@ -323,6 +309,7 @@ async function uploadImageToMediaLibrary(
     createdAt: saved.createdAt,
     id: saved.id,
     name: saved.originalFilename,
+    previewSourceUrl: saved.thumbnailUrl || saved.adminUrl,
     size: readableSize(saved.fileSize),
     sourceUrl: saved.adminUrl,
     type: 'image',
@@ -332,8 +319,6 @@ async function uploadImageToMediaLibrary(
     (item) => item.id === saved.id,
   );
   if (existingIndex !== -1) {
-    const existing = cmsState.media[existingIndex];
-    if (existing?.url.startsWith('blob:')) URL.revokeObjectURL(existing.url);
     cmsState.media.splice(existingIndex, 1);
   }
   cmsState.media.unshift(asset);
@@ -448,25 +433,6 @@ function openContentPreview() {
 async function loadReferences() {
   referenceOptions.value = [];
   relatedOptions.value = [];
-  const media = await listMedia();
-  const mappedMedia = await Promise.all(
-    media.map(async (item) => ({
-      alt: item.altText || '',
-      createdAt: item.createdAt,
-      id: item.id,
-      name: item.originalFilename,
-      size: readableSize(item.fileSize),
-      sourceUrl: item.adminUrl,
-      type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-      // 页面初始化不下载所有原图。打开图片选择器时再以小并发加载预览。
-      url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
-    })),
-  );
-  cmsState.media
-    .filter((item) => item.url.startsWith('blob:'))
-    .forEach((item) => URL.revokeObjectURL(item.url));
-  cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
-
   switch (props.resource) {
     case 'articles': {
       const flatten = (
@@ -518,6 +484,69 @@ async function loadReferences() {
       relatedOptions.value = [];
     }
   }
+}
+
+async function withConcurrency<T>(
+  values: T[],
+  worker: (value: T) => Promise<void>,
+  limit = 4,
+) {
+  let nextIndex = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, values.length) }, async () => {
+      while (nextIndex < values.length) {
+        const current = values[nextIndex++];
+        if (current) await worker(current);
+      }
+    }),
+  );
+}
+
+async function loadMediaOptions(keyword = '', withPreviews = false) {
+  mediaOptionsLoading.value = true;
+  try {
+    const media = await listMedia(keyword, { page: 1, size: 20 });
+    const previous = new Map(cmsState.media.map((item) => [item.id, item]));
+    const mappedMedia = media
+      .filter((item) => item.mediaType === 'IMAGE')
+      .map((item) => ({
+        alt: item.altText || '',
+        createdAt: item.createdAt,
+        id: item.id,
+        name: item.originalFilename,
+        previewSourceUrl: item.thumbnailUrl || item.adminUrl,
+        size: readableSize(item.fileSize),
+        sourceUrl: item.adminUrl,
+        type: 'image' as const,
+        url: previous.get(item.id)?.url || '',
+      }));
+    cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
+    mediaOptionsLoaded.value = true;
+
+    if (withPreviews) {
+      await withConcurrency(mappedMedia, async (asset) => {
+        if (asset.url || !asset.previewSourceUrl) return;
+        asset.url = await getMediaPreviewUrl(asset.previewSourceUrl).catch(
+          () => '',
+        );
+      });
+    }
+  } finally {
+    mediaOptionsLoading.value = false;
+  }
+}
+
+function handleMediaSelector(visible: boolean) {
+  if (visible && !mediaOptionsLoaded.value && !mediaOptionsLoading.value) {
+    void loadMediaOptions();
+  }
+}
+
+async function ensureSelectedMediaPreview(value: string) {
+  const id = mediaIdFromUrl(value);
+  const asset = cmsState.media.find((item) => item.id === id);
+  if (!asset || asset.url || !asset.previewSourceUrl) return;
+  asset.url = await getMediaPreviewUrl(asset.previewSourceUrl).catch(() => '');
 }
 
 async function load() {
@@ -637,6 +666,7 @@ function openCreate() {
   Object.assign(form, emptyForm());
   resetAdvancedFields();
   dialogVisible.value = true;
+  if (!mediaOptionsLoaded.value) void loadMediaOptions();
 }
 
 async function openEdit(value: unknown) {
@@ -653,6 +683,7 @@ async function openEdit(value: unknown) {
     Object.assign(form, structuredClone(toRaw(mapped)));
     loadAdvancedFields(mapped);
     dialogVisible.value = true;
+    if (!mediaOptionsLoaded.value) void loadMediaOptions();
   } finally {
     loading.value = false;
   }
@@ -770,6 +801,14 @@ function homePlacementLabel(value: unknown) {
   }
   return item.featured ? '推荐' : '';
 }
+
+function handleHomeVisibilityChange() {
+  if (!form.showOnHome) form.homePinned = false;
+}
+
+function handleHomePinnedChange() {
+  if (form.homePinned) form.showOnHome = true;
+}
 </script>
 
 <template>
@@ -850,6 +889,7 @@ function homePlacementLabel(value: unknown) {
                 :preview-src-list="[previewUrl(row.cover)]"
                 :src="previewUrl(row.cover)"
                 fit="cover"
+                lazy
               />
               <div v-else class="cover-placeholder">
                 {{ row.title.slice(0, 1) }}
@@ -998,7 +1038,12 @@ function homePlacementLabel(value: unknown) {
                   class="cover-image-select"
                   clearable
                   filterable
+                  :loading="mediaOptionsLoading"
                   placeholder="从素材库选择或粘贴图片地址"
+                  remote
+                  :remote-method="loadMediaOptions"
+                  @change="ensureSelectedMediaPreview"
+                  @visible-change="handleMediaSelector"
                 >
                   <ElOption
                     v-for="asset in imageOptions"
@@ -1032,8 +1077,13 @@ function homePlacementLabel(value: unknown) {
                 allow-create
                 clearable
                 filterable
+                :loading="mediaOptionsLoading"
                 placeholder="不设置时使用 PC 端图片"
+                remote
+                :remote-method="loadMediaOptions"
                 style="width: 100%"
+                @change="ensureSelectedMediaPreview"
+                @visible-change="handleMediaSelector"
               >
                 <ElOption
                   v-for="asset in imageOptions"
@@ -1281,6 +1331,7 @@ function homePlacementLabel(value: unknown) {
                   v-model="form.showOnHome"
                   active-text="显示"
                   inactive-text="隐藏"
+                  @change="handleHomeVisibilityChange"
                 />
               </ElFormItem>
             </ElCol>
@@ -1294,6 +1345,7 @@ function homePlacementLabel(value: unknown) {
                   v-model="form.homePinned"
                   active-text="置顶"
                   inactive-text="普通"
+                  @change="handleHomePinnedChange"
                 />
               </ElFormItem>
             </ElCol>
@@ -1340,7 +1392,7 @@ function homePlacementLabel(value: unknown) {
       title="插入正文图片"
       width="860px"
     >
-      <div class="inline-image-toolbar">
+      <div v-loading="mediaOptionsLoading" class="inline-image-toolbar">
         <p>选择素材后可修改图片说明，图片将插入正文当前光标位置。</p>
         <ElUpload
           :auto-upload="false"

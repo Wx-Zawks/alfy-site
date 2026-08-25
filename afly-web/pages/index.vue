@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ApiArticleDetail, ApiCaseListItem, ApiHome, ApiHomeSection, PageResult } from '~/types/api'
+import type { ApiCaseListItem, ApiHome, ApiHomeSection, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
 import { useContentMapper } from '~/composables/useContentMapper'
 
 useSeoMeta({ title: '新一代气凝胶及其复合产品技术', description: '奥飞新材面向建筑节能、工业节能等场景提供气凝胶材料、复合产品与应用方案。' })
 
 const { open } = useInquiryDialog()
-const { request, resolveMediaUrl } = useApiClient()
+const { resolveMediaUrl } = useApiClient()
 const { mapArticle, mapCase, mapScene } = useContentMapper()
 const [homeResponse, sectionResponse, caseResponse] = await Promise.all([
   useApi<ApiHome>('public-home', '/public/home'),
@@ -27,10 +27,12 @@ const caseEntries = computed(() => (caseData.value?.records ?? []).map(record =>
   view: mapCase(record, resolveMediaUrl)
 })))
 const casesPending = computed(() => casePending.value)
-const articles = computed(() => (home.value?.featuredArticles ?? []).map(item => ({
-  ...mapArticle(item, resolveMediaUrl),
-  homeSlot: item.homeSlot
-})))
+const articles = computed(() => (home.value?.featuredArticles ?? [])
+  .slice(0, 5)
+  .map(item => ({
+    ...mapArticle(item, resolveMediaUrl),
+    homeSlot: item.homeSlot
+  })))
 const activeCaseSceneKey = ref('')
 const filteredCaseEntries = computed(() => activeCaseSceneKey.value
   ? caseEntries.value.filter(({ record }) => record.sceneSlug === activeCaseSceneKey.value)
@@ -50,48 +52,11 @@ const remainingArticles = computed(() =>
   articles.value.filter(item => item.id !== featuredArticle.value?.id)
 )
 const secondaryArticle = computed(() => remainingArticles.value[0])
-const newsList = computed(() => remainingArticles.value.slice(1, 3))
-
-const { data: secondaryArticleDetail } = await useAsyncData<ApiArticleDetail | null>(
-  'public-home-secondary-article-detail',
-  async () => {
-    const article = secondaryArticle.value
-    if (!article || article.summary.trim()) return null
-    return await request<ApiArticleDetail>(
-      `/public/articles/${encodeURIComponent(article.slug)}`,
-      { optional: true }
-    )
-  },
-  { default: () => null }
-)
-
-function articleExcerpt(contentHtml: null | string | undefined, title: string) {
-  if (!contentHtml) return ''
-  const plainText = contentHtml
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&(?:nbsp|#160);/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-  const withoutTitle = plainText.startsWith(title) ? plainText.slice(title.length).trim() : plainText
-  const withoutContactBlock = withoutTitle
-    .replace(/公司地址[\s\S]*?邮件：\S+\s*/i, '')
-    .trim()
-  const excerpt = withoutContactBlock || withoutTitle || plainText
-  return excerpt.length > 120 ? `${excerpt.slice(0, 120).trimEnd()}…` : excerpt
-}
+const newsList = computed(() => remainingArticles.value.slice(1, 4))
 
 const secondaryArticleExcerpt = computed(() => {
   const article = secondaryArticle.value
-  if (!article) return ''
-  const summary = article.summary.trim() || secondaryArticleDetail.value?.summary?.trim()
-  return summary || articleExcerpt(secondaryArticleDetail.value?.contentHtml, article.title)
+  return article?.summary.trim() || ''
 })
 
 const fallbackHero = {
@@ -226,7 +191,7 @@ onBeforeUnmount(() => {
             <NuxtLink class="button button-outline" to="/technology">复合材料技术 <ArrowUpRightIcon /></NuxtLink>
           </div>
         </div>
-        <figure class="media-frame about-media"><img :src="resolveMediaUrl(homeSection('about')?.imageUrl, '/images/university.jpeg')" :alt="homeSection('about')?.title || '中南大学粉末冶金学院'"></figure>
+        <figure class="media-frame about-media"><img :src="resolveMediaUrl(homeSection('about')?.imageUrl, '/images/university.jpeg')" :alt="homeSection('about')?.title || '中南大学粉末冶金学院'" decoding="async" loading="lazy"></figure>
       </div>
     </section>
 
@@ -244,7 +209,7 @@ onBeforeUnmount(() => {
         <div v-if="applicationScenes.length" class="application-stage">
           <div ref="sceneRail" class="application-rail" aria-label="应用场景横向列表">
             <NuxtLink v-for="scene in applicationScenes" :key="scene.key" class="application-card" :data-scene-key="scene.key" :to="`/applications?category=${scene.key}`">
-              <img :src="scene.image" :alt="scene.name">
+              <img :src="scene.image" :alt="scene.name" decoding="async" loading="lazy">
               <div class="application-card-copy">
                 <h3>{{ scene.slogan }}</h3>
                 <p>{{ scene.summary }}</p>
@@ -278,7 +243,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div v-if="featuredCase" class="case-prototype-feature">
-          <NuxtLink class="case-main-image" :to="`/cases/${featuredCase.slug}`"><img :src="featuredCase.image" :alt="featuredCase.title"></NuxtLink>
+          <NuxtLink class="case-main-image" :to="`/cases/${featuredCase.slug}`"><img :src="featuredCase.image" :alt="featuredCase.title" decoding="async" loading="lazy"></NuxtLink>
           <article class="case-detail">
             <p class="eyebrow">{{ featuredCase.category }}<template v-if="featuredCase.location"> / {{ featuredCase.location }}</template></p>
             <h3>{{ featuredCase.title }}</h3>
@@ -293,13 +258,13 @@ onBeforeUnmount(() => {
         <div v-else class="empty-state">暂无已发布推荐案例。</div>
         <div v-if="caseCards.length" class="case-card-grid">
           <NuxtLink v-for="item in caseCards" :key="item.id" class="case-card" :to="`/cases/${item.slug}`">
-            <img :src="item.image" :alt="item.title">
+            <img :src="item.image" :alt="item.title" decoding="async" loading="lazy">
             <div><h3>{{ item.title }}</h3><span>查看案例 →</span></div>
           </NuxtLink>
         </div>
         <div v-if="sectionEnabled('partners')" class="partner-matrix">
           <h3>奥飞新材与立邦、三一、中化学、中国建筑等头部企业已建立深度合作</h3>
-          <div class="partner-grid-scroll"><img src="/images/partners-grid.png" alt="奥飞新材合作企业：立邦、三一、中国化学、中国船舶、中国电信、中国建科、中国建筑、中国重汽、中国铁建、比亚迪、深铁置业、吉利汽车、美的、TCL、中国移动"></div>
+          <div class="partner-grid-scroll"><img src="/images/partners-grid.png" alt="奥飞新材合作企业：立邦、三一、中国化学、中国船舶、中国电信、中国建科、中国建筑、中国重汽、中国铁建、比亚迪、深铁置业、吉利汽车、美的、TCL、中国移动" decoding="async" loading="lazy"></div>
         </div>
       </div>
     </section>
@@ -336,12 +301,12 @@ onBeforeUnmount(() => {
         <div class="section-heading"><div><p class="eyebrow">{{ homeSection('news')?.eyebrow || '新闻资讯' }}</p><h2>{{ homeSection('news')?.title || '关注气凝胶产业最新进展' }}</h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 →</NuxtLink></div>
         <div v-if="featuredArticle" class="news-showcase">
           <NuxtLink v-if="featuredArticle" class="news-feature" :to="`/news/${featuredArticle.slug}`">
-            <img :src="featuredArticle.image" :alt="featuredArticle.title">
+            <img :src="featuredArticle.image" :alt="featuredArticle.title" decoding="async" loading="lazy">
             <div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3>{{ featuredArticle.title }}</h3><b>了解更多 →</b></div>
           </NuxtLink>
           <NuxtLink v-if="secondaryArticle" class="news-highlight" :to="`/news/${secondaryArticle.slug}`"><span>{{ secondaryArticle.categoryName }} · {{ secondaryArticle.date }}</span><h3>{{ secondaryArticle.title }}</h3><p v-if="secondaryArticleExcerpt">{{ secondaryArticleExcerpt }}</p><b>了解更多 →</b></NuxtLink>
           <div v-if="newsList.length" class="news-list">
-            <NuxtLink v-for="item in newsList" :key="item.id" :to="`/news/${item.slug}`"><img :src="item.image" :alt="item.title"><div><small>{{ item.categoryName }} · {{ item.date }}</small><h3>{{ item.title }}</h3><span>查看详情 →</span></div></NuxtLink>
+            <NuxtLink v-for="item in newsList" :key="item.id" :to="`/news/${item.slug}`"><img :src="item.image" :alt="item.title" decoding="async" loading="lazy"><div><small>{{ item.categoryName }} · {{ item.date }}</small><h3>{{ item.title }}</h3><span>查看详情 →</span></div></NuxtLink>
           </div>
         </div>
         <div v-else class="empty-state">暂无已发布推荐新闻。</div>

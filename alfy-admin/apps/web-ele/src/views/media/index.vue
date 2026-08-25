@@ -24,6 +24,7 @@ import {
   ElInput,
   ElMessage,
   ElMessageBox,
+  ElPagination,
   ElTag,
   ElUpload,
 } from 'element-plus';
@@ -31,7 +32,7 @@ import {
 import {
   deleteMedia,
   getMediaPreviewUrl,
-  listMedia,
+  listMediaPage,
   updateMedia,
   uploadMedia,
 } from '#/api';
@@ -48,11 +49,15 @@ const ALLOWED_TYPES = new Set([
   'video/mp4',
 ]);
 const keyword = ref('');
+const currentPage = ref(1);
+const pageSize = 20;
+const total = ref(0);
 const loading = ref(false);
 const uploading = ref(false);
 const uploadFileList = ref<UploadFile[]>([]);
 const uploadProgress = ref({ completed: 0, failed: 0, total: 0 });
 let uploadSchedule: undefined | ReturnType<typeof setTimeout>;
+let searchSchedule: undefined | ReturnType<typeof setTimeout>;
 let previewObserver: IntersectionObserver | undefined;
 const previewQueuedIds = new Set<number>();
 const previewQueue: number[] = [];
@@ -101,12 +106,6 @@ function validateFile(file: File) {
   return true;
 }
 
-function revokePreviewUrls() {
-  cmsState.media
-    .filter((item) => item.url.startsWith('blob:'))
-    .forEach((item) => URL.revokeObjectURL(item.url));
-}
-
 function queuePreview(id: number) {
   const asset = cmsState.media.find((item) => item.id === id);
   if (
@@ -134,7 +133,7 @@ async function processPreviewQueue() {
 
     previewInFlight += 1;
     previewStatus[id] = 'loading';
-    void getMediaPreviewUrl(asset.sourceUrl || asset.url)
+    void getMediaPreviewUrl(asset.previewSourceUrl || asset.sourceUrl || asset.url)
       .then((url) => {
         const current = cmsState.media.find((item) => item.id === id);
         if (current) current.url = url;
@@ -177,12 +176,17 @@ function observeVisiblePreviews() {
 async function load() {
   loading.value = true;
   try {
-    const values = await listMedia(keyword.value);
-    const mapped = values.map((item) => ({
+    const result = await listMediaPage(keyword.value, {
+      page: currentPage.value,
+      size: pageSize,
+    });
+    total.value = result.total;
+    const mapped = result.records.map((item) => ({
         alt: item.altText || '',
         createdAt: item.createdAt,
         id: item.id,
         name: item.originalFilename,
+        previewSourceUrl: item.thumbnailUrl || item.adminUrl,
         size: readableSize(item.fileSize),
         sourceUrl: item.adminUrl,
         type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
@@ -190,7 +194,6 @@ async function load() {
         // viewport, rather than downloading the entire library at once.
         url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
       }));
-    revokePreviewUrls();
     previewQueue.splice(0);
     previewQueuedIds.clear();
     Object.keys(previewStatus).forEach((id) => delete previewStatus[Number(id)]);
@@ -321,13 +324,20 @@ async function remove(item: MediaAsset) {
 }
 
 onMounted(load);
+watch(keyword, () => {
+  if (searchSchedule) clearTimeout(searchSchedule);
+  searchSchedule = setTimeout(() => {
+    currentPage.value = 1;
+    void load();
+  }, 300);
+});
 watch(filtered, () => {
   void nextTick(observeVisiblePreviews);
 });
 onBeforeUnmount(() => {
   if (uploadSchedule) clearTimeout(uploadSchedule);
+  if (searchSchedule) clearTimeout(searchSchedule);
   previewObserver?.disconnect();
-  revokePreviewUrls();
 });
 </script>
 
@@ -359,7 +369,7 @@ onBeforeUnmount(() => {
     <ElCard class="media-card" shadow="never" v-loading="loading">
       <div class="toolbar">
         <ElInput v-model="keyword" clearable placeholder="搜索素材名称" />
-        <span>共 {{ filtered.length }} 个文件</span>
+        <span>共 {{ total }} 个文件</span>
       </div>
       <div v-if="filtered.length > 0" class="media-grid">
         <article
@@ -426,6 +436,15 @@ onBeforeUnmount(() => {
         </article>
       </div>
       <ElEmpty v-else description="没有匹配的素材" />
+      <ElPagination
+        v-if="total > pageSize"
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="total"
+        background
+        layout="prev, pager, next"
+        @current-change="load"
+      />
     </ElCard>
 
     <ElDialog

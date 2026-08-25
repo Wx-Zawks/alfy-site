@@ -5,7 +5,7 @@ import type {
   TechnologyPageRecord,
 } from '#/api';
 
-import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import {
   ElButton,
@@ -71,6 +71,7 @@ interface TechnologyForm {
 interface MediaOption {
   id: number;
   name: string;
+  previewSourceUrl: string;
   previewUrl: string;
 }
 
@@ -196,18 +197,36 @@ async function load() {
 
 async function ensureMediaOptions() {
   if (mediaLoaded.value) return;
-  const mediaRecords = await listMedia();
+  const mediaRecords = await listMedia('', { page: 1, size: 100 });
   const records = mediaRecords.filter(
     (item: MediaRecord) => item.mediaType === 'IMAGE',
   );
-  mediaOptions.value = await Promise.all(
-    records.map(async (item) => ({
-      id: item.id,
-      name: item.originalFilename,
-      previewUrl: await getMediaPreviewUrl(item.adminUrl).catch(() => ''),
-    })),
-  );
+  mediaOptions.value = records.map((item) => ({
+    id: item.id,
+    name: item.originalFilename,
+    previewSourceUrl: item.thumbnailUrl || item.adminUrl,
+    previewUrl: '',
+  }));
   mediaLoaded.value = true;
+}
+
+async function loadSelectedMediaPreviews() {
+  const selectedIds = new Set(
+    [
+      form.heroMediaId,
+      ...form.capabilityRows.map((item) => item.imageMediaId),
+      ...form.pillars.map((item) => item.imageMediaId),
+    ].filter((id): id is number => Boolean(id)),
+  );
+  await Promise.all(
+    mediaOptions.value
+      .filter((item) => selectedIds.has(item.id) && !item.previewUrl)
+      .map(async (item) => {
+        item.previewUrl = await getMediaPreviewUrl(
+          item.previewSourceUrl,
+        ).catch(() => '');
+      }),
+  );
 }
 
 function fillForm(definition: PageDefinition, page?: TechnologyPageRecord) {
@@ -243,6 +262,7 @@ async function openEditor(
     ]);
     fillForm(definition, page);
     dialogVisible.value = true;
+    void loadSelectedMediaPreviews();
   } finally {
     loading.value = false;
   }
@@ -309,13 +329,6 @@ async function changeStatus(
     statusBusyKey.value = '';
   }
 }
-
-onBeforeUnmount(() => {
-  mediaOptions.value.forEach((item) => {
-    if (item.previewUrl.startsWith('blob:'))
-      URL.revokeObjectURL(item.previewUrl);
-  });
-});
 
 void load();
 </script>
@@ -495,6 +508,7 @@ void load();
                 filterable
                 placeholder="从素材库选择图片"
                 style="width: 100%"
+                @change="loadSelectedMediaPreviews"
               >
                 <ElOption
                   v-for="item in mediaOptions"
@@ -555,6 +569,7 @@ void load();
               filterable
               placeholder="选择模块图片"
               style="width: 100%"
+              @change="loadSelectedMediaPreviews"
             >
               <ElOption
                 v-for="item in mediaOptions"

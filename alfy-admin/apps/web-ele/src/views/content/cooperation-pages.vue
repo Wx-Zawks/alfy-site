@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { ContentPageRecord, MediaRecord } from '#/api';
 
-import { computed, onBeforeUnmount, reactive, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 
 import {
   ElButton,
@@ -89,6 +89,7 @@ interface CooperationForm {
 interface MediaOption {
   id: number;
   name: string;
+  previewSourceUrl: string;
   previewUrl: string;
 }
 
@@ -244,18 +245,27 @@ async function load() {
 
 async function ensureMediaOptions() {
   if (mediaLoaded.value) return;
-  const mediaRecords = await listMedia();
+  const mediaRecords = await listMedia('', { page: 1, size: 100 });
   const records = mediaRecords.filter(
     (item: MediaRecord) => item.mediaType === 'IMAGE',
   );
-  mediaOptions.value = await Promise.all(
-    records.map(async (item) => ({
-      id: item.id,
-      name: item.originalFilename,
-      previewUrl: await getMediaPreviewUrl(item.adminUrl).catch(() => ''),
-    })),
-  );
+  mediaOptions.value = records.map((item) => ({
+    id: item.id,
+    name: item.originalFilename,
+    previewSourceUrl: item.thumbnailUrl || item.adminUrl,
+    previewUrl: '',
+  }));
   mediaLoaded.value = true;
+}
+
+async function loadSelectedMediaPreview() {
+  const selected = mediaOptions.value.find(
+    (item) => item.id === form.coverMediaId,
+  );
+  if (!selected || selected.previewUrl) return;
+  selected.previewUrl = await getMediaPreviewUrl(
+    selected.previewSourceUrl,
+  ).catch(() => '');
 }
 
 function fillForm(definition: PageDefinition, page?: ContentPageRecord) {
@@ -303,6 +313,7 @@ async function openEditor(
     ]);
     fillForm(definition, page);
     dialogVisible.value = true;
+    void loadSelectedMediaPreview();
   } finally {
     loading.value = false;
   }
@@ -378,13 +389,6 @@ async function changeStatus(
     statusBusyKey.value = '';
   }
 }
-
-onBeforeUnmount(() => {
-  mediaOptions.value.forEach((item) => {
-    if (item.previewUrl.startsWith('blob:'))
-      URL.revokeObjectURL(item.previewUrl);
-  });
-});
 
 void load();
 </script>
@@ -568,6 +572,7 @@ void load();
                 filterable
                 placeholder="从素材库选择图片"
                 style="width: 100%"
+                @change="loadSelectedMediaPreview"
               >
                 <ElOption
                   v-for="item in mediaOptions"

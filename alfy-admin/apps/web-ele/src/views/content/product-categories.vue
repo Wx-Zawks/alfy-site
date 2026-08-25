@@ -33,6 +33,7 @@ const loading = ref(false);
 const saving = ref(false);
 const dialogVisible = ref(false);
 const mediaOptions = ref<Array<{ id: number; name: string }>>([]);
+const mediaLoaded = ref(false);
 const form = reactive({
   coverMediaId: undefined as number | undefined,
   enabled: true,
@@ -47,17 +48,19 @@ const form = reactive({
 async function load() {
   loading.value = true;
   try {
-    const [categories, media] = await Promise.all([
-      listProductCategories(),
-      listMedia(),
-    ]);
-    rows.value = categories;
-    mediaOptions.value = media
-      .filter((item) => item.mediaType === 'IMAGE')
-      .map((item) => ({ id: item.id, name: item.originalFilename }));
+    rows.value = await listProductCategories();
   } finally {
     loading.value = false;
   }
+}
+
+async function ensureMediaOptions() {
+  if (mediaLoaded.value) return;
+  const media = await listMedia('', { page: 1, size: 100 });
+  mediaOptions.value = media
+      .filter((item) => item.mediaType === 'IMAGE')
+      .map((item) => ({ id: item.id, name: item.originalFilename }));
+  mediaLoaded.value = true;
 }
 
 function openCreate() {
@@ -72,12 +75,14 @@ function openCreate() {
     version: undefined,
   });
   dialogVisible.value = true;
+  void ensureMediaOptions();
 }
 
 function openEdit(value: unknown) {
   const row = value as ProductCategoryRecord;
   Object.assign(form, row);
   dialogVisible.value = true;
+  void ensureMediaOptions();
 }
 
 async function save() {

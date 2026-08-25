@@ -16,12 +16,11 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { getMediaPreviewUrl, listContent, listMedia, saveContent } from '#/api';
+import { listContent, saveContent } from '#/api';
 import { cmsState } from '#/data/cms';
 import {
   contentFromBackend,
   contentPayload,
-  mediaIdFromUrl,
 } from '#/data/cms-adapter';
 
 const sortContainer = ref<HTMLElement | null>(null);
@@ -63,10 +62,9 @@ const previewCards = computed(() =>
 async function load() {
   loading.value = true;
   try {
-    const [cases, scenes, media] = await Promise.all([
+    const [cases, scenes] = await Promise.all([
       listContent('cases'),
       listContent('scenes'),
-      listMedia(),
     ]);
     const names = new Map(
       scenes.map((item) => [
@@ -81,24 +79,6 @@ async function load() {
       (item) => item.resource !== 'cases',
     );
     cmsState.content.splice(0, cmsState.content.length, ...retained, ...mapped);
-    const previews = await Promise.all(
-      media
-        .filter((item) => item.mediaType === 'IMAGE')
-        .map(async (item) => ({
-          alt: item.altText || '',
-          createdAt: item.createdAt,
-          id: item.id,
-          name: item.originalFilename,
-          size: '',
-          sourceUrl: item.adminUrl,
-          type: 'image' as const,
-          url: await getMediaPreviewUrl(item.adminUrl),
-        })),
-    );
-    cmsState.media
-      .filter((item) => item.url.startsWith('blob:'))
-      .forEach((item) => URL.revokeObjectURL(item.url));
-    cmsState.media.splice(0, cmsState.media.length, ...previews);
   } finally {
     loading.value = false;
   }
@@ -109,8 +89,7 @@ async function persist(item: ContentItem) {
 }
 
 function previewUrl(value: string) {
-  const id = mediaIdFromUrl(value);
-  return cmsState.media.find((item) => item.id === id)?.url || value;
+  return value;
 }
 
 function statusLabel(status: ContentItem['status']) {

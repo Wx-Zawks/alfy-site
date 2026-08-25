@@ -17,18 +17,11 @@ import {
 } from 'element-plus';
 
 import {
-  getContent,
-  getMediaPreviewUrl,
   listContent,
-  listMedia,
   saveContent,
 } from '#/api';
 import { cmsState } from '#/data/cms';
-import {
-  contentFromBackend,
-  contentPayload,
-  mediaIdFromUrl,
-} from '#/data/cms-adapter';
+import { contentFromBackend, contentPayload } from '#/data/cms-adapter';
 
 const sortContainer = ref<HTMLElement | null>(null);
 const loading = ref(false);
@@ -66,54 +59,21 @@ const previewRest = computed(() =>
   ),
 );
 const previewSecondary = computed(() => previewRest.value[0]);
-const previewList = computed(() => previewRest.value.slice(1, 3));
+const previewList = computed(() => previewRest.value.slice(1, 4));
 
 async function load() {
   loading.value = true;
   try {
-    const summaries = await listContent('articles');
-    const details = await Promise.all(
-      summaries.map(async (item) => {
-        try {
-          return await getContent('articles', Number(item.id));
-        } catch (error) {
-          console.warn(`新闻 ${item.id} 的详情加载失败，改用列表数据`, error);
-          return item;
-        }
-      }),
+    const summaries = await listContent('articles', { homeOnly: true });
+    // The homepage editor only needs list fields. Fetching every article detail
+    // caused an N+1 request storm when the old API returned up to 100 records.
+    const mapped = summaries.map((item) =>
+      contentFromBackend('articles', item),
     );
-    const mapped = details.map((item) => contentFromBackend('articles', item));
     const retained = cmsState.content.filter(
       (item) => item.resource !== 'articles',
     );
     cmsState.content.splice(0, cmsState.content.length, ...retained, ...mapped);
-
-    try {
-      const media = await listMedia();
-      const previews = await Promise.all(
-        media
-          .filter((item) => item.mediaType === 'IMAGE')
-          .map(async (item) => ({
-            alt: item.altText || '',
-            createdAt: item.createdAt,
-            id: item.id,
-            name: item.originalFilename,
-            size: '',
-            sourceUrl: item.adminUrl,
-            type: 'image' as const,
-            url: await getMediaPreviewUrl(item.adminUrl).catch((error) => {
-              console.warn(`素材 ${item.id} 的预览加载失败`, error);
-              return '';
-            }),
-          })),
-      );
-      cmsState.media
-        .filter((item) => item.url.startsWith('blob:'))
-        .forEach((item) => URL.revokeObjectURL(item.url));
-      cmsState.media.splice(0, cmsState.media.length, ...previews);
-    } catch (error) {
-      console.warn('新闻已加载，但素材列表加载失败', error);
-    }
   } finally {
     loading.value = false;
   }
@@ -124,8 +84,7 @@ async function persist(item: ContentItem) {
 }
 
 function previewUrl(value: string) {
-  const id = mediaIdFromUrl(value);
-  return cmsState.media.find((item) => item.id === id)?.url || value;
+  return value;
 }
 
 function statusLabel(status: ContentItem['status']) {
@@ -169,7 +128,7 @@ async function handleVisibility(item: ContentItem) {
 
 function normalizeOrder(items: ContentItem[]) {
   items.forEach((item, index) => {
-    item.homeSortOrder = (index + 1) * 10;
+    item.homeSortOrder = index + 1;
   });
 }
 
@@ -217,10 +176,10 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       </div>
       <div class="summary">
         <div>
-          <b>{{ allArticles.length }}</b><span>全部新闻</span>
+          <b>{{ allArticles.length }}</b><span>首页新闻</span>
         </div>
         <div>
-          <b>{{ visibleArticles.length }}</b><span>首页展示</span>
+          <b>{{ Math.min(visibleArticles.length, 5) }}</b><span>实际展示</span>
         </div>
         <div>
           <b>{{ pinnedArticle ? 1 : 0 }}</b><span>主置顶</span>
@@ -232,7 +191,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       :closable="false"
       class="mode-alert"
       show-icon
-      title="首页最多设置一个主置顶新闻；其余新闻拖拽排序后，第 1 条进入中间重点卡片，后续新闻进入右侧列表。"
+      title="首页最多展示 5 篇新闻：1 篇主新闻、1 篇中间重点新闻和右侧 3 篇新闻；可拖拽调整展示顺序。"
       type="info"
     />
 
@@ -294,7 +253,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
           </div>
           <div ref="sortContainer" class="news-sort-list">
             <article
-              v-for="item in orderedArticles"
+              v-for="(item, index) in orderedArticles"
               :key="item.id"
               :data-id="item.id"
               class="news-row"
@@ -325,7 +284,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
                 <h3>{{ item.title }}</h3>
                 <p>{{ item.summary }}</p>
               </div>
-              <span class="sort-value">排序 {{ item.homeSortOrder }}</span>
+              <span class="sort-value">排序 {{ index + 1 }}</span>
               <div class="row-actions">
                 <ElSwitch
                   v-model="item.showOnHome"

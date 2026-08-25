@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { UploadFile, UploadFiles, UploadRawFile } from 'element-plus';
 
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import {
   ElButton,
@@ -79,18 +79,10 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
-function revokePreviewUrls(options: InlineImageOption[]) {
-  options.forEach((asset) => {
-    if (asset.previewUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(asset.previewUrl);
-    }
-  });
-}
-
 async function loadImageOptions() {
   loading.value = true;
   try {
-    const mediaRecords = await listMedia();
+    const mediaRecords = await listMedia('', { page: 1, size: 20 });
     const nextOptions = mediaRecords
       .filter((item) => item.mediaType === 'IMAGE')
       .map((item) => ({
@@ -98,7 +90,7 @@ async function loadImageOptions() {
         id: item.id,
         name: item.originalFilename,
         previewUrl: '',
-        sourceUrl: item.adminUrl,
+        sourceUrl: item.thumbnailUrl || item.adminUrl,
       }));
     revokePreviewUrls(imageOptions.value);
     imageOptions.value = nextOptions;
@@ -212,7 +204,9 @@ async function processUploadQueue() {
           alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
           id: saved.id,
           name: saved.originalFilename,
-          previewUrl: await getMediaPreviewUrl(saved.adminUrl),
+          previewUrl: await getMediaPreviewUrl(
+            saved.thumbnailUrl || saved.adminUrl,
+          ),
           sourceUrl: saved.adminUrl,
         };
         const existingIndex = imageOptions.value.findIndex(
@@ -245,7 +239,6 @@ async function processUploadQueue() {
   }
 }
 
-onBeforeUnmount(() => revokePreviewUrls(imageOptions.value));
 </script>
 
 <template>

@@ -58,6 +58,8 @@ class AdminMediaServiceTests {
         assertThat(response.id()).isEqualTo(10L);
         assertThat(response.originalFilename()).isEqualTo("renamed.jpg");
         assertThat(response.altText()).isEqualTo("新的图片说明");
+        assertThat(response.thumbnailUrl()).isEqualTo(
+                "/admin/media/10/thumbnail?v=hash");
         assertThat(media.getStorageKey()).isEqualTo("2026-07-29/original.jpg");
         verify(operationLogService)
                 .record(1L, "UPDATE", "MEDIA", 10L, "修改素材 renamed.jpg");

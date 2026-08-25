@@ -298,6 +298,9 @@ public class AdminMediaService {
     }
 
     private AdminMediaResponse toResponse(MediaAsset media) {
+        String cacheVersion = media.getSha256() == null || media.getSha256().isBlank()
+                ? String.valueOf(media.getId())
+                : media.getSha256().substring(0, Math.min(16, media.getSha256().length()));
         return new AdminMediaResponse(
                 media.getId(),
                 media.getMediaType(),
@@ -308,6 +311,7 @@ public class AdminMediaService {
                 media.getHeight(),
                 media.getAltText(),
                 "/admin/media/" + media.getId() + "/file",
+                "/admin/media/" + media.getId() + "/thumbnail?v=" + cacheVersion,
                 media.getCreatedAt()
         );
     }

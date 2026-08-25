@@ -31,6 +31,6 @@ public class PublicHomeController {
     @GetMapping("/home") public ApiResponse<HomeResponse> home() {
         return ApiResponse.success(new HomeResponse(heroSlideService.listPublic(), applicationCaseService.listScenes(),
                 applicationCaseService.listCases(null, null, true, 1, 4).getRecords(), technologyPageService.findPublic(),
-                articleService.listHomeArticles(4)));
+                articleService.listHomeArticles(5)));
     }
 }

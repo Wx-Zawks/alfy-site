@@ -52,13 +52,16 @@ public class AdminArticleService {
     private final AdminOperationLogService operationLogService;
     private final HtmlSanitizer htmlSanitizer;
 
-    public Page<AdminArticleListItemResponse> list(String status, Long categoryId, String keyword, long page, long size) {
+    public Page<AdminArticleListItemResponse> list(
+            String status, Long categoryId, String keyword, boolean homeOnly, long page, long size) {
         Set<Long> articleIds = findArticleIds(categoryId);
         if (categoryId != null && articleIds.isEmpty()) {
             return new Page<>(page, size, 0);
         }
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), new LambdaQueryWrapper<Article>()
                 .eq(status != null && !status.isBlank(), Article::getStatus, status)
+                .eq(homeOnly, Article::getStatus, "PUBLISHED")
+                .isNotNull(homeOnly, Article::getHomeSlot)
                 .in(categoryId != null, Article::getId, articleIds)
                 .like(keyword != null && !keyword.isBlank(), Article::getTitle, keyword)
                 .orderByDesc(Article::getUpdatedAt)

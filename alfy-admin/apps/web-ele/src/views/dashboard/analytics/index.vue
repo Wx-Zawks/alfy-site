@@ -13,12 +13,13 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { listContent, listInquiries, listMedia } from '#/api';
+import { listContent, listInquiries, listMediaPage } from '#/api';
 import { cmsState } from '#/data/cms';
 import { contentFromBackend } from '#/data/cms-adapter';
 
 const router = useRouter();
 const loading = ref(false);
+const mediaTotal = ref(0);
 
 const metrics = computed(() => [
   {
@@ -42,7 +43,7 @@ const metrics = computed(() => [
   },
   {
     label: '素材文件',
-    value: cmsState.media.length,
+    value: mediaTotal.value,
     note: '图片与文档',
     tone: 'slate',
   },
@@ -87,11 +88,6 @@ function getInquiryStatus(value: string) {
   return inquiryStatus[value] || { label: '未知', type: 'info' as const };
 }
 
-function readableSize(bytes: number) {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
 async function load() {
   loading.value = true;
   try {
@@ -113,7 +109,7 @@ async function load() {
         }),
       ),
       listInquiries(),
-      listMedia(),
+      listMediaPage('', { page: 1, size: 1 }),
     ]);
     cmsState.content.splice(0, cmsState.content.length, ...groups.flat());
     cmsState.inquiries.splice(
@@ -135,19 +131,7 @@ async function load() {
         type: item.inquiryType,
       })),
     );
-    cmsState.media.splice(
-      0,
-      cmsState.media.length,
-      ...media.map((item) => ({
-        alt: item.altText || '',
-        createdAt: item.createdAt,
-        id: item.id,
-        name: item.originalFilename,
-        size: readableSize(item.fileSize),
-        type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-        url: item.adminUrl,
-      })),
-    );
+    mediaTotal.value = media.total;
   } finally {
     loading.value = false;
   }

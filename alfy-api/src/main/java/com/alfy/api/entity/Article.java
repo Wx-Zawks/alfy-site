@@ -1,6 +1,8 @@
 package com.alfy.api.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -37,6 +39,8 @@ public class Article {
     private String status;
     private Integer sortOrder;
     private Integer isFeatured;
+    /** 首页展示关闭时必须把已有展示位显式更新为 NULL。 */
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String homeSlot;
     private Integer homeSortOrder;
     private String seoTitle;

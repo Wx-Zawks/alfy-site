@@ -147,7 +147,7 @@ watch(compositeProducts, () => nextTick(resetProductTrack))
         </header>
         <div class="material-type-grid">
           <article v-for="material in materialTypes" :key="material.formula" class="material-type-card">
-            <img :src="material.image" :alt="`${material.formula}${material.name}`">
+            <img :src="material.image" :alt="`${material.formula}${material.name}`" decoding="async" loading="lazy">
             <div>
               <h3><strong>{{ material.formula }}</strong>{{ material.name }}</h3>
               <p>{{ material.description }}</p>
@@ -166,7 +166,7 @@ watch(compositeProducts, () => nextTick(resetProductTrack))
         </header>
         <div class="technology-coverage-grid">
           <figure v-for="sample in coverageSamples" :key="sample.label">
-            <img :src="sample.image" :alt="sample.label">
+            <img :src="sample.image" :alt="sample.label" decoding="async" loading="lazy">
             <figcaption>{{ sample.label }}</figcaption>
           </figure>
         </div>
@@ -186,7 +186,7 @@ watch(compositeProducts, () => nextTick(resetProductTrack))
         <div class="technology-process-grid">
           <article v-for="step in processSteps" :key="step.title" class="technology-process-card">
             <div class="process-image">
-              <img :src="step.image" :alt="step.title">
+              <img :src="step.image" :alt="step.title" decoding="async" loading="lazy">
             </div>
             <h3>{{ step.title }}</h3>
             <p>{{ step.description }}</p>

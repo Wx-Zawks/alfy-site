@@ -44,6 +44,7 @@ const heroDialog = ref(false);
 const navigations = ref<NavigationRecord[]>([]);
 const heroes = ref<PageHeroRecord[]>([]);
 const mediaOptions = ref<Array<{ id: number; label: string; url: string }>>([]);
+const mediaLoaded = ref(false);
 
 const navigationForm = reactive({
   enabled: true,
@@ -90,23 +91,28 @@ const parentIdById = computed(() => {
 async function load() {
   loading.value = true;
   try {
-    const [navigationRows, heroRows, mediaRows] = await Promise.all([
+    const [navigationRows, heroRows] = await Promise.all([
       listNavigations(area.value),
       listPageHeroes(),
-      listMedia(),
     ]);
     navigations.value = navigationRows;
     heroes.value = heroRows;
-    mediaOptions.value = mediaRows
-      .filter((item) => item.mediaType === 'IMAGE')
-      .map((item) => ({
-        id: item.id,
-        label: item.originalFilename,
-        url: item.adminUrl,
-      }));
   } finally {
     loading.value = false;
   }
+}
+
+async function ensureMediaOptions() {
+  if (mediaLoaded.value) return;
+  const mediaRows = await listMedia('', { page: 1, size: 100 });
+  mediaOptions.value = mediaRows
+    .filter((item) => item.mediaType === 'IMAGE')
+    .map((item) => ({
+      id: item.id,
+      label: item.originalFilename,
+      url: item.adminUrl,
+    }));
+  mediaLoaded.value = true;
 }
 
 async function changeArea() {
@@ -182,6 +188,7 @@ async function removeNavigation(id: number) {
 }
 
 function openHero(value?: unknown) {
+  void ensureMediaOptions();
   const row = value as PageHeroRecord | undefined;
   Object.assign(heroForm, {
     backgroundImageUrl: row?.backgroundImageUrl || '',

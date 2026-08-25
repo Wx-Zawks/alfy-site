@@ -35,10 +35,12 @@ public class AdminArticleController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "false") boolean homeOnly,
             @RequestParam(defaultValue = "1") @Min(1) long page,
             @RequestParam(defaultValue = "10") @Min(1) @Max(100) long size
     ) {
-        Page<AdminArticleListItemResponse> result = adminArticleService.list(status, categoryId, keyword, page, size);
+        Page<AdminArticleListItemResponse> result = adminArticleService.list(
+                status, categoryId, keyword, homeOnly, page, size);
         return ApiResponse.success(PageResponse.from(result));
     }
 

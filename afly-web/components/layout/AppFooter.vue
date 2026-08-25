@@ -123,7 +123,7 @@ async function submitInquiry() {
 <template>
   <footer id="site-footer" class="site-footer">
     <div class="container footer-header">
-      <NuxtLink class="footer-logo-wrap" to="/" :aria-label="`${companyName}首页`"><img :src="logoUrl" :alt="companyName"></NuxtLink>
+      <NuxtLink class="footer-logo-wrap" to="/" :aria-label="`${companyName}首页`"><img :src="logoUrl" :alt="companyName" decoding="async" loading="lazy"></NuxtLink>
       <strong>{{ companyName }}</strong>
     </div>
     <div class="container footer-mobile">
@@ -145,7 +145,7 @@ async function submitInquiry() {
     <div class="container footer-main">
       <div class="footer-brand">
         <h3>联系我们</h3>
-        <img class="footer-qr" :src="wechatQrUrl" :alt="`${companyName}联系二维码`">
+        <img class="footer-qr" :src="wechatQrUrl" :alt="`${companyName}联系二维码`" decoding="async" loading="lazy">
         <a class="footer-contact-detail" :href="`tel:${servicePhone}`"><b>企业电话：</b>{{ servicePhone }}</a>
         <a class="footer-contact-detail" :href="`mailto:${serviceEmail}`"><b>企业邮箱：</b>{{ serviceEmail }}</a>
         <button class="footer-contact-link" type="button" @click="open">立即咨询 <span>→</span></button>

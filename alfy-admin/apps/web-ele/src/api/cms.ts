@@ -50,6 +50,7 @@ export interface MediaRecord {
   mediaType: 'DOCUMENT' | 'IMAGE' | 'VIDEO';
   mimeType: string;
   originalFilename: string;
+  thumbnailUrl?: string;
   width?: null | number;
 }
 
@@ -224,7 +225,16 @@ const endpointByResource: Record<
   scenes: 'application-scenes',
 };
 
-export async function listContent(resource: ContentResource) {
+export async function listContent(
+  resource: ContentResource,
+  options: {
+    homeOnly?: boolean;
+    keyword?: string;
+    page?: number;
+    size?: number;
+    status?: string;
+  } = {},
+) {
   if (resource === 'technologies') {
     try {
       const response = await rawRequestClient.get<{
@@ -254,7 +264,7 @@ export async function listContent(resource: ContentResource) {
   }
   const result = await requestClient.get<PageResult<BackendContentRecord>>(
     `/admin/${endpoint}`,
-    { params: { page: 1, size: 100 } },
+    { params: { page: 1, size: 100, ...options } },
   );
   return result.records;
 }
@@ -396,14 +406,28 @@ export async function listArticleCategories() {
   );
 }
 
-export async function listMedia(keyword = '') {
+export async function listMediaPage(
+  keyword = '',
+  options: { page?: number; size?: number } = {},
+) {
   const result = await requestClient.get<PageResult<MediaRecord>>(
     '/admin/media',
     {
-      params: { keyword: keyword || undefined, page: 1, size: 100 },
+      params: {
+        keyword: keyword || undefined,
+        page: options.page ?? 1,
+        size: options.size ?? 20,
+      },
     },
   );
-  return result.records;
+  return result;
+}
+
+export async function listMedia(
+  keyword = '',
+  options: { page?: number; size?: number } = {},
+) {
+  return (await listMediaPage(keyword, options)).records;
 }
 
 export function uploadMedia(file: File, altText = '') {
@@ -439,7 +463,21 @@ export function deleteMedia(id: number) {
   return requestClient.delete(`/admin/media/${id}`);
 }
 
-export async function getMediaPreviewUrl(adminUrl: string) {
+const mediaPreviewCache = new Map<string, Promise<string>>();
+
+export function getMediaPreviewUrl(adminUrl: string) {
+  const cached = mediaPreviewCache.get(adminUrl);
+  if (cached) return cached;
+
+  const previewRequest = loadMediaPreviewUrl(adminUrl).catch((error) => {
+    mediaPreviewCache.delete(adminUrl);
+    throw error;
+  });
+  mediaPreviewCache.set(adminUrl, previewRequest);
+  return previewRequest;
+}
+
+async function loadMediaPreviewUrl(adminUrl: string) {
   const apiBase = String(
     import.meta.env.VITE_GLOB_API_URL || '/api/v1',
   ).replace(/\/$/, '');

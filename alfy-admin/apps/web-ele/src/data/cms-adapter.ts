@@ -36,7 +36,10 @@ export function contentFromBackend(
   let showOnHome = false;
   if (resource === 'articles') {
     homePinned = homeSlot === 'NEWS_PRIMARY';
-    showOnHome = Boolean(homeSlot || value.featured);
+    // `homeSlot` is the source of truth for homepage news placement. Falling
+    // back to `featured` here makes a disabled switch turn itself back on
+    // after reload when an older record still has is_featured = 1.
+    showOnHome = Boolean(homeSlot);
   } else if (resource === 'cases') {
     homePinned = Boolean(value.featured);
     showOnHome = Boolean(value.featured);
@@ -59,7 +62,7 @@ export function contentFromBackend(
     coverMediaId: coverMediaId ? Number(coverMediaId) : undefined,
     createdAt: value.publishedAt ?? value.updatedAt ?? '',
     eyebrow: value.eyebrow ?? '',
-    featured: Boolean(value.featured),
+    featured: resource === 'articles' ? showOnHome : Boolean(value.featured),
     highlightTitle: value.highlightText ?? '',
     homePinned,
     homeSortOrder: Number(value.homeSortOrder ?? value.sortOrder ?? 0),
@@ -134,7 +137,9 @@ export function contentPayload(
         contentHtml: form.contentHtml || null,
         contentText: raw.contentText ?? null,
         coverMediaId: common.coverMediaId,
-        featured: form.showOnHome || form.featured,
+        // Keep the legacy featured flag in sync with the explicit homepage
+        // placement instead of allowing its stale value to re-enable news.
+        featured: form.homePinned || form.showOnHome,
         homeSlot,
         homeSortOrder: form.homeSortOrder,
         seoDescription: common.seoDescription,
