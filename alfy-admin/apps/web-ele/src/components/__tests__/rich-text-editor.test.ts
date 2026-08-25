@@ -9,7 +9,7 @@ describe('rich text editor managed media previews', () => {
       props: {
         mediaPreviewUrls: { 2: 'blob:http://localhost:5777/media-2' },
         modelValue:
-          '<figure><img src="alfy-media:2" alt="???" loading="lazy"></figure>',
+          '<figure><img src="alfy-media:2" alt="产品图" loading="lazy"></figure>',
       },
     });
 
@@ -18,13 +18,13 @@ describe('rich text editor managed media previews', () => {
     expect(image.attributes('src')).toBe('blob:http://localhost:5777/media-2');
     expect(image.attributes('data-alfy-media-id')).toBe('2');
 
-    image.element.setAttribute('alt', '???????');
+    image.element.setAttribute('alt', '更新后的产品图');
     await editor.trigger('input');
 
     const updates = wrapper.emitted('update:modelValue');
     const html = String(updates?.at(-1)?.[0] || '');
     expect(html).toContain('src="alfy-media:2"');
-    expect(html).toContain('alt="???????"');
+    expect(html).toContain('alt="更新后的产品图"');
     expect(html).not.toContain('blob:');
     expect(html).not.toContain('data-alfy-media-id');
   });
@@ -33,7 +33,7 @@ describe('rich text editor managed media previews', () => {
     const wrapper = mount(RichTextEditor, {
       props: {
         mediaPreviewUrls: { 2: 'blob:http://localhost:5777/old-media-2' },
-        modelValue: '<img src="alfy-media:2" alt="???">',
+        modelValue: '<img src="alfy-media:2" alt="产品图">',
       },
     });
 

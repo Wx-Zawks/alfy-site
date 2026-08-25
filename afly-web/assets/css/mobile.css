@@ -2,6 +2,7 @@
 .footer-mobile {
   display: none;
 }
+
 @media (max-width: 767px) {
   :root {
     --mobile-gutter: 18px;
