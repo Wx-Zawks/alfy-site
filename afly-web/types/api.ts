@@ -112,6 +112,7 @@ export interface ApiArticleListItem {
   sourcePublishedAt?: null | string
   summary?: null | string
   title: string
+  videoUrl?: null | string
 }
 
 export interface ApiArticleMedia {

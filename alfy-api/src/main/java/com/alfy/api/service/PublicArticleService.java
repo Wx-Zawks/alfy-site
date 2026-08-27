@@ -81,9 +81,11 @@ public class PublicArticleService {
         );
         Map<Long, List<ArticleCategoryResponse>> categoriesByArticle = categoriesByArticle(articlePage.getRecords());
         Map<Long, String> coverUrls = coverUrls(articlePage.getRecords());
+        Map<Long, String> videoUrls = videoUrls(articlePage.getRecords());
         List<ArticleListItemResponse> records = articlePage.getRecords().stream()
                 .map(article -> new ArticleListItemResponse(
                         article.getId(), article.getSlug(), article.getTitle(), summaryOf(article), coverUrls.get(article.getId()),
+                        videoUrls.get(article.getId()),
                         article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                         categoriesByArticle.getOrDefault(article.getId(), List.of())
                 ))
@@ -107,8 +109,10 @@ public class PublicArticleService {
         articles = articles.stream().limit(resultLimit).toList();
         Map<Long, List<ArticleCategoryResponse>> categoriesByArticle = categoriesByArticle(articles);
         Map<Long, String> coverUrls = coverUrls(articles);
+        Map<Long, String> videoUrls = videoUrls(articles);
         return articles.stream().map(article -> new ArticleListItemResponse(
                 article.getId(), article.getSlug(), article.getTitle(), summaryOf(article), coverUrls.get(article.getId()),
+                videoUrls.get(article.getId()),
                 article.getSourcePublishedAt(), article.getPublishedAt(), article.getHomeSlot(),
                 categoriesByArticle.getOrDefault(article.getId(), List.of()))).toList();
     }
@@ -245,6 +249,36 @@ public class PublicArticleService {
                 .filter(article -> article.getCoverMediaId() != null && coverMediaIds.contains(article.getCoverMediaId()))
                 .collect(Collectors.toMap(Article::getId,
                         article -> mediaUrl(article.getCoverMediaId())));
+    }
+
+    /**
+     * Return at most one playable video per article for lightweight list/home cards.
+     * The actual video bytes are still served only when the browser requests this URL.
+     */
+    private Map<Long, String> videoUrls(Collection<Article> articles) {
+        if (articles.isEmpty()) {
+            return Map.of();
+        }
+        Set<Long> articleIds = articles.stream().map(Article::getId).collect(Collectors.toSet());
+        List<ArticleMedia> relations = articleMediaMapper.selectList(new LambdaQueryWrapper<ArticleMedia>()
+                .in(ArticleMedia::getArticleId, articleIds)
+                .orderByAsc(ArticleMedia::getSortOrder)
+                .orderByAsc(ArticleMedia::getId));
+        if (relations.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, MediaAsset> mediaById = mediaAssetMapper.selectBatchIds(
+                        relations.stream().map(ArticleMedia::getMediaId).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(MediaAsset::getId, media -> media));
+        Map<Long, String> result = new HashMap<>();
+        for (ArticleMedia relation : relations) {
+            MediaAsset media = mediaById.get(relation.getMediaId());
+            if (media != null && "VIDEO".equalsIgnoreCase(media.getMediaType())) {
+                result.putIfAbsent(relation.getArticleId(), mediaUrl(media.getId()));
+            }
+        }
+        return result;
     }
 
     private List<ArticleMediaResponse> mediaByArticle(Long articleId) {

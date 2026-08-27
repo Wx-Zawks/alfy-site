@@ -53,6 +53,7 @@ const remainingArticles = computed(() =>
 )
 const secondaryArticle = computed(() => remainingArticles.value[0])
 const newsList = computed(() => remainingArticles.value.slice(1, 4))
+const playingFeaturedVideo = ref(false)
 
 const secondaryArticleExcerpt = computed(() => {
   const article = secondaryArticle.value
@@ -300,10 +301,31 @@ onBeforeUnmount(() => {
       <div class="container">
         <div class="section-heading"><div><p class="eyebrow">{{ homeSection('news')?.eyebrow || '新闻资讯' }}</p><h2>{{ homeSection('news')?.title || '关注气凝胶产业最新进展' }}</h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 →</NuxtLink></div>
         <div v-if="featuredArticle" class="news-showcase">
-          <NuxtLink v-if="featuredArticle" class="news-feature" :to="`/news/${featuredArticle.slug}`">
-            <img :src="featuredArticle.image" :alt="featuredArticle.title" decoding="async" loading="lazy">
-            <div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3>{{ featuredArticle.title }}</h3><b>了解更多 →</b></div>
-          </NuxtLink>
+          <article v-if="featuredArticle" class="news-feature">
+            <div class="news-feature-media">
+              <video
+                v-if="featuredArticle.videoUrl && playingFeaturedVideo"
+                :src="featuredArticle.videoUrl"
+                :poster="featuredArticle.image"
+                :aria-label="`${featuredArticle.title} 视频`"
+                controls
+                autoplay
+                playsinline
+                preload="metadata"
+              />
+              <template v-else>
+                <img :src="featuredArticle.image" :alt="featuredArticle.title" decoding="async" loading="lazy">
+                <button
+                  v-if="featuredArticle.videoUrl"
+                  class="news-video-play"
+                  type="button"
+                  :aria-label="`播放《${featuredArticle.title}》视频`"
+                  @click="playingFeaturedVideo = true"
+                ><span aria-hidden="true">▶</span></button>
+              </template>
+            </div>
+            <div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3><NuxtLink :to="`/news/${featuredArticle.slug}`">{{ featuredArticle.title }}</NuxtLink></h3><NuxtLink :to="`/news/${featuredArticle.slug}`"><b>了解更多 →</b></NuxtLink></div>
+          </article>
           <NuxtLink v-if="secondaryArticle" class="news-highlight" :to="`/news/${secondaryArticle.slug}`"><span>{{ secondaryArticle.categoryName }} · {{ secondaryArticle.date }}</span><h3>{{ secondaryArticle.title }}</h3><p v-if="secondaryArticleExcerpt">{{ secondaryArticleExcerpt }}</p><b>了解更多 →</b></NuxtLink>
           <div v-if="newsList.length" class="news-list">
             <NuxtLink v-for="item in newsList" :key="item.id" :to="`/news/${item.slug}`"><img :src="item.image" :alt="item.title" decoding="async" loading="lazy"><div><small>{{ item.categoryName }} · {{ item.date }}</small><h3>{{ item.title }}</h3><span>查看详情 →</span></div></NuxtLink>

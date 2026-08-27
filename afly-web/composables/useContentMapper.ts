@@ -98,6 +98,7 @@ export function mapArticle(
   const category = item.categories[0]
   const media = 'media' in item ? item.media : []
   const coverMedia = media.find(entry => entry.usageType === 'COVER') || media.find(entry => entry.mediaType === 'IMAGE')
+  const videoMedia = media.find(entry => entry.mediaType === 'VIDEO')
   const coverUrl = 'coverUrl' in item ? item.coverUrl : coverMedia?.url
   return {
     category: category?.code || 'all',
@@ -109,7 +110,8 @@ export function mapArticle(
     slug: item.slug,
     sourceUrl: 'sourceUrl' in item ? item.sourceUrl || '' : '',
     summary: item.summary || '',
-    title: item.title
+    title: item.title,
+    videoUrl: resolveMedia(item.videoUrl || videoMedia?.url, '') || undefined
   }
 }
 

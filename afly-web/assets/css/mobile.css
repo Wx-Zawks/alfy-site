@@ -696,7 +696,7 @@
     height: auto;
     min-height: 0;
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 12px;
   }
 
   .home-page .news-list > a {

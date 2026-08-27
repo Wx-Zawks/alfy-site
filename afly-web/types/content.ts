@@ -50,6 +50,7 @@ export interface Article {
   date: string
   summary: string
   image: string
+  videoUrl?: string
   contentHtml?: string
   sourceUrl?: string
 }

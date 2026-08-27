@@ -10,6 +10,7 @@ public record ArticleListItemResponse(
         String title,
         String summary,
         String coverUrl,
+        String videoUrl,
         LocalDateTime sourcePublishedAt,
         LocalDateTime publishedAt,
         String homeSlot,
