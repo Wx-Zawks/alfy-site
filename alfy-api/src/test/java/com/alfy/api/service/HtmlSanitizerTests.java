@@ -34,6 +34,24 @@ class HtmlSanitizerTests {
     }
 
     @Test
+    void keepsManagedInlineVideoPlaceholder() {
+        String clean = sanitizer.clean("""
+                <figure>
+                  <video controls preload="metadata">
+                    <source src="alfy-media:3" type="video/mp4">
+                  </video>
+                  <figcaption>活动现场</figcaption>
+                </figure>
+                """);
+
+        assertThat(clean)
+                .contains("<video controls preload=\"metadata\">")
+                .contains("src=\"alfy-media:3\"")
+                .contains("type=\"video/mp4\"")
+                .contains("活动现场");
+    }
+
+    @Test
     void keepsControlledTypographyAttributesButRemovesUnsafeStyles() {
         String clean = sanitizer.clean("""
                 <p data-align="center" onclick="alert(1)">

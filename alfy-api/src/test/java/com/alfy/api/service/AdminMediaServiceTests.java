@@ -92,6 +92,27 @@ class AdminMediaServiceTests {
     }
 
     @Test
+    void acceptsQuickTimeVideoWhenBrowserSendsGenericMimeType() {
+        when(mediaAssetMapper.insert(any(MediaAsset.class))).thenAnswer(invocation -> {
+            MediaAsset media = invocation.getArgument(0);
+            media.setId(20L);
+            return 1;
+        });
+        MockMultipartFile video = new MockMultipartFile(
+                "file",
+                "event.mov",
+                "application/octet-stream",
+                "video".getBytes()
+        );
+
+        var response = service.upload(video, "活动视频", PRINCIPAL);
+
+        assertThat(response.mediaType()).isEqualTo("VIDEO");
+        assertThat(response.mimeType()).isEqualTo("video/quicktime");
+        assertThat(response.originalFilename()).isEqualTo("event.mov");
+    }
+
+    @Test
     void rejectsReplacementWithDifferentMediaType() {
         MediaAsset media = image(12L, "2026-07-29/original.jpg");
         when(mediaAssetMapper.selectById(12L)).thenReturn(media);

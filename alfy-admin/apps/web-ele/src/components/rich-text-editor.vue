@@ -8,24 +8,29 @@ const props = withDefaults(
     disabled?: boolean;
     mediaImagePicker?: boolean;
     mediaPreviewUrls?: Record<number, string>;
+    mediaVideoPicker?: boolean;
     minHeight?: number;
     modelValue?: string;
     placeholder?: string;
     showImageButton?: boolean;
+    showVideoButton?: boolean;
   }>(),
   {
     disabled: false,
     minHeight: 280,
     mediaImagePicker: false,
     mediaPreviewUrls: () => ({}),
+    mediaVideoPicker: false,
     modelValue: '',
     placeholder: '请输入正文内容',
     showImageButton: true,
+    showVideoButton: false,
   },
 );
 
 const emit = defineEmits<{
   requestImage: [];
+  requestVideo: [];
   'update:modelValue': [value: string];
 }>();
 
@@ -152,10 +157,10 @@ function renderMediaReferences(html: string) {
   if (!html) return '';
   const template = document.createElement('template');
   template.innerHTML = html;
-  for (const image of template.content.querySelectorAll<HTMLImageElement>(
-    'img[src]',
+  for (const media of template.content.querySelectorAll<HTMLElement>(
+    'img[src], source[src], video[src]',
   )) {
-    const match = image
+    const match = media
       .getAttribute('src')
       ?.trim()
       .match(/^alfy-media:([1-9]\d*)$/i);
@@ -163,22 +168,22 @@ function renderMediaReferences(html: string) {
     if (!mediaId) continue;
     const previewUrl = props.mediaPreviewUrls[Number(mediaId)];
     if (!previewUrl) continue;
-    image.dataset.alfyMediaId = mediaId;
-    image.setAttribute('src', previewUrl);
+    media.dataset.alfyMediaId = mediaId;
+    media.setAttribute('src', previewUrl);
   }
   return template.innerHTML;
 }
 
 function serializeEditorHtml(editor: HTMLElement) {
   const clone = editor.cloneNode(true) as HTMLElement;
-  for (const image of clone.querySelectorAll<HTMLImageElement>(
-    'img[data-alfy-media-id]',
+  for (const media of clone.querySelectorAll<HTMLElement>(
+    '[data-alfy-media-id]',
   )) {
-    const mediaId = image.dataset.alfyMediaId;
+    const mediaId = media.dataset.alfyMediaId;
     if (mediaId && /^[1-9]\d*$/.test(mediaId)) {
-      image.setAttribute('src', `alfy-media:${mediaId}`);
+      media.setAttribute('src', `alfy-media:${mediaId}`);
     }
-    delete image.dataset.alfyMediaId;
+    delete media.dataset.alfyMediaId;
   }
   return normalizeHtml(clone);
 }
@@ -382,6 +387,26 @@ async function insertImageFromUrl() {
   );
 }
 
+async function insertVideoFromUrl() {
+  let input = '';
+  try {
+    const result = await ElMessageBox.prompt('请输入视频地址', '插入视频', {
+      cancelButtonText: '取消',
+      confirmButtonText: '插入',
+      inputPlaceholder: 'https://example.com/video.mp4',
+    });
+    input = result.value;
+  } catch {
+    return;
+  }
+
+  const url = input.trim();
+  if (!url || !isSafeUrl(url, true)) return;
+  insertHtml(
+    `<figure><video controls preload="metadata"><source src="${escapeHtml(url)}"></video></figure>`,
+  );
+}
+
 function requestImage() {
   if (props.disabled || sourceMode.value) return;
   rememberSelection();
@@ -390,6 +415,16 @@ function requestImage() {
     return;
   }
   void insertImageFromUrl();
+}
+
+function requestVideo() {
+  if (props.disabled || sourceMode.value) return;
+  rememberSelection();
+  if (props.mediaVideoPicker) {
+    emit('requestVideo');
+    return;
+  }
+  void insertVideoFromUrl();
 }
 
 function cleanPastedHtml(html: string) {
@@ -461,7 +496,9 @@ function cleanPastedHtml(html: string) {
           break;
         }
         case 'VIDEO': {
-          if (name === 'poster' && isSafeUrl(value, true)) {
+          if (name === 'src' && isSafeUrl(value, true)) {
+            safeAttributes.set('src', value.trim());
+          } else if (name === 'poster' && isSafeUrl(value, true)) {
             safeAttributes.set('poster', value.trim());
           } else if (name === 'controls') {
             safeAttributes.set('controls', '');
@@ -804,6 +841,17 @@ defineExpose({ insertHtml });
         @mousedown.prevent
       >
         🖼
+      </button>
+      <button
+        v-if="showVideoButton"
+        :disabled="disabled || sourceMode"
+        aria-label="插入视频"
+        title="插入视频"
+        type="button"
+        @click="requestVideo"
+        @mousedown.prevent
+      >
+        🎬
       </button>
       <button
         :disabled="disabled || sourceMode"

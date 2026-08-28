@@ -262,11 +262,33 @@ export async function listContent(
   if (resource === 'banners') {
     return requestClient.get<BackendContentRecord[]>(`/admin/${endpoint}`);
   }
-  const result = await requestClient.get<PageResult<BackendContentRecord>>(
+  const requestedPage = options.page;
+  const size = options.size ?? 100;
+  const firstPage = requestedPage ?? 1;
+  const queryOptions = { ...options };
+  delete queryOptions.page;
+  delete queryOptions.size;
+
+  const firstResult = await requestClient.get<PageResult<BackendContentRecord>>(
     `/admin/${endpoint}`,
-    { params: { page: 1, size: 100, ...options } },
+    {
+      params: { ...queryOptions, page: firstPage, size },
+    },
   );
-  return result.records;
+  if (requestedPage || firstResult.records.length >= firstResult.total) {
+    return firstResult.records;
+  }
+
+  const records = [...firstResult.records];
+  const totalPages = Math.ceil(firstResult.total / size);
+  for (let page = firstPage + 1; page <= totalPages; page += 1) {
+    const result = await requestClient.get<PageResult<BackendContentRecord>>(
+      `/admin/${endpoint}`,
+      { params: { ...queryOptions, page, size } },
+    );
+    records.push(...result.records);
+  }
+  return records;
 }
 
 export async function getContent(resource: ContentResource, id: number) {

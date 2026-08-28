@@ -79,6 +79,14 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
+function revokePreviewUrls(options: InlineImageOption[]) {
+  for (const asset of options) {
+    if (asset.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(asset.previewUrl);
+    }
+  }
+}
+
 async function loadImageOptions() {
   loading.value = true;
   try {
@@ -170,7 +178,8 @@ async function uploadInlineImage(
   _uploadFiles: UploadFiles,
 ) {
   const rawFile = uploadFile.raw;
-  if (!rawFile || uploadQueue.value.some((file) => file.uid === rawFile.uid)) return;
+  if (!rawFile || uploadQueue.value.some((file) => file.uid === rawFile.uid))
+    return;
   uploadQueue.value.push(rawFile);
   if (uploadSchedule) clearTimeout(uploadSchedule);
   uploadSchedule = setTimeout(() => {
@@ -199,7 +208,10 @@ async function processUploadQueue() {
     let completed = 0;
     for (const file of files) {
       try {
-        const saved = await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
+        const saved = await uploadMedia(
+          file,
+          file.name.replace(/\.[^.]+$/, ''),
+        );
         const asset: InlineImageOption = {
           alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
           id: saved.id,
@@ -238,7 +250,6 @@ async function processUploadQueue() {
     if (uploadQueue.value.length > 0) void processUploadQueue();
   }
 }
-
 </script>
 
 <template>

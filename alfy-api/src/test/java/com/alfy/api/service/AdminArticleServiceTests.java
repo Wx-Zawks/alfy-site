@@ -94,6 +94,43 @@ class AdminArticleServiceTests {
     }
 
     @Test
+    void createsInlineVideoRelationFromManagedPlaceholder() {
+        MediaAsset video = new MediaAsset();
+        video.setId(3L);
+        video.setMediaType("VIDEO");
+        video.setStorageKey("2026-07-29/event.mp4");
+        video.setOriginalFilename("event.mp4");
+        AtomicReference<Article> savedArticle = new AtomicReference<>();
+        when(articleMapper.selectOne(any())).thenReturn(null);
+        when(articleCategoryMapper.selectCount(any())).thenReturn(1L);
+        when(mediaAssetMapper.selectBatchIds(anyCollection())).thenReturn(List.of(video));
+        when(articleMapper.insert(any(Article.class))).thenAnswer(invocation -> {
+            Article article = invocation.getArgument(0);
+            article.setId(9L);
+            article.setVersion(0L);
+            savedArticle.set(article);
+            return 1;
+        });
+        when(articleMapper.selectById(9L)).thenAnswer(ignored -> savedArticle.get());
+        when(articleCategoryRelationMapper.selectList(any())).thenReturn(List.of());
+        when(articleMediaMapper.selectList(any())).thenReturn(List.of());
+
+        AdminArticleUpsertRequest request = new AdminArticleUpsertRequest(
+                "视频新闻", "video-news", "摘要",
+                "<figure><video controls preload=\"metadata\"><source src=\"alfy-media:3\" type=\"video/mp4\"></video></figure>",
+                null, null, "编辑", null, null, List.of(3L), 0, false,
+                null, 0, null, null, null, null
+        );
+
+        service.create(request, new AdminPrincipal(1L, "admin", "content_admin"));
+
+        ArgumentCaptor<ArticleMedia> relationCaptor = ArgumentCaptor.forClass(ArticleMedia.class);
+        verify(articleMediaMapper).insert(relationCaptor.capture());
+        assertThat(relationCaptor.getValue().getMediaId()).isEqualTo(3L);
+        assertThat(savedArticle.get().getContentHtml()).contains("src=\"alfy-media:3\"");
+    }
+
+    @Test
     void convertsImportedStorageKeyToEditablePlaceholder() {
         Article article = new Article();
         article.setId(8L);

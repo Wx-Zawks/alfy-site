@@ -26,6 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.HexFormat;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,6 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminMediaService {
     private static final long MAX_FILE_SIZE = 30L * 1024 * 1024;
+    private static final long MAX_VIDEO_SIZE = 200L * 1024 * 1024;
     private static final int MAX_FILENAME_LENGTH = 255;
     private static final int MAX_ALT_TEXT_LENGTH = 255;
     private static final Set<String> ALLOWED_TYPES = Set.of(
@@ -41,7 +43,32 @@ public class AdminMediaService {
             "image/webp",
             "image/gif",
             "video/mp4",
+            "video/mpeg",
+            "video/ogg",
+            "video/quicktime",
+            "video/webm",
+            "video/x-m4v",
+            "video/x-matroska",
+            "video/x-msvideo",
             "application/pdf"
+    );
+    private static final Map<String, String> TYPE_BY_EXTENSION = Map.ofEntries(
+            Map.entry(".avi", "video/x-msvideo"),
+            Map.entry(".gif", "image/gif"),
+            Map.entry(".jpeg", "image/jpeg"),
+            Map.entry(".jpg", "image/jpeg"),
+            Map.entry(".m4v", "video/x-m4v"),
+            Map.entry(".mkv", "video/x-matroska"),
+            Map.entry(".mov", "video/quicktime"),
+            Map.entry(".mp4", "video/mp4"),
+            Map.entry(".mpeg", "video/mpeg"),
+            Map.entry(".mpg", "video/mpeg"),
+            Map.entry(".ogg", "video/ogg"),
+            Map.entry(".ogv", "video/ogg"),
+            Map.entry(".pdf", "application/pdf"),
+            Map.entry(".png", "image/png"),
+            Map.entry(".webm", "video/webm"),
+            Map.entry(".webp", "image/webp")
     );
 
     private final MediaAssetMapper mediaAssetMapper;
@@ -185,8 +212,8 @@ public class AdminMediaService {
 
     private StoredFile store(MultipartFile file) {
         validateUpload(file);
-        String contentType = file.getContentType().toLowerCase(Locale.ROOT);
         String originalFilename = normalizeUploadFilename(file.getOriginalFilename());
+        String contentType = contentTypeOf(file, originalFilename);
         String storageKey =
                 LocalDate.now() + "/" + UUID.randomUUID() + extension(originalFilename);
         Path target = resolveStoragePath(storageKey);
@@ -217,17 +244,32 @@ public class AdminMediaService {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "请选择要上传的文件");
         }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST, "单个文件不能超过 30MB");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null
-                || !ALLOWED_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+        String filename = normalizeUploadFilename(file.getOriginalFilename());
+        String contentType = contentTypeOf(file, filename);
+        if (!ALLOWED_TYPES.contains(contentType)) {
             throw new BusinessException(
                     ErrorCode.BAD_REQUEST,
-                    "仅支持 JPG、PNG、WebP、GIF、MP4 和 PDF 文件"
+                    "仅支持 JPG、PNG、WebP、GIF、PDF 及常用视频格式"
             );
         }
+        long maxSize = contentType.startsWith("video/") ? MAX_VIDEO_SIZE : MAX_FILE_SIZE;
+        if (file.getSize() > maxSize) {
+            throw new BusinessException(
+                    ErrorCode.BAD_REQUEST,
+                    contentType.startsWith("video/")
+                            ? "单个视频不能超过 200MB"
+                            : "单个图片或文档不能超过 30MB"
+            );
+        }
+    }
+
+    private static String contentTypeOf(MultipartFile file, String filename) {
+        String declared = file.getContentType();
+        String normalized = declared == null ? "" : declared.toLowerCase(Locale.ROOT).trim();
+        if (!normalized.isBlank() && !"application/octet-stream".equals(normalized)) {
+            return normalized;
+        }
+        return TYPE_BY_EXTENSION.getOrDefault(extension(filename), normalized);
     }
 
     private void applyStoredFile(MediaAsset media, StoredFile stored) {

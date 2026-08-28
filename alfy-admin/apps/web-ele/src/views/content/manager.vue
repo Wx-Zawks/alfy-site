@@ -79,11 +79,17 @@ const inlineImageAlt = ref('');
 const inlineImageCaption = ref('');
 const inlineImageUploading = ref(false);
 const inlineImageUploadQueue = ref<UploadRawFile[]>([]);
+const inlineVideoDialogVisible = ref(false);
+const selectedInlineVideoId = ref<number>();
+const inlineVideoCaption = ref('');
+const inlineVideoUploading = ref(false);
+const inlineVideoUploadQueue = ref<UploadRawFile[]>([]);
 const coverImageUploading = ref(false);
 const mediaOptionsLoading = ref(false);
 const mediaOptionsLoaded = ref(false);
 const coverUploadFileList = ref<UploadFile[]>([]);
 let inlineImageUploadSchedule: ReturnType<typeof setTimeout> | undefined;
+let inlineVideoUploadSchedule: ReturnType<typeof setTimeout> | undefined;
 
 const MAX_IMAGE_SIZE = 30 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -91,6 +97,17 @@ const ALLOWED_IMAGE_TYPES = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+]);
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
+const ALLOWED_VIDEO_TYPES = new Set([
+  'video/mp4',
+  'video/mpeg',
+  'video/ogg',
+  'video/quicktime',
+  'video/webm',
+  'video/x-m4v',
+  'video/x-matroska',
+  'video/x-msvideo',
 ]);
 
 const meta = computed(() => resourceMeta[props.resource]);
@@ -139,6 +156,9 @@ const stats = computed(() => ({
 const imageOptions = computed(() =>
   cmsState.media.filter((asset) => asset.type === 'image'),
 );
+const videoOptions = computed(() =>
+  cmsState.media.filter((asset) => asset.type === 'video'),
+);
 const inlineMediaPreviewUrls = computed<Record<number, string>>(() => {
   const urls: Record<number, string> = {};
   for (const asset of imageOptions.value) {
@@ -148,6 +168,9 @@ const inlineMediaPreviewUrls = computed<Record<number, string>>(() => {
 });
 const selectedInlineMedia = computed(() =>
   imageOptions.value.find((asset) => asset.id === selectedInlineMediaId.value),
+);
+const selectedInlineVideo = computed(() =>
+  videoOptions.value.find((asset) => asset.id === selectedInlineVideoId.value),
 );
 const emptyForm = (): ContentItem => ({
   category: categoryOptions.value[0] || '未分类',
@@ -198,7 +221,7 @@ const contentPreviewDocument = computed(() => {
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data: http: https:; style-src 'unsafe-inline'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src blob: data: http: https:; media-src blob: data: http: https:; style-src 'unsafe-inline'">
   <style>
     * { box-sizing: border-box; }
     body { max-width: 820px; margin: 0 auto; padding: 28px; color: #3e4750; font: 16px/1.85 Inter, "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif; overflow-wrap: anywhere; }
@@ -308,6 +331,7 @@ async function uploadImageToMediaLibrary(
     alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
     createdAt: saved.createdAt,
     id: saved.id,
+    mimeType: saved.mimeType,
     name: saved.originalFilename,
     previewSourceUrl: saved.thumbnailUrl || saved.adminUrl,
     size: readableSize(saved.fileSize),
@@ -358,7 +382,10 @@ async function uploadInlineImage(
   _uploadFiles: UploadFiles,
 ) {
   const rawFile = uploadFile.raw;
-  if (!rawFile || inlineImageUploadQueue.value.some((file) => file.uid === rawFile.uid)) {
+  if (
+    !rawFile ||
+    inlineImageUploadQueue.value.some((file) => file.uid === rawFile.uid)
+  ) {
     return;
   }
   inlineImageUploadQueue.value.push(rawFile);
@@ -371,7 +398,9 @@ async function uploadInlineImage(
 }
 
 async function processInlineImageUploadQueue() {
-  const files = inlineImageUploadQueue.value.splice(0).filter(validateImageFile);
+  const files = inlineImageUploadQueue.value
+    .splice(0)
+    .filter(validateImageFile);
   if (files.length === 0) return;
   inlineImageUploading.value = true;
   try {
@@ -396,6 +425,149 @@ async function processInlineImageUploadQueue() {
     inlineImageUploading.value = false;
     if (inlineImageUploadQueue.value.length > 0) {
       void processInlineImageUploadQueue();
+    }
+  }
+}
+
+function selectInlineVideo(id: number) {
+  selectedInlineVideoId.value = id;
+  inlineVideoCaption.value = '';
+}
+
+function openInlineVideoPicker() {
+  selectedInlineVideoId.value = undefined;
+  inlineVideoCaption.value = '';
+  inlineVideoDialogVisible.value = true;
+  void loadMediaOptions('', false);
+}
+
+function validateVideoFile(file: UploadRawFile) {
+  if (file.size > MAX_VIDEO_SIZE) {
+    ElMessage.error('单个视频不能超过 200MB');
+    return false;
+  }
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  const type =
+    file.type.toLowerCase() ||
+    (
+      {
+        avi: 'video/x-msvideo',
+        m4v: 'video/x-m4v',
+        mkv: 'video/x-matroska',
+        mov: 'video/quicktime',
+        mp4: 'video/mp4',
+        mpeg: 'video/mpeg',
+        mpg: 'video/mpeg',
+        ogg: 'video/ogg',
+        ogv: 'video/ogg',
+        webm: 'video/webm',
+      } as Record<string, string>
+    )[extension] ||
+    '';
+  if (!ALLOWED_VIDEO_TYPES.has(type)) {
+    ElMessage.error('支持 MP4、M4V、MOV、WebM、OGV、MPEG 和 AVI 视频');
+    return false;
+  }
+  return true;
+}
+
+async function uploadVideoToMediaLibrary(
+  file: UploadRawFile,
+): Promise<MediaAsset> {
+  const saved = await uploadMedia(file, file.name.replace(/\.[^.]+$/, ''));
+  const asset: MediaAsset = {
+    alt: saved.altText || file.name.replace(/\.[^.]+$/, ''),
+    createdAt: saved.createdAt,
+    id: saved.id,
+    mimeType: saved.mimeType,
+    name: saved.originalFilename,
+    previewSourceUrl: saved.adminUrl,
+    size: readableSize(saved.fileSize),
+    sourceUrl: saved.adminUrl,
+    type: 'video',
+    url: '',
+  };
+  const existingIndex = cmsState.media.findIndex(
+    (item) => item.id === saved.id,
+  );
+  if (existingIndex !== -1) cmsState.media.splice(existingIndex, 1);
+  cmsState.media.unshift(asset);
+  return asset;
+}
+
+function insertInlineVideo() {
+  const asset = selectedInlineVideo.value;
+  if (!asset) {
+    ElMessage.warning('请先选择一个视频');
+    return;
+  }
+  const caption = inlineVideoCaption.value.trim();
+  const figure = [
+    '<figure>',
+    '  <video controls preload="metadata">',
+    `    <source src="alfy-media:${asset.id}" type="${escapeHtml(asset.mimeType || 'video/mp4')}">`,
+    '  </video>',
+    caption ? `  <figcaption>${escapeHtml(caption)}</figcaption>` : '',
+    '</figure>',
+  ]
+    .filter(Boolean)
+    .join('\n');
+  if (!contentEditorRef.value) {
+    ElMessage.error('正文编辑器尚未就绪，请稍后重试');
+    return;
+  }
+  contentEditorRef.value.insertHtml(figure);
+  inlineVideoDialogVisible.value = false;
+  ElMessage.success('视频已插入正文，保存后自动关联素材');
+}
+
+async function uploadInlineVideo(
+  uploadFile: UploadFile,
+  _uploadFiles: UploadFiles,
+) {
+  const rawFile = uploadFile.raw;
+  if (
+    !rawFile ||
+    inlineVideoUploadQueue.value.some((file) => file.uid === rawFile.uid)
+  ) {
+    return;
+  }
+  inlineVideoUploadQueue.value.push(rawFile);
+  if (inlineVideoUploadSchedule) clearTimeout(inlineVideoUploadSchedule);
+  inlineVideoUploadSchedule = setTimeout(() => {
+    inlineVideoUploadSchedule = undefined;
+    void processInlineVideoUploadQueue();
+  }, 0);
+}
+
+async function processInlineVideoUploadQueue() {
+  const files = inlineVideoUploadQueue.value
+    .splice(0)
+    .filter(validateVideoFile);
+  if (files.length === 0) return;
+  inlineVideoUploading.value = true;
+  try {
+    let completed = 0;
+    for (const file of files) {
+      try {
+        const asset = await uploadVideoToMediaLibrary(file);
+        selectInlineVideo(asset.id);
+        completed += 1;
+      } catch (error) {
+        console.warn(`视频 ${file.name} 上传失败`, error);
+      }
+    }
+    if (completed > 0) {
+      ElMessage.success(
+        files.length === 1
+          ? '视频已上传，请确认后插入正文'
+          : `已上传 ${completed}/${files.length} 个视频，请选择后插入正文`,
+      );
+    }
+  } finally {
+    inlineVideoUploading.value = false;
+    if (inlineVideoUploadQueue.value.length > 0) {
+      void processInlineVideoUploadQueue();
     }
   }
 }
@@ -505,19 +677,20 @@ async function withConcurrency<T>(
 async function loadMediaOptions(keyword = '', withPreviews = false) {
   mediaOptionsLoading.value = true;
   try {
-    const media = await listMedia(keyword, { page: 1, size: 20 });
+    const media = await listMedia(keyword, { page: 1, size: 100 });
     const previous = new Map(cmsState.media.map((item) => [item.id, item]));
     const mappedMedia = media
-      .filter((item) => item.mediaType === 'IMAGE')
+      .filter((item) => ['IMAGE', 'VIDEO'].includes(item.mediaType))
       .map((item) => ({
         alt: item.altText || '',
         createdAt: item.createdAt,
         id: item.id,
+        mimeType: item.mimeType,
         name: item.originalFilename,
         previewSourceUrl: item.thumbnailUrl || item.adminUrl,
         size: readableSize(item.fileSize),
         sourceUrl: item.adminUrl,
-        type: 'image' as const,
+        type: item.mediaType.toLowerCase() as 'image' | 'video',
         url: previous.get(item.id)?.url || '',
       }));
     cmsState.media.splice(0, cmsState.media.length, ...mappedMedia);
@@ -525,7 +698,8 @@ async function loadMediaOptions(keyword = '', withPreviews = false) {
 
     if (withPreviews) {
       await withConcurrency(mappedMedia, async (asset) => {
-        if (asset.url || !asset.previewSourceUrl) return;
+        if (asset.type !== 'image' || asset.url || !asset.previewSourceUrl)
+          return;
         asset.url = await getMediaPreviewUrl(asset.previewSourceUrl).catch(
           () => '',
         );
@@ -1255,12 +1429,15 @@ function handleHomePinnedChange() {
                 v-model="form.contentHtml"
                 :media-image-picker="true"
                 :media-preview-urls="inlineMediaPreviewUrls"
+                :media-video-picker="props.resource === 'articles'"
                 :min-height="300"
-                placeholder="请输入正文；可设置字体、字号、颜色、对齐方式，并从工具栏插入图片"
+                :show-video-button="props.resource === 'articles'"
+                placeholder="请输入正文；可设置字体、字号、颜色、对齐方式，并从工具栏插入图片或视频"
                 @request-image="openInlineImagePicker"
+                @request-video="openInlineVideoPicker"
               />
               <p class="content-editor-tip">
-                图片会插入当前光标位置；可从素材库选择或直接上传，保存后自动关联素材。
+                图片和视频会插入当前光标位置；可从素材库选择或直接上传，保存后自动关联素材。
               </p>
             </ElFormItem>
           </ElCol>
@@ -1452,6 +1629,75 @@ function handleHomePinnedChange() {
           :disabled="!selectedInlineMedia"
           type="primary"
           @click="insertInlineImage"
+        >
+          插入当前位置
+        </ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog
+      v-model="inlineVideoDialogVisible"
+      append-to-body
+      :close-on-click-modal="false"
+      title="插入正文视频"
+      width="760px"
+    >
+      <div v-loading="mediaOptionsLoading" class="inline-image-toolbar">
+        <p>选择素材库视频，或上传新视频后插入正文当前光标位置。</p>
+        <ElUpload
+          :auto-upload="false"
+          :disabled="inlineVideoUploading"
+          :on-change="uploadInlineVideo"
+          :show-file-list="false"
+          accept=".mp4,.m4v,.mov,.webm,.ogv,.ogg,.mpeg,.mpg,.avi,.mkv"
+          multiple
+        >
+          <ElButton :loading="inlineVideoUploading" type="primary">
+            上传新视频
+          </ElButton>
+        </ElUpload>
+      </div>
+
+      <div
+        v-if="videoOptions.length > 0"
+        class="inline-image-grid inline-video-grid"
+      >
+        <button
+          v-for="asset in videoOptions"
+          :key="asset.id"
+          :class="{ selected: selectedInlineVideoId === asset.id }"
+          type="button"
+          @click="selectInlineVideo(asset.id)"
+        >
+          <span class="inline-image-placeholder">🎬 视频素材</span>
+          <strong :title="asset.name">{{ asset.name }}</strong>
+        </button>
+      </div>
+      <ElEmpty v-else description="素材库暂无视频，可先上传一个视频" />
+
+      <div v-if="selectedInlineVideo" class="inline-image-fields">
+        <ElFormItem label="视频说明（可选）">
+          <ElInput
+            v-model="inlineVideoCaption"
+            maxlength="200"
+            placeholder="例如：活动现场视频"
+            show-word-limit
+          />
+        </ElFormItem>
+        <ElFormItem label="文件信息">
+          <ElInput
+            :model-value="`${selectedInlineVideo.name} · ${selectedInlineVideo.size}`"
+            disabled
+          />
+        </ElFormItem>
+      </div>
+
+      <template #footer>
+        <ElButton @click="inlineVideoDialogVisible = false">取消</ElButton>
+        <ElButton
+          :disabled="!selectedInlineVideo"
+          type="primary"
+          @click="insertInlineVideo"
         >
           插入当前位置
         </ElButton>

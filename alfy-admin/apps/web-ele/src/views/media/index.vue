@@ -39,6 +39,7 @@ import {
 import { cmsState } from '#/data/cms';
 
 const MAX_FILE_SIZE = 30 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 const PREVIEW_CONCURRENCY = 2;
 const ALLOWED_TYPES = new Set([
   'application/pdf',
@@ -47,6 +48,13 @@ const ALLOWED_TYPES = new Set([
   'image/png',
   'image/webp',
   'video/mp4',
+  'video/mpeg',
+  'video/ogg',
+  'video/quicktime',
+  'video/webm',
+  'video/x-m4v',
+  'video/x-matroska',
+  'video/x-msvideo',
 ]);
 const keyword = ref('');
 const currentPage = ref(1);
@@ -81,7 +89,9 @@ const replacementAccept = computed(() => {
   if (editingAsset.value?.type === 'image') {
     return '.jpg,.jpeg,.png,.webp,.gif';
   }
-  return editingAsset.value?.type === 'video' ? '.mp4' : '.pdf';
+  return editingAsset.value?.type === 'video'
+    ? '.mp4,.m4v,.mov,.webm,.ogv,.ogg,.mpeg,.mpg,.avi,.mkv'
+    : '.pdf';
 });
 
 function readableSize(bytes: number) {
@@ -94,13 +104,49 @@ function assetTypeFromMime(type: string): MediaAsset['type'] {
   return type.startsWith('video/') ? 'video' : 'document';
 }
 
+function normalizedFileType(file: File) {
+  const declared = file.type.toLowerCase();
+  if (declared) return declared;
+  const extension = file.name.split('.').pop()?.toLowerCase() || '';
+  return (
+    (
+      {
+        avi: 'video/x-msvideo',
+        gif: 'image/gif',
+        jpeg: 'image/jpeg',
+        jpg: 'image/jpeg',
+        m4v: 'video/x-m4v',
+        mkv: 'video/x-matroska',
+        mov: 'video/quicktime',
+        mp4: 'video/mp4',
+        mpeg: 'video/mpeg',
+        mpg: 'video/mpeg',
+        ogg: 'video/ogg',
+        ogv: 'video/ogg',
+        pdf: 'application/pdf',
+        png: 'image/png',
+        webm: 'video/webm',
+        webp: 'image/webp',
+      } as Record<string, string>
+    )[extension] || ''
+  );
+}
+
 function validateFile(file: File) {
-  if (file.size > MAX_FILE_SIZE) {
-    ElMessage.error('单个文件不能超过 30MB');
+  const type = normalizedFileType(file);
+  if (!ALLOWED_TYPES.has(type)) {
+    ElMessage.error(
+      '支持 JPG、PNG、WebP、GIF、PDF，以及 MP4、M4V、MOV、WebM、OGV、MPEG、AVI 视频',
+    );
     return false;
   }
-  if (!ALLOWED_TYPES.has(file.type.toLowerCase())) {
-    ElMessage.error('仅支持 JPG、PNG、WebP、GIF、MP4 和 PDF 文件');
+  const maxSize = type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_FILE_SIZE;
+  if (file.size > maxSize) {
+    ElMessage.error(
+      type.startsWith('video/')
+        ? '单个视频不能超过 200MB'
+        : '单个图片或文档不能超过 30MB',
+    );
     return false;
   }
   return true;
@@ -133,7 +179,9 @@ async function processPreviewQueue() {
 
     previewInFlight += 1;
     previewStatus[id] = 'loading';
-    void getMediaPreviewUrl(asset.previewSourceUrl || asset.sourceUrl || asset.url)
+    void getMediaPreviewUrl(
+      asset.previewSourceUrl || asset.sourceUrl || asset.url,
+    )
       .then((url) => {
         const current = cmsState.media.find((item) => item.id === id);
         if (current) current.url = url;
@@ -182,21 +230,24 @@ async function load() {
     });
     total.value = result.total;
     const mapped = result.records.map((item) => ({
-        alt: item.altText || '',
-        createdAt: item.createdAt,
-        id: item.id,
-        name: item.originalFilename,
-        previewSourceUrl: item.thumbnailUrl || item.adminUrl,
-        size: readableSize(item.fileSize),
-        sourceUrl: item.adminUrl,
-        type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
-        // Request the protected binary only when this card approaches the
-        // viewport, rather than downloading the entire library at once.
-        url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
-      }));
+      alt: item.altText || '',
+      createdAt: item.createdAt,
+      id: item.id,
+      mimeType: item.mimeType,
+      name: item.originalFilename,
+      previewSourceUrl: item.thumbnailUrl || item.adminUrl,
+      size: readableSize(item.fileSize),
+      sourceUrl: item.adminUrl,
+      type: item.mediaType.toLowerCase() as 'document' | 'image' | 'video',
+      // Request the protected binary only when this card approaches the
+      // viewport, rather than downloading the entire library at once.
+      url: item.mediaType === 'IMAGE' ? '' : item.adminUrl,
+    }));
     previewQueue.splice(0);
     previewQueuedIds.clear();
-    Object.keys(previewStatus).forEach((id) => delete previewStatus[Number(id)]);
+    Object.keys(previewStatus).forEach(
+      (id) => delete previewStatus[Number(id)],
+    );
     cmsState.media.splice(0, cmsState.media.length, ...mapped);
     await nextTick();
     observeVisiblePreviews();
@@ -266,7 +317,9 @@ function selectReplacement(_uploadFile: UploadFile, uploadFiles: UploadFiles) {
     replacementFile.value = undefined;
     return;
   }
-  if (assetTypeFromMime(latest.type) !== editingAsset.value?.type) {
+  if (
+    assetTypeFromMime(normalizedFileType(latest)) !== editingAsset.value?.type
+  ) {
     ElMessage.error('替换文件必须与原素材保持相同类型');
     replacementFile.value = undefined;
     return;
@@ -355,7 +408,7 @@ onBeforeUnmount(() => {
         multiple
         :on-change="addFile"
         :show-file-list="false"
-        accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.pdf"
+        accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.mp4,.m4v,.mov,.webm,.ogv,.ogg,.mpeg,.mpg,.avi,.mkv"
       >
         <ElButton :loading="uploading" size="large" type="primary">
           {{
@@ -385,7 +438,9 @@ onBeforeUnmount(() => {
             fit="cover"
           />
           <div
-            v-else-if="item.type === 'image' && previewStatus[item.id] === 'failed'"
+            v-else-if="
+              item.type === 'image' && previewStatus[item.id] === 'failed'
+            "
             class="image-preview-failed"
           >
             <span>预览加载失败</span>

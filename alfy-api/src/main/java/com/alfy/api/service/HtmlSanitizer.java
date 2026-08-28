@@ -10,7 +10,7 @@ public class HtmlSanitizer {
 
     private static final Safelist ARTICLE_SAFE_LIST = Safelist.relaxed()
             .addTags("figure", "figcaption", "video", "source")
-            .addAttributes("video", "controls", "poster", "preload")
+            .addAttributes("video", "controls", "playsinline", "poster", "preload", "src")
             .addAttributes("source", "src", "type")
             .addAttributes("img", "src", "alt", "title", "loading")
             .addAttributes("span", "data-font", "data-size", "data-color", "data-highlight")
@@ -25,7 +25,10 @@ public class HtmlSanitizer {
             .addAttributes("h5", "data-align")
             .addAttributes("h6", "data-align")
             .addProtocols("a", "href", "http", "https", "mailto")
-            .addProtocols("img", "src", "http", "https", "alfy-media");
+            .addProtocols("img", "src", "http", "https", "alfy-media")
+            .addProtocols("source", "src", "http", "https", "alfy-media")
+            .addProtocols("video", "src", "http", "https", "alfy-media")
+            .addProtocols("video", "poster", "http", "https", "alfy-media");
 
     public String clean(String html) {
         return html == null ? null : Jsoup.clean(html, ARTICLE_SAFE_LIST);

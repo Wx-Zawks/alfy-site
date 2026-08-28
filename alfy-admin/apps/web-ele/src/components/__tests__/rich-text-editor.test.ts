@@ -4,6 +4,19 @@ import { describe, expect, it } from 'vitest';
 import RichTextEditor from '../rich-text-editor.vue';
 
 describe('rich text editor managed media previews', () => {
+  it('requests a managed video from the toolbar', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        mediaVideoPicker: true,
+        showVideoButton: true,
+      },
+    });
+
+    await wrapper.get('button[aria-label="插入视频"]').trigger('click');
+
+    expect(wrapper.emitted('requestVideo')).toHaveLength(1);
+  });
+
   it('renders a preview URL but emits the persistent media reference', async () => {
     const wrapper = mount(RichTextEditor, {
       props: {

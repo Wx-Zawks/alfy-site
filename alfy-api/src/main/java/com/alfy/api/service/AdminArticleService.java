@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -200,20 +201,23 @@ public class AdminArticleService {
     }
 
     private void replaceInlineMedia(Long articleId, String contentHtml) {
-        LinkedHashSet<Long> mediaIds = extractInlineMediaIds(contentHtml);
-        if (!mediaIds.isEmpty()) {
-            Map<Long, MediaAsset> mediaById = mediaAssetMapper.selectBatchIds(mediaIds).stream()
+        LinkedHashMap<Long, String> mediaTypesById = extractInlineMediaTypes(contentHtml);
+        if (!mediaTypesById.isEmpty()) {
+            Map<Long, MediaAsset> mediaById = mediaAssetMapper.selectBatchIds(mediaTypesById.keySet()).stream()
                     .collect(Collectors.toMap(MediaAsset::getId, media -> media));
-            boolean containsInvalidMedia = mediaById.size() != mediaIds.size()
-                    || mediaById.values().stream().anyMatch(media -> !"IMAGE".equals(media.getMediaType()));
+            boolean containsInvalidMedia = mediaById.size() != mediaTypesById.size()
+                    || mediaTypesById.entrySet().stream().anyMatch(entry -> {
+                        MediaAsset media = mediaById.get(entry.getKey());
+                        return media == null || !entry.getValue().equalsIgnoreCase(media.getMediaType());
+                    });
             if (containsInvalidMedia) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文中包含不存在或非图片类型的素材");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文中包含不存在或类型不匹配的图片/视频素材");
             }
         }
 
         articleMediaMapper.deleteInlineByArticleId(articleId);
         int sortOrder = 0;
-        for (Long mediaId : mediaIds) {
+        for (Long mediaId : mediaTypesById.keySet()) {
             ArticleMedia relation = new ArticleMedia();
             relation.setArticleId(articleId);
             relation.setMediaId(mediaId);
@@ -223,27 +227,33 @@ public class AdminArticleService {
         }
     }
 
-    private LinkedHashSet<Long> extractInlineMediaIds(String contentHtml) {
-        LinkedHashSet<Long> mediaIds = new LinkedHashSet<>();
+    private LinkedHashMap<Long, String> extractInlineMediaTypes(String contentHtml) {
+        LinkedHashMap<Long, String> mediaTypesById = new LinkedHashMap<>();
         if (contentHtml == null || contentHtml.isBlank()) {
-            return mediaIds;
+            return mediaTypesById;
         }
-        for (Element image : Jsoup.parseBodyFragment(contentHtml).select("img[src]")) {
-            String source = image.attr("src").trim();
+        for (Element mediaElement : Jsoup.parseBodyFragment(contentHtml)
+                .select("img[src], source[src], video[src]")) {
+            String source = mediaElement.attr("src").trim();
             if (!source.regionMatches(true, 0, "alfy-media:", 0, "alfy-media:".length())) {
                 continue;
             }
             String rawId = source.substring("alfy-media:".length());
             if (!rawId.matches("[1-9]\\d*")) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文图片素材标识不合法");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文图片或视频素材标识不合法");
             }
             try {
-                mediaIds.add(Long.parseLong(rawId));
+                Long mediaId = Long.parseLong(rawId);
+                String expectedType = "img".equals(mediaElement.tagName()) ? "IMAGE" : "VIDEO";
+                String existingType = mediaTypesById.putIfAbsent(mediaId, expectedType);
+                if (existingType != null && !existingType.equals(expectedType)) {
+                    throw new BusinessException(ErrorCode.BAD_REQUEST, "同一素材不能同时作为图片和视频使用");
+                }
             } catch (NumberFormatException exception) {
-                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文图片素材标识不合法");
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "正文图片或视频素材标识不合法");
             }
         }
-        return mediaIds;
+        return mediaTypesById;
     }
 
     private Article requireArticle(Long id) {

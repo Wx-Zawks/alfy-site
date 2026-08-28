@@ -105,6 +105,7 @@ export interface MediaAsset {
   alt: string;
   createdAt: string;
   id: number;
+  mimeType?: string;
   name: string;
   previewSourceUrl?: string;
   size: string;
