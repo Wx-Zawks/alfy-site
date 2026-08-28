@@ -2907,6 +2907,7 @@ h3 {
 .home-page .news-feature-media {
   position: relative;
   min-height: 0;
+  padding: 0;
   overflow: hidden;
   background: #111;
 }
@@ -2924,30 +2925,41 @@ h3 {
   position: absolute;
   inset: 50% auto auto 50%;
   display: grid;
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 70px;
   place-items: center;
   padding: 0;
-  border: 2px solid rgba(255, 255, 255, .9);
+  border: 1px solid rgba(255, 255, 255, .72);
   border-radius: 50%;
   color: #fff;
-  background: rgba(12, 18, 22, .72);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, .25);
+  background: linear-gradient(135deg, rgba(233, 42, 52, .96), rgba(167, 16, 29, .9));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .38);
   transform: translate(-50%, -50%);
-  transition: background .2s ease, transform .2s ease;
+  transition: box-shadow .2s ease, transform .2s ease;
   cursor: pointer;
+}
+
+.home-page .news-video-play::before {
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 255, 255, .5);
+  border-radius: inherit;
+  content: "";
 }
 
 .home-page .news-video-play:hover,
 .home-page .news-video-play:focus-visible {
-  background: var(--red);
-  transform: translate(-50%, -50%) scale(1.06);
+  box-shadow: 0 16px 38px rgba(160, 10, 20, .4), inset 0 1px 0 rgba(255, 255, 255, .48);
+  transform: translate(-50%, -50%) scale(1.08);
 }
 
-.home-page .news-video-play span {
-  margin-left: 4px;
-  color: inherit;
-  font-size: 1.3rem;
+.home-page .news-video-play svg {
+  position: relative;
+  z-index: 1;
+  width: 25px;
+  height: 25px;
+  margin-left: 3px;
+  fill: currentColor;
 }
 
 .home-page .news-feature > div:not(.news-feature-media) {
@@ -3037,6 +3049,7 @@ h3 {
   height: 500px;
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 12px;
+  border: 0;
   background: transparent;
 }
 

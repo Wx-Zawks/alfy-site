@@ -321,7 +321,11 @@ onBeforeUnmount(() => {
                   type="button"
                   :aria-label="`播放《${featuredArticle.title}》视频`"
                   @click="playingFeaturedVideo = true"
-                ><span aria-hidden="true">▶</span></button>
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                    <path d="M9 7.4a1 1 0 0 1 1.53-.85l6.58 4.6a1.04 1.04 0 0 1 0 1.7l-6.58 4.6A1 1 0 0 1 9 16.6V7.4Z" />
+                  </svg>
+                </button>
               </template>
             </div>
             <div><span>{{ featuredArticle.categoryName }} · {{ featuredArticle.date }}</span><h3><NuxtLink :to="`/news/${featuredArticle.slug}`">{{ featuredArticle.title }}</NuxtLink></h3><NuxtLink :to="`/news/${featuredArticle.slug}`"><b>了解更多 →</b></NuxtLink></div>
