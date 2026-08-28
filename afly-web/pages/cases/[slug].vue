@@ -27,7 +27,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div v-if="item">
+  <div v-if="item" class="content-detail-page">
     <PageHero :eyebrow="item.category" :title="item.title" :highlight="item.location" :description="item.summary" :image="item.image" />
     <section v-if="solutionBlocks.length" class="section section-muted"><div class="container"><div class="section-heading"><div><p class="eyebrow">需求与方案</p><h2>从项目问题反推材料组合</h2></div></div><div class="info-grid"><article v-for="block in solutionBlocks" :key="block.label" class="info-card"><span>{{ block.label }}</span><h3>{{ block.title }}</h3><p>{{ block.content }}</p></article></div></div></section>
     <section v-if="item.contentHtml" class="section"><div class="container"><div class="cms-rich-text article" v-html="item.contentHtml" /></div></section>

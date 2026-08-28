@@ -26,7 +26,7 @@ useHead({
 </script>
 
 <template>
-  <div v-if="article">
+  <div v-if="article" class="content-detail-page">
     <PageHero :eyebrow="`${article.categoryName}${article.date ? ` · ${article.date}` : ''}`" :title="article.title" :description="article.summary" :image="article.image" />
     <section class="section"><article class="container article"><div v-if="article.contentHtml" class="cms-rich-text" v-html="article.contentHtml" /><p v-else class="lead">{{ article.summary }}</p><p v-if="article.sourceUrl" class="article-source"><a :href="article.sourceUrl" target="_blank" rel="noopener noreferrer">查看原文来源 →</a></p></article></section>
   </div>

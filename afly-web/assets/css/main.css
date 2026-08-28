@@ -800,6 +800,16 @@ h3 {
   font-size: clamp(2.65rem, 4.6vw, 4.25rem);
 }
 
+/* Case and news detail pages share the same content axis as the footer. */
+.content-detail-page .page-hero-content {
+  max-width: none;
+  text-align: left;
+}
+
+.content-detail-page .article {
+  max-width: none;
+}
+
 .detail-layout {
   gap: 58px;
 }
