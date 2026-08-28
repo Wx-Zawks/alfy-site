@@ -45,7 +45,9 @@ class HtmlSanitizerTests {
                 """);
 
         assertThat(clean)
-                .contains("<video controls preload=\"metadata\">")
+                .contains("<video")
+                .contains("controls=\"\"")
+                .contains("preload=\"metadata\"")
                 .contains("src=\"alfy-media:3\"")
                 .contains("type=\"video/mp4\"")
                 .contains("活动现场");
