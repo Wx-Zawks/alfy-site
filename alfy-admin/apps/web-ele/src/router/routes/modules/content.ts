@@ -6,6 +6,7 @@ const manager = () => import('#/views/content/manager.vue');
 const homeSections = () => import('#/views/content/home-sections.vue');
 const homeCases = () => import('#/views/content/home-cases.vue');
 const homeNews = () => import('#/views/content/home-news.vue');
+const caseCategories = () => import('#/views/content/case-categories.vue');
 const productCategories = () =>
   import('#/views/content/product-categories.vue');
 const technologyPages = () => import('#/views/content/technology-pages.vue');
@@ -93,6 +94,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Scenes',
         path: '/applications/scenes',
         props: { resource: 'scenes' },
+      },
+      {
+        component: caseCategories,
+        meta: { icon: 'lucide:tags', title: '案例分类' },
+        name: 'CaseCategories',
+        path: '/applications/case-categories',
       },
       {
         component: manager,

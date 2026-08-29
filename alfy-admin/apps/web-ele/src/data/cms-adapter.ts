@@ -156,8 +156,7 @@ export function contentPayload(
     }
     case 'banners': {
       return {
-        desktopMediaId:
-          mediaIdFromUrl(form.cover) ?? undefined,
+        desktopMediaId: mediaIdFromUrl(form.cover) ?? undefined,
         endsAt: raw.endsAt ?? null,
         eyebrow: form.eyebrow || null,
         highlightText: form.highlightTitle || null,
@@ -186,7 +185,10 @@ export function contentPayload(
         location: raw.location ?? null,
         productIds: raw.productIds ?? [],
         resultSummary: raw.resultSummary ?? null,
-        sceneId: form.categoryId,
+        categoryId: form.categoryId,
+        // 保留首个场景给旧版 API/官网，真正的可选关联使用 sceneIds。
+        sceneId: Array.isArray(raw.sceneIds) ? (raw.sceneIds[0] ?? null) : null,
+        sceneIds: raw.sceneIds ?? [],
         seoDescription: common.seoDescription,
         seoKeywords: common.seoKeywords,
         seoTitle: common.seoTitle,

@@ -74,7 +74,7 @@ export function mapCase(
 ): CaseProject {
   return {
     background: 'background' in item ? item.background || '' : '',
-    category: item.scene || '应用案例',
+    category: item.category || '应用案例',
     contentHtml: 'contentHtml' in item ? resolveRichTextHtml(item.contentHtml, resolveMedia) : '',
     customerNeed: 'customerNeed' in item ? item.customerNeed || '' : '',
     id: item.id,

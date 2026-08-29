@@ -30,6 +30,7 @@ public class PublicHomeController {
     @GetMapping("/technologies/{pageKey}") public ApiResponse<TechnologyPageResponse> technologyPage(@org.springframework.web.bind.annotation.PathVariable String pageKey) { return ApiResponse.success(technologyPageService.getPublic(pageKey)); }
     @GetMapping("/home") public ApiResponse<HomeResponse> home() {
         return ApiResponse.success(new HomeResponse(heroSlideService.listPublic(), applicationCaseService.listScenes(),
+                applicationCaseService.listCaseCategories(),
                 applicationCaseService.listCases(null, null, true, 1, 4).getRecords(), technologyPageService.findPublic(),
                 articleService.listHomeArticles(5)));
     }

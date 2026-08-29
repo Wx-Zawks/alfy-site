@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiApplicationScene, ApiCaseListItem, PageResult } from '~/types/api'
+import type { ApiCaseCategory, ApiCaseListItem, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
 import { useContentMapper } from '~/composables/useContentMapper'
 
@@ -9,14 +9,16 @@ const route = useRoute()
 const router = useRouter()
 const { resolveMediaUrl } = useApiClient()
 const { mapCase } = useContentMapper()
-const [{ data: sceneData }, { data: caseData }] = await Promise.all([
-  useApi<ApiApplicationScene[]>('public-application-scenes', '/public/application-scenes'),
-  useApi<PageResult<ApiCaseListItem>>('public-cases', '/public/cases?page=1&size=100')
+const initialScene = typeof route.query.scene === 'string' ? route.query.scene : ''
+const caseEndpoint = `/public/cases?page=1&size=100${initialScene ? `&scene=${encodeURIComponent(initialScene)}` : ''}`
+const [{ data: categoryData }, { data: caseData }] = await Promise.all([
+  useApi<ApiCaseCategory[]>('public-case-categories', '/public/case-categories'),
+  useApi<PageResult<ApiCaseListItem>>(`public-cases-${initialScene || 'all'}`, caseEndpoint)
 ])
 
 const categories = computed(() => [
   { key: 'all', name: '全部案例' },
-  ...(sceneData.value ?? []).map(scene => ({ key: scene.key, name: scene.name }))
+  ...(categoryData.value ?? []).map(category => ({ key: category.slug, name: category.name }))
 ])
 const caseEntries = computed(() => (caseData.value?.records ?? []).map(record => ({
   record,
@@ -27,7 +29,7 @@ const activeCategory = ref(initialCategory)
 const pageSize = 9
 const currentPage = ref(1)
 const filteredCases = computed(() => caseEntries.value
-  .filter(({ record }) => activeCategory.value === 'all' || record.sceneSlug === activeCategory.value)
+  .filter(({ record }) => activeCategory.value === 'all' || record.categorySlug === activeCategory.value)
   .map(({ view }) => view))
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredCases.value.length / pageSize)))
 const paginatedCases = computed(() => {

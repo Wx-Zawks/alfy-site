@@ -810,6 +810,11 @@ h3 {
   max-width: none;
 }
 
+/* Product details use the full shared container, aligned with the footer content. */
+.product-detail-page .article {
+  max-width: none;
+}
+
 .detail-layout {
   gap: 58px;
 }

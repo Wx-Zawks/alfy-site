@@ -3,6 +3,7 @@ package com.alfy.api.controller;
 import com.alfy.api.common.ApiResponse;
 import com.alfy.api.common.PageResponse;
 import com.alfy.api.dto.PublicApplicationSceneResponse;
+import com.alfy.api.dto.PublicCaseCategoryResponse;
 import com.alfy.api.dto.PublicCaseDetailResponse;
 import com.alfy.api.dto.PublicCaseListItemResponse;
 import com.alfy.api.service.PublicApplicationCaseService;
@@ -30,15 +31,21 @@ public class PublicApplicationCaseController {
         return ApiResponse.success(publicApplicationCaseService.listScenes());
     }
 
+    @GetMapping("/case-categories")
+    public ApiResponse<List<PublicCaseCategoryResponse>> listCaseCategories() {
+        return ApiResponse.success(publicApplicationCaseService.listCaseCategories());
+    }
+
     @GetMapping("/cases")
     public ApiResponse<PageResponse<PublicCaseListItemResponse>> listCases(
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) String scene,
             @RequestParam(required = false) String product,
             @RequestParam(required = false) Boolean featured,
             @RequestParam(defaultValue = "1") @Min(1) long page,
             @RequestParam(defaultValue = "12") @Min(1) @Max(100) long size
     ) {
-        Page<PublicCaseListItemResponse> result = publicApplicationCaseService.listCases(scene, product, featured, page, size);
+        Page<PublicCaseListItemResponse> result = publicApplicationCaseService.listCases(category, scene, product, featured, page, size);
         return ApiResponse.success(PageResponse.from(result));
     }
 

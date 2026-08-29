@@ -6,6 +6,7 @@ import java.util.List;
 public record HomeResponse(
         List<HeroSlideResponse> banners,
         List<PublicApplicationSceneResponse> applicationScenes,
+        List<PublicCaseCategoryResponse> caseCategories,
         List<PublicCaseListItemResponse> featuredCases,
         TechnologyPageResponse technologyOverview,
         List<ArticleListItemResponse> featuredArticles

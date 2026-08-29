@@ -41,6 +41,11 @@ class SecurityEndpointTests {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data").isArray());
 
+        mockMvc.perform(get("/api/v1/public/case-categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data").isArray());
+
         mockMvc.perform(get("/api/v1/public/cases"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))

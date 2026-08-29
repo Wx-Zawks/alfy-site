@@ -12,35 +12,17 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@TableName("case_project")
-public class CaseProject {
-
+@TableName("case_category")
+public class CaseCategory {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-    private Long categoryId;
-    /** 兼容旧版本，新的场景关联以 case_scene_rel 为准。 */
-    private Long sceneId;
-    private String title;
+    private String name;
     private String slug;
-    private String clientName;
-    private String location;
     private String summary;
-    private String background;
-    private String customerNeed;
-    private String solution;
-    private String implementation;
-    private String resultSummary;
-    private String contentHtml;
-    private Long coverMediaId;
-    private Integer isFeatured;
     private Integer sortOrder;
-    private String status;
-    private String seoTitle;
-    private String seoDescription;
-    private String seoKeywords;
+    private Integer status;
     @Version
     private Long version;
-    private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic

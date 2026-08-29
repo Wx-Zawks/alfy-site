@@ -1,13 +1,14 @@
 package com.alfy.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
 public record AdminCaseUpsertRequest(
-        @NotNull Long sceneId,
+        Long categoryId,
+        /** 旧版 Admin 兼容字段；新版使用 categoryId 和 sceneIds。 */
+        Long sceneId,
         @NotBlank @Size(max = 255) String title,
         @NotBlank @Size(max = 255) String slug,
         @Size(max = 255) String clientName,
@@ -26,5 +27,6 @@ public record AdminCaseUpsertRequest(
         @Size(max = 500) String seoDescription,
         @Size(max = 500) String seoKeywords,
         List<Long> productIds,
+        List<Long> sceneIds,
         Long version
 ) { }

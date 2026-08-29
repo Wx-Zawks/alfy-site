@@ -32,6 +32,16 @@ export interface ProductCategoryRecord {
   version: number;
 }
 
+export interface CaseCategoryRecord {
+  enabled: boolean;
+  id: number;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  summary?: null | string;
+  version: number;
+}
+
 export interface ArticleCategoryRecord {
   children: ArticleCategoryRecord[];
   code: string;
@@ -422,6 +432,30 @@ export function deleteProductCategory(id: number) {
   return requestClient.delete(`/admin/product-categories/${id}`);
 }
 
+export async function listCaseCategories() {
+  const result = await requestClient.get<PageResult<CaseCategoryRecord>>(
+    '/admin/case-categories',
+    { params: { page: 1, size: 100 } },
+  );
+  return result.records;
+}
+
+export function saveCaseCategory(
+  id: null | number,
+  payload: Record<string, unknown>,
+) {
+  return id
+    ? requestClient.put<CaseCategoryRecord>(
+        `/admin/case-categories/${id}`,
+        payload,
+      )
+    : requestClient.post<CaseCategoryRecord>('/admin/case-categories', payload);
+}
+
+export function deleteCaseCategory(id: number) {
+  return requestClient.delete(`/admin/case-categories/${id}`);
+}
+
 export async function listArticleCategories() {
   return requestClient.get<ArticleCategoryRecord[]>(
     '/public/article-categories',
@@ -449,7 +483,8 @@ export async function listMedia(
   keyword = '',
   options: { page?: number; size?: number } = {},
 ) {
-  return (await listMediaPage(keyword, options)).records;
+  const page = await listMediaPage(keyword, options);
+  return page.records;
 }
 
 export function uploadMedia(file: File, altText = '') {

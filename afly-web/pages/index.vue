@@ -21,6 +21,7 @@ const sectionMap = computed(() => new Map((sectionData.value ?? []).map(section 
 const homeSection = (key: string) => sectionMap.value.get(key)
 const sectionEnabled = (key: string) => homeSection(key)?.enabled ?? true
 const applicationScenes = computed(() => (home.value?.applicationScenes ?? []).map(item => mapScene(item, resolveMediaUrl)))
+const caseCategories = computed(() => home.value?.caseCategories ?? [])
 const applicationScenesPending = computed(() => homePending.value)
 const caseEntries = computed(() => (caseData.value?.records ?? []).map(record => ({
   record,
@@ -33,9 +34,9 @@ const articles = computed(() => (home.value?.featuredArticles ?? [])
     ...mapArticle(item, resolveMediaUrl),
     homeSlot: item.homeSlot
   })))
-const activeCaseSceneKey = ref('')
-const filteredCaseEntries = computed(() => activeCaseSceneKey.value
-  ? caseEntries.value.filter(({ record }) => record.sceneSlug === activeCaseSceneKey.value)
+const activeCaseCategoryKey = ref('')
+const filteredCaseEntries = computed(() => activeCaseCategoryKey.value
+  ? caseEntries.value.filter(({ record }) => record.categorySlug === activeCaseCategoryKey.value)
   : caseEntries.value)
 const featuredCaseEntry = computed(() =>
   filteredCaseEntries.value.find(({ record }) => record.featured) || filteredCaseEntries.value[0]
@@ -91,10 +92,10 @@ watch(applicationScenes, (items) => {
   if (!items.some(item => item.key === activeSceneKey.value)) activeSceneKey.value = items[0]?.key || ''
 }, { immediate: true })
 
-watch(caseEntries, (entries) => {
-  if (entries.some(({ record }) => record.sceneSlug === activeCaseSceneKey.value)) return
-  activeCaseSceneKey.value = entries.find(({ record }) => record.featured)?.record.sceneSlug
-    || entries[0]?.record.sceneSlug
+watch([caseCategories, caseEntries], ([categories, entries]) => {
+  if (categories.some(category => category.slug === activeCaseCategoryKey.value)) return
+  activeCaseCategoryKey.value = entries.find(({ record }) => record.featured)?.record.categorySlug
+    || categories[0]?.slug
     || ''
 }, { immediate: true })
 
@@ -209,7 +210,7 @@ onBeforeUnmount(() => {
         </div>
         <div v-if="applicationScenes.length" class="application-stage">
           <div ref="sceneRail" class="application-rail" aria-label="应用场景横向列表">
-            <NuxtLink v-for="scene in applicationScenes" :key="scene.key" class="application-card" :data-scene-key="scene.key" :to="`/applications?category=${scene.key}`">
+            <NuxtLink v-for="scene in applicationScenes" :key="scene.key" class="application-card" :data-scene-key="scene.key" :to="`/applications?scene=${scene.key}`">
               <img :src="scene.image" :alt="scene.name" decoding="async" loading="lazy">
               <div class="application-card-copy">
                 <h3>{{ scene.slogan }}</h3>
@@ -236,11 +237,11 @@ onBeforeUnmount(() => {
       <div class="container">
         <div class="section-heading case-heading">
           <div><p class="eyebrow">{{ homeSection('cases')?.eyebrow || '典型案例' }}</p><h2>{{ homeSection('cases')?.title || '用真实项目建立信任' }}</h2></div>
-          <div v-if="applicationScenes.length" class="application-category-bar case-category-bar" aria-label="典型案例场景筛选">
+          <div v-if="caseCategories.length" class="application-category-bar case-category-bar" aria-label="典型案例分类筛选">
             <div class="application-category-scroll">
-              <button v-for="scene in applicationScenes" :key="scene.key" type="button" :class="{ active: activeCaseSceneKey === scene.key }" :aria-pressed="activeCaseSceneKey === scene.key" @click="activeCaseSceneKey = scene.key">{{ scene.name }}</button>
+              <button v-for="category in caseCategories" :key="category.slug" type="button" :class="{ active: activeCaseCategoryKey === category.slug }" :aria-pressed="activeCaseCategoryKey === category.slug" @click="activeCaseCategoryKey = category.slug">{{ category.name }}</button>
             </div>
-            <NuxtLink :to="`/applications?category=${activeCaseSceneKey}`">查看更多 <ArrowUpRightIcon /></NuxtLink>
+            <NuxtLink :to="`/applications?category=${activeCaseCategoryKey}`">查看更多 <ArrowUpRightIcon /></NuxtLink>
           </div>
         </div>
         <div v-if="featuredCase" class="case-prototype-feature">

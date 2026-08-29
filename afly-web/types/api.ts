@@ -32,7 +32,17 @@ export interface ApiApplicationScene {
   summary?: null | string
 }
 
+export interface ApiCaseCategory {
+  id: number
+  name: string
+  slug: string
+  sortOrder?: null | number
+  summary?: null | string
+}
+
 export interface ApiCaseListItem {
+  category?: null | string
+  categorySlug?: null | string
   coverImageUrl?: null | string
   featured: boolean
   id: number
@@ -166,6 +176,7 @@ export interface ApiTechnologyBlock {
 export interface ApiHome {
   applicationScenes: ApiApplicationScene[]
   banners: ApiHeroSlide[]
+  caseCategories: ApiCaseCategory[]
   featuredArticles: ApiArticleListItem[]
   featuredCases: ApiCaseListItem[]
   technologyOverview?: ApiTechnologyPage | null

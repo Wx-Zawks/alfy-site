@@ -41,6 +41,7 @@ import {
   getContent,
   getMediaPreviewUrl,
   listArticleCategories,
+  listCaseCategories,
   listContent,
   listMedia,
   listProductCategories,
@@ -66,9 +67,9 @@ const loading = ref(false);
 const saving = ref(false);
 const referenceOptions = ref<Array<{ id: number; name: string }>>([]);
 const relatedOptions = ref<Array<{ id: number; name: string }>>([]);
+const sceneOptions = ref<Array<{ id: number; name: string }>>([]);
 const originalStatus = ref<ContentStatus>('draft');
 const featuresText = ref('');
-const specificationsText = ref('');
 const capabilityRowsText = ref('');
 const pillarsText = ref('');
 const contentEditorRef = ref<{ insertHtml: (html: string) => void }>();
@@ -400,7 +401,7 @@ async function uploadInlineImage(
 async function processInlineImageUploadQueue() {
   const files = inlineImageUploadQueue.value
     .splice(0)
-    .filter(validateImageFile);
+    .filter((file) => validateImageFile(file));
   if (files.length === 0) return;
   inlineImageUploading.value = true;
   try {
@@ -543,7 +544,7 @@ async function uploadInlineVideo(
 async function processInlineVideoUploadQueue() {
   const files = inlineVideoUploadQueue.value
     .splice(0)
-    .filter(validateVideoFile);
+    .filter((file) => validateVideoFile(file));
   if (files.length === 0) return;
   inlineVideoUploading.value = true;
   try {
@@ -605,6 +606,7 @@ function openContentPreview() {
 async function loadReferences() {
   referenceOptions.value = [];
   relatedOptions.value = [];
+  sceneOptions.value = [];
   switch (props.resource) {
     case 'articles': {
       const flatten = (
@@ -620,15 +622,20 @@ async function loadReferences() {
       break;
     }
     case 'cases': {
-      const [values, products] = await Promise.all([
-        listContent('scenes'),
+      const [values, products, scenes] = await Promise.all([
+        listCaseCategories(),
         listContent('products'),
+        listContent('scenes'),
       ]);
       referenceOptions.value = values.map((item) => ({
         id: Number(item.id),
-        name: String(item.name || item.title || item.slug),
+        name: item.name,
       }));
       relatedOptions.value = products.map((item) => ({
+        id: Number(item.id),
+        name: String(item.name || item.title || item.slug),
+      }));
+      sceneOptions.value = scenes.map((item) => ({
         id: Number(item.id),
         name: String(item.name || item.title || item.slug),
       }));
@@ -777,7 +784,6 @@ function applyReference() {
 
 function resetAdvancedFields() {
   featuresText.value = '';
-  specificationsText.value = '';
   capabilityRowsText.value = '';
   pillarsText.value = '';
 }
@@ -786,9 +792,6 @@ function loadAdvancedFields(item: ContentItem) {
   const raw = item.raw || {};
   featuresText.value = Array.isArray(raw.features)
     ? raw.features.join('\n')
-    : '';
-  specificationsText.value = raw.specifications
-    ? JSON.stringify(raw.specifications, null, 2)
     : '';
   capabilityRowsText.value = raw.capabilityRows
     ? JSON.stringify(raw.capabilityRows, null, 2)
@@ -804,11 +807,6 @@ function applyAdvancedFields() {
       .filter(Boolean);
   }
   try {
-    if (props.resource === 'products') {
-      rawForm.value.specifications = specificationsText.value.trim()
-        ? JSON.parse(specificationsText.value)
-        : null;
-    }
     if (props.resource === 'technologies') {
       rawForm.value.capabilityRows = capabilityRowsText.value.trim()
         ? JSON.parse(capabilityRowsText.value)
@@ -1139,7 +1137,9 @@ function handleHomePinnedChange() {
             </ElFormItem>
           </ElCol>
           <ElCol :md="8" :xs="24">
-            <ElFormItem label="分类">
+            <ElFormItem
+              :label="props.resource === 'cases' ? '案例分类' : '分类'"
+            >
               <ElSelect
                 v-if="props.resource === 'articles'"
                 v-model="form.categoryIds"
@@ -1208,14 +1208,14 @@ function handleHomePinnedChange() {
               <div class="cover-image-field">
                 <ElSelect
                   v-model="form.cover"
+                  :loading="mediaOptionsLoading"
+                  :remote-method="loadMediaOptions"
                   allow-create
                   class="cover-image-select"
                   clearable
                   filterable
-                  :loading="mediaOptionsLoading"
                   placeholder="从素材库选择或粘贴图片地址"
                   remote
-                  :remote-method="loadMediaOptions"
                   @change="ensureSelectedMediaPreview"
                   @visible-change="handleMediaSelector"
                 >
@@ -1248,13 +1248,13 @@ function handleHomePinnedChange() {
             <ElFormItem label="手机端背景图片">
               <ElSelect
                 v-model="form.mobileCover"
+                :loading="mediaOptionsLoading"
+                :remote-method="loadMediaOptions"
                 allow-create
                 clearable
                 filterable
-                :loading="mediaOptionsLoading"
                 placeholder="不设置时使用 PC 端图片"
                 remote
-                :remote-method="loadMediaOptions"
                 style="width: 100%"
                 @change="ensureSelectedMediaPreview"
                 @visible-change="handleMediaSelector"
@@ -1298,15 +1298,6 @@ function handleHomePinnedChange() {
               </ElFormItem>
             </ElCol>
             <ElCol :span="24">
-              <ElFormItem label="产品参数 JSON（官网独立展示模块）">
-                <ElInput
-                  v-model="specificationsText"
-                  :rows="6"
-                  type="textarea"
-                />
-              </ElFormItem>
-            </ElCol>
-            <ElCol :span="24">
               <ElFormItem label="关联应用场景" required>
                 <ElSelect
                   v-model="rawForm.sceneIds"
@@ -1347,6 +1338,24 @@ function handleHomePinnedChange() {
             </ElCol>
           </template>
           <template v-if="props.resource === 'cases'">
+            <ElCol :span="24">
+              <ElFormItem label="关联应用场景（可选）">
+                <ElSelect
+                  v-model="rawForm.sceneIds"
+                  clearable
+                  multiple
+                  placeholder="案例可以不关联应用场景，也可以关联多个"
+                  style="width: 100%"
+                >
+                  <ElOption
+                    v-for="item in sceneOptions"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                  />
+                </ElSelect>
+              </ElFormItem>
+            </ElCol>
             <ElCol :span="24">
               <ElFormItem label="关联产品" required>
                 <ElSelect
@@ -1564,12 +1573,12 @@ function handleHomePinnedChange() {
 
     <ElDialog
       v-model="inlineImageDialogVisible"
-      append-to-body
       :close-on-click-modal="false"
+      append-to-body
       title="插入正文图片"
       width="860px"
     >
-      <div v-loading="mediaOptionsLoading" class="inline-image-toolbar">
+      <div class="inline-image-toolbar" v-loading="mediaOptionsLoading">
         <p>选择素材后可修改图片说明，图片将插入正文当前光标位置。</p>
         <ElUpload
           :auto-upload="false"
@@ -1637,12 +1646,12 @@ function handleHomePinnedChange() {
 
     <ElDialog
       v-model="inlineVideoDialogVisible"
-      append-to-body
       :close-on-click-modal="false"
+      append-to-body
       title="插入正文视频"
       width="760px"
     >
-      <div v-loading="mediaOptionsLoading" class="inline-image-toolbar">
+      <div class="inline-image-toolbar" v-loading="mediaOptionsLoading">
         <p>选择素材库视频，或上传新视频后插入正文当前光标位置。</p>
         <ElUpload
           :auto-upload="false"
@@ -1706,8 +1715,8 @@ function handleHomePinnedChange() {
 
     <ElDialog
       v-model="contentPreviewVisible"
-      append-to-body
       :close-on-click-modal="false"
+      append-to-body
       title="官网正文预览"
       width="900px"
     >

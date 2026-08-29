@@ -16,12 +16,9 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { listContent, saveContent } from '#/api';
+import { listCaseCategories, listContent, saveContent } from '#/api';
 import { cmsState } from '#/data/cms';
-import {
-  contentFromBackend,
-  contentPayload,
-} from '#/data/cms-adapter';
+import { contentFromBackend, contentPayload } from '#/data/cms-adapter';
 
 const sortContainer = ref<HTMLElement | null>(null);
 const loading = ref(false);
@@ -62,15 +59,12 @@ const previewCards = computed(() =>
 async function load() {
   loading.value = true;
   try {
-    const [cases, scenes] = await Promise.all([
+    const [cases, categories] = await Promise.all([
       listContent('cases'),
-      listContent('scenes'),
+      listCaseCategories(),
     ]);
     const names = new Map(
-      scenes.map((item) => [
-        Number(item.id),
-        String(item.name || item.title || item.slug),
-      ]),
+      categories.map((item) => [Number(item.id), item.name]),
     );
     const mapped = cases.map((item) =>
       contentFromBackend('cases', item, names),

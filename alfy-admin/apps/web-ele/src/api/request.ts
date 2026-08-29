@@ -19,7 +19,8 @@ import { useAuthStore } from '#/store';
 import { clearRefreshToken, refreshTokenApi } from './core';
 
 // 使用标准 Vite 环境变量，部署时由 .env.production 或服务器构建参数提供。
-const { apiURL } = useAppConfig(import.meta.env, false);
+const { apiURL: configuredApiURL } = useAppConfig(import.meta.env, false);
+const apiURL = configuredApiURL || '/api/v1';
 
 function apiErrorPayload(error: unknown): unknown {
   const value = error as {

@@ -10,7 +10,7 @@ export const overridesPreferences = defineOverridesPreferences({
   app: {
     accessMode: 'frontend',
     enableRefreshToken: true,
-    name: import.meta.env.VITE_APP_TITLE,
+    name: import.meta.env.VITE_APP_TITLE || '奥飞新材管理后台',
   },
   logo: {
     enable: true,

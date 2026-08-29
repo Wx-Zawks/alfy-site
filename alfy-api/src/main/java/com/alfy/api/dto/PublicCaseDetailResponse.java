@@ -6,6 +6,8 @@ public record PublicCaseDetailResponse(
         Long id,
         String slug,
         String title,
+        String category,
+        String categorySlug,
         String scene,
         String sceneSlug,
         String location,
