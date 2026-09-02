@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ApiTechnologyPage } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
+import { normalizeDocumentTitle } from '~/composables/useContentMapper'
 
 interface TechnologyBlock {
   description: string
@@ -57,12 +58,8 @@ const pillars = computed(() => normalizeBlocks(page.value?.pillars))
 const fallback = pageDefaults[slug]!
 const heroImage = computed(() => resolveMediaUrl(page.value?.heroImageUrl, fallback.image))
 
-function documentTitle(value: string | null | undefined, fallbackTitle: string) {
-  return (value || fallbackTitle).replace(/\s*(?:｜|\|)\s*奥飞新材$/, '')
-}
-
 useSeoMeta({
-  title: () => documentTitle(page.value?.seoTitle || page.value?.title, fallback.label),
+  title: () => normalizeDocumentTitle(page.value?.seoTitle || page.value?.title, fallback.label),
   description: () => page.value?.seoDescription || page.value?.summary || '',
   keywords: () => page.value?.seoKeywords || '奥飞新材,气凝胶'
 })
@@ -71,6 +68,7 @@ useSeoMeta({
 <template>
   <div v-if="page" class="technology-detail-page">
     <PageHero
+      class="brief-hero technology-hero"
       :eyebrow="page.eyebrow || fallback.label"
       :title="page.title"
       :highlight="page.highlightText || ''"

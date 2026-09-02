@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { ApiCaseDetail } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapCase } from '~/composables/useContentMapper'
 
 const route = useRoute()
 const { resolveMediaUrl } = useApiClient()
-const { mapCase } = useContentMapper()
 const { data } = await useApi<ApiCaseDetail>(
   `public-case-${String(route.params.slug)}`,
   `/public/cases/${encodeURIComponent(String(route.params.slug))}`,

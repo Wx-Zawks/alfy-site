@@ -1,33 +1,28 @@
 <script setup lang="ts">
-import type { ApiCaseListItem, ApiHome, ApiHomeSection, PageResult } from '~/types/api'
+import type { ApiHome, ApiHomeSection } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapArticle, mapCase, mapScene } from '~/composables/useContentMapper'
 
 useSeoMeta({ title: '新一代气凝胶及其复合产品技术', description: '奥飞新材面向建筑节能、工业节能等场景提供气凝胶材料、复合产品与应用方案。' })
 
 const { open } = useInquiryDialog()
 const { resolveMediaUrl } = useApiClient()
-const { mapArticle, mapCase, mapScene } = useContentMapper()
-const [homeResponse, sectionResponse, caseResponse] = await Promise.all([
+const [homeResponse, sectionResponse] = await Promise.all([
   useApi<ApiHome>('public-home', '/public/home'),
-  useApi<ApiHomeSection[]>('public-home-sections', '/public/home-sections'),
-  useApi<PageResult<ApiCaseListItem>>('public-home-cases', '/public/cases?page=1&size=100')
+  useApi<ApiHomeSection[]>('public-home-sections', '/public/home-sections')
 ])
 const { data: home, pending: homePending } = homeResponse
 const { data: sectionData } = sectionResponse
-const { data: caseData, pending: casePending } = caseResponse
 
 const sectionMap = computed(() => new Map((sectionData.value ?? []).map(section => [section.sectionKey, section])))
 const homeSection = (key: string) => sectionMap.value.get(key)
 const sectionEnabled = (key: string) => homeSection(key)?.enabled ?? true
 const applicationScenes = computed(() => (home.value?.applicationScenes ?? []).map(item => mapScene(item, resolveMediaUrl)))
 const caseCategories = computed(() => home.value?.caseCategories ?? [])
-const applicationScenesPending = computed(() => homePending.value)
-const caseEntries = computed(() => (caseData.value?.records ?? []).map(record => ({
+const caseEntries = computed(() => (home.value?.featuredCases ?? []).map(record => ({
   record,
   view: mapCase(record, resolveMediaUrl)
 })))
-const casesPending = computed(() => casePending.value)
 const articles = computed(() => (home.value?.featuredArticles ?? [])
   .slice(0, 5)
   .map(item => ({
@@ -225,7 +220,7 @@ onBeforeUnmount(() => {
             <button type="button" aria-label="向后浏览应用场景" :disabled="activeSceneKey === applicationScenes[applicationScenes.length - 1]?.key" @click="scrollScenes(1)">›</button>
           </div>
         </div>
-        <div v-else-if="applicationScenesPending" class="content-loading" role="status" aria-live="polite">
+        <div v-else-if="homePending" class="content-loading" role="status" aria-live="polite">
           <span /><span /><span />
           正在加载应用场景…
         </div>
@@ -253,7 +248,7 @@ onBeforeUnmount(() => {
             <NuxtLink class="button button-outline" :to="`/cases/${featuredCase.slug}`">查看案例 →</NuxtLink>
           </article>
         </div>
-        <div v-else-if="casesPending" class="content-loading" role="status" aria-live="polite">
+        <div v-else-if="homePending" class="content-loading" role="status" aria-live="polite">
           <span /><span /><span />
           正在加载推荐案例…
         </div>

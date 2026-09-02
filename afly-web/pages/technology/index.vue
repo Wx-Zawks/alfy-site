@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import type { ApiProductListItem, ApiTechnologyPage, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapProduct, normalizeDocumentTitle } from '~/composables/useContentMapper'
 
 const { resolveMediaUrl } = useApiClient()
-const { mapProduct } = useContentMapper()
 const [
   { data: technology },
   { data: productData }
@@ -13,12 +12,8 @@ const [
   useApi<PageResult<ApiProductListItem>>('public-products', '/public/products?page=1&size=100')
 ])
 
-function documentTitle(value: string | null | undefined, fallback: string) {
-  return (value || fallback).replace(/\s*(?:｜|\|)\s*奥飞新材$/, '')
-}
-
 useSeoMeta({
-  title: () => documentTitle(technology.value?.seoTitle || technology.value?.title, '核心技术'),
+  title: () => normalizeDocumentTitle(technology.value?.seoTitle || technology.value?.title, '核心技术'),
   description: () => technology.value?.seoDescription || '奥飞新材气凝胶双纳米结构、常压干燥与复合材料制备技术。',
   keywords: () => technology.value?.seoKeywords || '奥飞新材,气凝胶,核心技术'
 })

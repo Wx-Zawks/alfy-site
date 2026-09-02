@@ -10,7 +10,6 @@ async function runDepcheck() {
     packages.map(async (pkg) => {
       if (
         [
-          '@vben/backend-mock',
           '@vben/commitlint-config',
           '@vben/eslint-config',
           '@vben/lint-staged-config',
@@ -19,7 +18,6 @@ async function runDepcheck() {
           '@vben/stylelint-config',
           '@vben/tailwind-config',
           '@vben/tsconfig',
-          '@vben/vite-config',
           '@vben/vite-config',
           '@vben/vsh',
         ].includes(pkg.packageJson.name)

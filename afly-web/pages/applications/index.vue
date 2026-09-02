@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import type { ApiCaseCategory, ApiCaseListItem, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapCase } from '~/composables/useContentMapper'
 
 useSeoMeta({ title: '应用与案例', description: '奥飞新材建筑节能、工业节能、石油石化等领域的典型应用案例。' })
 
 const route = useRoute()
 const router = useRouter()
 const { resolveMediaUrl } = useApiClient()
-const { mapCase } = useContentMapper()
 const initialScene = typeof route.query.scene === 'string' ? route.query.scene : ''
 const caseEndpoint = `/public/cases?page=1&size=100${initialScene ? `&scene=${encodeURIComponent(initialScene)}` : ''}`
 const [{ data: categoryData }, { data: caseData }] = await Promise.all([
@@ -27,39 +26,26 @@ const caseEntries = computed(() => (caseData.value?.records ?? []).map(record =>
 const initialCategory = typeof route.query.category === 'string' ? route.query.category : 'all'
 const activeCategory = ref(initialCategory)
 const pageSize = 9
-const currentPage = ref(1)
 const filteredCases = computed(() => caseEntries.value
   .filter(({ record }) => activeCategory.value === 'all' || record.categorySlug === activeCategory.value)
   .map(({ view }) => view))
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredCases.value.length / pageSize)))
-const paginatedCases = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filteredCases.value.slice(start, start + pageSize)
-})
-const paginationItems = computed<(number | string)[]>(() => {
-  if (totalPages.value <= 7) return Array.from({ length: totalPages.value }, (_, index) => index + 1)
-
-  const pages = [1, currentPage.value - 1, currentPage.value, currentPage.value + 1, totalPages.value]
-    .filter(page => page >= 1 && page <= totalPages.value)
-  const uniquePages = [...new Set(pages)].sort((left, right) => left - right)
-
-  return uniquePages.flatMap((page, index) => {
-    const previous = uniquePages[index - 1]
-    return previous && page - previous > 1 ? [`ellipsis-${previous}`, page] : [page]
-  })
-})
+const {
+  changePage: setPage,
+  currentPage,
+  paginatedItems: paginatedCases,
+  paginationItems,
+  resetPage,
+  totalPages
+} = useClientPagination(filteredCases, pageSize)
 
 function changeCategory(key: string) {
   activeCategory.value = key
-  currentPage.value = 1
+  resetPage()
   router.replace({ query: key === 'all' ? {} : { category: key } })
 }
 
 function changePage(page: number) {
-  const nextPage = Math.min(Math.max(page, 1), totalPages.value)
-  if (nextPage === currentPage.value) return
-
-  currentPage.value = nextPage
+  if (!setPage(page)) return
   nextTick(() => document.querySelector('.case-filter-row')?.scrollIntoView({
     behavior: 'smooth',
     block: 'start'
@@ -68,13 +54,9 @@ function changePage(page: number) {
 
 watch([() => route.query.category, categories], ([category]) => {
   const next = typeof category === 'string' && categories.value.some(item => item.key === category) ? category : 'all'
-  if (activeCategory.value !== next) currentPage.value = 1
+  if (activeCategory.value !== next) resetPage()
   activeCategory.value = next
 }, { immediate: true })
-
-watch(totalPages, total => {
-  if (currentPage.value > total) currentPage.value = total
-})
 </script>
 
 <template>

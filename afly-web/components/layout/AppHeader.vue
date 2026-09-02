@@ -6,6 +6,7 @@ const route = useRoute()
 const { open } = useInquiryDialog()
 const { resolveMediaUrl } = useApiClient()
 const menuOpen = ref(false)
+const isScrolled = ref(false)
 const transparentHeader = computed(() => route.path === '/')
 const overlaySections = ['/applications', '/cases', '/cooperation', '/news', '/technology']
 const overlayHeader = computed(() => transparentHeader.value
@@ -35,12 +36,23 @@ const navItems = computed(() => {
 const logoUrl = computed(() => resolveMediaUrl(site.value?.logoUrl, '/images/alfy-logo.png'))
 const companyName = computed(() => site.value?.companyName || '奥飞新材')
 const isActive = (to: string) => to === '/' ? route.path === '/' : route.path.startsWith(to)
+const updateScrollState = () => { isScrolled.value = window.scrollY > 16 }
 
-watch(() => route.fullPath, () => { menuOpen.value = false })
+onMounted(() => {
+  updateScrollState()
+  window.addEventListener('scroll', updateScrollState, { passive: true })
+})
+
+onBeforeUnmount(() => window.removeEventListener('scroll', updateScrollState))
+
+watch(() => route.fullPath, () => {
+  menuOpen.value = false
+  nextTick(updateScrollState)
+})
 </script>
 
 <template>
-  <header class="site-header" :class="{ 'is-overlay': overlayHeader, 'is-open': menuOpen, 'is-transparent': transparentHeader }">
+  <header class="site-header" :class="{ 'is-overlay': overlayHeader, 'is-open': menuOpen, 'is-transparent': transparentHeader, 'is-scrolled': isScrolled }">
     <NuxtLink class="brand" to="/" :aria-label="`${companyName}首页`">
       <span class="brand-glyph" aria-hidden="true"><img :src="logoUrl" alt=""></span>
       <span class="brand-word">ALFY</span>

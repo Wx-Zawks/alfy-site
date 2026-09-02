@@ -25,7 +25,7 @@ export function resolveRichTextHtml(value: null | string | undefined, resolveMed
   })
 }
 
-export function formatContentDate(value?: null | string) {
+function formatContentDate(value?: null | string) {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value.slice(0, 10)
@@ -36,6 +36,9 @@ export function formatContentDate(value?: null | string) {
   })
     .format(date)
     .replaceAll('/', '-')
+}
+export function normalizeDocumentTitle(value: null | string | undefined, fallback: string) {
+  return (value || fallback).replace(/\s*(?:｜|\|)\s*奥飞新材$/, '')
 }
 
 export function mapProduct(
@@ -113,8 +116,4 @@ export function mapArticle(
     title: item.title,
     videoUrl: resolveMedia(item.videoUrl || videoMedia?.url, '') || undefined
   }
-}
-
-export function useContentMapper() {
-  return { formatContentDate, mapArticle, mapCase, mapProduct, mapScene }
 }

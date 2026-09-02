@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { ApiArticleCategory, ApiArticleListItem, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapArticle } from '~/composables/useContentMapper'
 
 useSeoMeta({ title: '新闻资讯', description: '奥飞新材公司新闻、行业新闻与技术动态。' })
 const { resolveMediaUrl } = useApiClient()
-const { mapArticle } = useContentMapper()
 const [{ data: categoryData }, { data: articleData }] = await Promise.all([
   useApi<ApiArticleCategory[]>('public-article-categories', '/public/article-categories'),
   useApi<PageResult<ApiArticleListItem>>('public-articles', '/public/articles?page=1&size=100')
@@ -52,8 +51,16 @@ watch(filtered, () => {
 </script>
 
 <template>
-  <div>
-    <PageHero page-key="news" eyebrow="Newsroom" title="关注气凝胶产业" highlight="最新进展" description="记录科研、产品、项目与产业合作的重要节点。" image="/images/launch-2.jpg" />
+  <div class="brief-page news-page">
+    <PageHero
+      class="brief-hero"
+      page-key="news"
+      eyebrow="Newsroom"
+      title="关注气凝胶产业"
+      highlight="最新进展"
+      description="记录科研、产品、项目与产业合作的重要节点。"
+      image="/images/launch-2.jpg"
+    />
 
     <nav class="technology-subnav news-category-nav" aria-label="新闻分类">
       <div class="container">

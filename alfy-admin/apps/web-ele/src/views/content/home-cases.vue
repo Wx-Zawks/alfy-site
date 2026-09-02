@@ -82,10 +82,6 @@ async function persist(item: ContentItem) {
   await saveContent('cases', item.id, contentPayload('cases', item));
 }
 
-function previewUrl(value: string) {
-  return value;
-}
-
 function statusLabel(status: ContentItem['status']) {
   if (status === 'published') return '已发布';
   if (status === 'draft') return '草稿';
@@ -212,7 +208,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
             <ElImage
               v-if="pinnedCase.cover"
               :preview-src-list="[pinnedCase.cover]"
-              :src="previewUrl(pinnedCase.cover)"
+              :src="pinnedCase.cover"
               fit="cover"
             />
             <div v-else class="cover-placeholder">
@@ -269,7 +265,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
               </button>
               <ElImage
                 v-if="item.cover"
-                :src="previewUrl(item.cover)"
+                :src="item.cover"
                 fit="cover"
               />
               <div v-else class="cover-placeholder">
@@ -325,7 +321,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
           <article class="feature-preview">
             <ElImage
               v-if="previewPinned.cover"
-              :src="previewUrl(previewPinned.cover)"
+                :src="previewPinned.cover"
               fit="cover"
             />
             <div class="preview-overlay">
@@ -338,7 +334,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
             <article v-for="item in previewCards" :key="item.id">
               <ElImage
                 v-if="item.cover"
-                :src="previewUrl(item.cover)"
+                  :src="item.cover"
                 fit="cover"
               />
               <div>

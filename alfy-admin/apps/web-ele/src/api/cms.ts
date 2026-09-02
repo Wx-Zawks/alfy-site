@@ -483,8 +483,7 @@ export async function listMedia(
   keyword = '',
   options: { page?: number; size?: number } = {},
 ) {
-  const page = await listMediaPage(keyword, options);
-  return page.records;
+  return (await listMediaPage(keyword, options)).records;
 }
 
 export function uploadMedia(file: File, altText = '') {

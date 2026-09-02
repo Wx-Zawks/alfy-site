@@ -24,10 +24,14 @@ const heroRequest = props.pageKey
   : null
 
 const hero = computed(() => heroRequest?.data.value ?? null)
-const eyebrow = computed(() => hero.value?.eyebrow || props.eyebrow)
-const title = computed(() => hero.value?.title || props.title)
-const highlight = computed(() => hero.value?.highlightText || props.highlight)
-const description = computed(() => hero.value?.summary || props.description)
+// Props are offline/API-error fallbacks only. Once CMS data exists, nullable fields
+// must stay empty so content deleted in the admin does not reappear from defaults.
+const eyebrow = computed(() => hero.value ? (hero.value.eyebrow ?? '') : props.eyebrow)
+const title = computed(() => hero.value ? hero.value.title : props.title)
+const highlight = computed(() =>
+  hero.value ? (hero.value.highlightText ?? '') : props.highlight)
+const description = computed(() =>
+  hero.value ? (hero.value.summary ?? '') : props.description)
 const image = computed(() => resolveMediaUrl(hero.value?.backgroundImageUrl, props.image))
 const mobileImage = computed(() => resolveMediaUrl(hero.value?.mobileBackgroundImageUrl, image.value))
 const actions = computed(() => [hero.value?.primaryAction, hero.value?.secondaryAction]

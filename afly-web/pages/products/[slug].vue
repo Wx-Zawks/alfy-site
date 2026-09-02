@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { ApiProductDetail } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapProduct } from '~/composables/useContentMapper'
 
 const route = useRoute()
 const { resolveMediaUrl } = useApiClient()
-const { mapProduct } = useContentMapper()
 const { data } = await useApi<ApiProductDetail>(
   `public-product-${String(route.params.slug)}`,
   `/public/products/${encodeURIComponent(String(route.params.slug))}`,

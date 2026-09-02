@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { ApiArticleDetail } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
-import { useContentMapper } from '~/composables/useContentMapper'
+import { mapArticle } from '~/composables/useContentMapper'
 
 const route = useRoute()
 const { resolveMediaUrl } = useApiClient()
-const { mapArticle } = useContentMapper()
 const { data } = await useApi<ApiArticleDetail>(
   `public-article-${String(route.params.slug)}`,
   `/public/articles/${encodeURIComponent(String(route.params.slug))}`,

@@ -238,18 +238,6 @@ export interface ApiPageHero {
   title: string
 }
 
-export interface ApiPartner {
-  category?: null | string
-  featured: boolean
-  id: number
-  logoUrl?: null | string
-  name: string
-  slug: string
-  sortOrder?: null | number
-  summary?: null | string
-  websiteUrl?: null | string
-}
-
 export interface ApiContentPage {
   category?: null | string
   contentData?: null | ApiCooperationContentData

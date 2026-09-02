@@ -401,7 +401,7 @@ async function uploadInlineImage(
 async function processInlineImageUploadQueue() {
   const files = inlineImageUploadQueue.value
     .splice(0)
-    .filter((file) => validateImageFile(file));
+    .filter(validateImageFile);
   if (files.length === 0) return;
   inlineImageUploading.value = true;
   try {
@@ -544,7 +544,7 @@ async function uploadInlineVideo(
 async function processInlineVideoUploadQueue() {
   const files = inlineVideoUploadQueue.value
     .splice(0)
-    .filter((file) => validateVideoFile(file));
+    .filter(validateVideoFile);
   if (files.length === 0) return;
   inlineVideoUploading.value = true;
   try {

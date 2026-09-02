@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type {
   ApiInquiryRequest,
-  ApiInquiryResult,
   ApiNavigation,
   ApiNavigationItem,
   ApiSiteSetting
@@ -16,8 +15,7 @@ interface FooterGroup {
 }
 
 const { open } = useInquiryDialog()
-const { request, resolveMediaUrl } = useApiClient()
-const route = useRoute()
+const { resolveMediaUrl } = useApiClient()
 const [{ data: site }, { data: navigation }] = await Promise.all([
   useApi<ApiSiteSetting>('public-site-setting', '/public/site'),
   useApi<ApiNavigation>('public-navigation', '/public/navigation')
@@ -85,9 +83,6 @@ const serviceEmail = computed(() => site.value?.serviceEmail || 'info@alfy.cn')
 const wechatQrUrl = computed(() => resolveMediaUrl(site.value?.wechatQrImageUrl, '/images/alfy-site-qr.png'))
 const copyright = computed(() => site.value?.copyrightText || `© ${new Date().getFullYear()} ${companyName.value}`)
 
-const submitting = ref(false)
-const inquiryResult = ref<ApiInquiryResult | null>(null)
-const inquiryError = ref('')
 const inquiryForm = reactive<ApiInquiryRequest>({
   inquiryType: '项目方案',
   message: '',
@@ -95,29 +90,12 @@ const inquiryForm = reactive<ApiInquiryRequest>({
   phone: '',
   privacyAccepted: false
 })
-
-async function submitInquiry() {
-  submitting.value = true
-  inquiryError.value = ''
-  try {
-    const queryEntries = Object.entries(route.query)
-      .filter(([key, value]) => key.startsWith('utm_') && typeof value === 'string')
-      .map(([key, value]) => [key, String(value)])
-    inquiryResult.value = await request<ApiInquiryResult>('/public/inquiries', {
-      method: 'POST',
-      body: {
-        ...inquiryForm,
-        sourceUrl: import.meta.client ? window.location.href : route.fullPath,
-        utm: Object.fromEntries(queryEntries)
-      }
-    })
-  } catch (error) {
-    const value = error as { data?: { message?: string }; message?: string }
-    inquiryError.value = value.data?.message || value.message || '提交失败，请稍后重试或直接联系我们。'
-  } finally {
-    submitting.value = false
-  }
-}
+const {
+  errorMessage: inquiryError,
+  result: inquiryResult,
+  submit: submitInquiry,
+  submitting
+} = useInquirySubmission(inquiryForm)
 </script>
 
 <template>
