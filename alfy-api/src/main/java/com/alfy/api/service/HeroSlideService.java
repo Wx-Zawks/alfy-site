@@ -84,11 +84,11 @@ public class HeroSlideService {
     }
     private void apply(HeroSlide s, HeroSlideUpsertRequest r) {
         s.setEyebrow(trim(r.eyebrow())); s.setTitle(r.title().trim()); s.setHighlightText(trim(r.highlightText())); s.setSummary(trim(r.summary()));
-        s.setDesktopMediaId(r.desktopMediaId()); s.setMobileMediaId(r.mobileMediaId()); s.setPrimaryActionLabel(trim(r.primaryActionLabel())); s.setPrimaryActionTarget(trim(r.primaryActionTarget()));
+        s.setDesktopMediaId(r.desktopMediaId()); s.setMobileMediaId(r.mobileMediaId()); s.setBackgroundActionTarget(trim(r.backgroundActionTarget())); s.setPrimaryActionLabel(trim(r.primaryActionLabel())); s.setPrimaryActionTarget(trim(r.primaryActionTarget()));
         s.setSecondaryActionLabel(trim(r.secondaryActionLabel())); s.setSecondaryActionTarget(trim(r.secondaryActionTarget())); s.setSortOrder(r.sortOrder() == null ? 0 : r.sortOrder()); s.setStartsAt(r.startsAt()); s.setEndsAt(r.endsAt());
     }
     private HeroSlide require(Long id) { HeroSlide slide = heroSlideMapper.selectById(id); if (slide == null) throw new BusinessException(ErrorCode.NOT_FOUND, "轮播不存在"); return slide; }
-    private HeroSlideResponse toResponse(HeroSlide s) { return new HeroSlideResponse(s.getId(), s.getEyebrow(), s.getTitle(), s.getHighlightText(), s.getSummary(), url(s.getDesktopMediaId()), url(s.getMobileMediaId()), action(s.getPrimaryActionLabel(), s.getPrimaryActionTarget()), action(s.getSecondaryActionLabel(), s.getSecondaryActionTarget()), s.getSortOrder(), s.getStatus(), s.getStartsAt(), s.getEndsAt(), s.getPublishedAt(), s.getVersion()); }
+    private HeroSlideResponse toResponse(HeroSlide s) { return new HeroSlideResponse(s.getId(), s.getEyebrow(), s.getTitle(), s.getHighlightText(), s.getSummary(), url(s.getDesktopMediaId()), url(s.getMobileMediaId()), s.getBackgroundActionTarget(), action(s.getPrimaryActionLabel(), s.getPrimaryActionTarget()), action(s.getSecondaryActionLabel(), s.getSecondaryActionTarget()), s.getSortOrder(), s.getStatus(), s.getStartsAt(), s.getEndsAt(), s.getPublishedAt(), s.getVersion()); }
     private ActionResponse action(String label, String target) { return blank(label) && blank(target) ? null : new ActionResponse(label, target); }
     private String url(Long id) { return id == null ? null : "/api/v1/public/media/" + id; }
     private void assertVersion(Long expected, Long actual) { if (expected == null || !expected.equals(actual)) throw new BusinessException(ErrorCode.CONFLICT, "轮播已被其他管理员修改，请刷新后重试"); }

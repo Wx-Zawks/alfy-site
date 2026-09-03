@@ -10,7 +10,7 @@ public record HeroSlideUpsertRequest(
         @NotBlank @Size(max = 255) String title,
         @Size(max = 255) String highlightText,
         @Size(max = 1000) String summary,
-        Long desktopMediaId, Long mobileMediaId,
+        Long desktopMediaId, Long mobileMediaId, @Size(max = 500) String backgroundActionTarget,
         @Size(max = 100) String primaryActionLabel, @Size(max = 500) String primaryActionTarget,
         @Size(max = 100) String secondaryActionLabel, @Size(max = 500) String secondaryActionTarget,
         Integer sortOrder, LocalDateTime startsAt, LocalDateTime endsAt, Long version

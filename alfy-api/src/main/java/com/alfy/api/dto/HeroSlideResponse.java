@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record HeroSlideResponse(
         Long id, String eyebrow, String title, String highlightText, String summary,
-        String desktopImageUrl, String mobileImageUrl, ActionResponse primaryAction,
+        String desktopImageUrl, String mobileImageUrl, String backgroundActionTarget, ActionResponse primaryAction,
         ActionResponse secondaryAction, Integer sortOrder, String status, LocalDateTime startsAt,
         LocalDateTime endsAt, LocalDateTime publishedAt, Long version
 ) { }

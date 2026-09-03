@@ -64,6 +64,7 @@ const fallbackHero = {
   highlight: '连接材料与产业',
   description: '以材料创新连接产业需求，为客户提供气凝胶材料及复合产品解决方案。',
   primaryAction: { label: '查看应用案例', target: '/applications' },
+  backgroundActionTarget: null,
   secondaryAction: null
 }
 const heroSlides = computed(() => {
@@ -72,6 +73,7 @@ const heroSlides = computed(() => {
   return published.map(slide => ({
     id: slide.id,
     image: resolveMediaUrl(slide.desktopImageUrl, '/images/news-1.jpeg'),
+    backgroundActionTarget: slide.backgroundActionTarget,
     eyebrow: slide.eyebrow || '',
     title: slide.title,
     highlight: slide.highlightText || '',
@@ -122,6 +124,9 @@ const currentHeroSlide = computed(() => heroSlides.value[activeHeroSlide.value] 
 const goToHeroSlide = (index: number) => { activeHeroSlide.value = index }
 const nextHeroSlide = () => { activeHeroSlide.value = (activeHeroSlide.value + 1) % heroSlides.value.length }
 const previousHeroSlide = () => { activeHeroSlide.value = (activeHeroSlide.value - 1 + heroSlides.value.length) % heroSlides.value.length }
+const openHeroBackground = (target?: null | string) => {
+  if (target) void navigateTo(target)
+}
 const startHeroTouch = (event: TouchEvent) => { heroTouchStartX.value = event.changedTouches[0]?.clientX ?? null }
 const endHeroTouch = (event: TouchEvent) => {
   const startX = heroTouchStartX.value
@@ -151,8 +156,8 @@ onBeforeUnmount(() => {
 <template>
   <div class="home-page">
     <section class="home-hero" :class="{ 'has-proof': sectionEnabled('proof') }" @mouseenter="heroPaused = true" @mouseleave="heroPaused = false" @focusin="heroPaused = true" @focusout="heroPaused = false" @touchstart.passive="startHeroTouch" @touchend.passive="endHeroTouch">
-      <div class="hero-slides" aria-hidden="true">
-        <div v-for="(slide, index) in heroSlides" :key="slide.id" class="hero-slide" :class="{ active: index === activeHeroSlide }" :style="{ backgroundImage: `url(${slide.image})` }" />
+      <div class="hero-slides">
+        <button v-for="(slide, index) in heroSlides" :key="slide.id" class="hero-slide" :class="{ active: index === activeHeroSlide, clickable: Boolean(slide.backgroundActionTarget) }" :aria-hidden="index !== activeHeroSlide || !slide.backgroundActionTarget" :disabled="!slide.backgroundActionTarget" type="button" :aria-label="slide.backgroundActionTarget ? `查看 ${slide.title}` : undefined" :tabindex="index === activeHeroSlide && slide.backgroundActionTarget ? 0 : -1" :style="{ backgroundImage: `url(${slide.image})` }" @click="openHeroBackground(slide.backgroundActionTarget)" />
       </div>
       <div class="container home-hero-content">
         <p class="eyebrow eyebrow-light">{{ currentHeroSlide.eyebrow }}</p>

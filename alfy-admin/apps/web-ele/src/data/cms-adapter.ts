@@ -51,6 +51,7 @@ export function contentFromBackend(
       categoryNames.get(Number(categoryId)) ??
       categories[0]?.name ??
       '未分类',
+    backgroundActionLink: value.backgroundActionTarget ?? '',
     categoryId: categoryId ? Number(categoryId) : undefined,
     categoryIds: categories.map((item: { id: number }) => Number(item.id)),
     contentHtml: value.contentHtml ?? '',
@@ -157,6 +158,7 @@ export function contentPayload(
     case 'banners': {
       return {
         desktopMediaId: mediaIdFromUrl(form.cover) ?? undefined,
+        backgroundActionTarget: form.backgroundActionLink || null,
         endsAt: raw.endsAt ?? null,
         eyebrow: form.eyebrow || null,
         highlightText: form.highlightTitle || null,

@@ -45,6 +45,7 @@ export interface ContentItem {
   categoryId?: number;
   categoryIds?: number[];
   category: string;
+  backgroundActionLink: string;
   contentHtml?: string;
   cover: string;
   coverMediaId?: number;
@@ -202,6 +203,7 @@ const content = (
   sortOrder = id,
   cover = '',
 ): ContentItem => ({
+  backgroundActionLink: '',
   category,
   cover,
   createdAt: now,

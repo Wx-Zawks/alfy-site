@@ -11,6 +11,7 @@ export interface ApiAction {
 }
 
 export interface ApiHeroSlide {
+  backgroundActionTarget?: null | string
   desktopImageUrl?: null | string
   eyebrow?: null | string
   highlightText?: null | string

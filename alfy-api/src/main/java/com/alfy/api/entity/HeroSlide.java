@@ -1,6 +1,8 @@
 package com.alfy.api.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -22,6 +24,8 @@ public class HeroSlide {
     private String summary;
     private Long desktopMediaId;
     private Long mobileMediaId;
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
+    private String backgroundActionTarget;
     private String primaryActionLabel;
     private String primaryActionTarget;
     private String secondaryActionLabel;

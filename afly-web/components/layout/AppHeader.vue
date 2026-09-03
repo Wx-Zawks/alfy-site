@@ -22,7 +22,7 @@ const [{ data: site }, { data: navigation }] = await Promise.all([
 const fallbackNav: ApiNavigationItem[] = [
   { id: -1, label: '首页', target: '/', enabled: true, highlighted: false, sortOrder: 1, children: [] },
   { id: -2, label: '产品', target: '/products', enabled: true, highlighted: false, sortOrder: 2, children: [] },
-  { id: -3, label: '应用与案例', target: '/applications', enabled: true, highlighted: false, sortOrder: 3, children: [] },
+  { id: -3, label: '案例', target: '/applications', enabled: true, highlighted: false, sortOrder: 3, children: [] },
   { id: -4, label: '技术', target: '/technology', enabled: true, highlighted: false, sortOrder: 4, children: [] },
   { id: -5, label: '新闻', target: '/news', enabled: true, highlighted: false, sortOrder: 5, children: [] },
   { id: -6, label: '合作', target: '/cooperation', enabled: true, highlighted: false, sortOrder: 6, children: [] },

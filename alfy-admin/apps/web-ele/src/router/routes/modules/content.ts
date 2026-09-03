@@ -83,7 +83,7 @@ const routes: RouteRecordRaw[] = [
       authority: ['super_admin', 'content_admin'],
       icon: 'lucide:briefcase-business',
       order: 30,
-      title: '应用与案例',
+      title: '案例',
     },
     name: 'Applications',
     path: '/applications',

@@ -174,6 +174,7 @@ const selectedInlineVideo = computed(() =>
   videoOptions.value.find((asset) => asset.id === selectedInlineVideoId.value),
 );
 const emptyForm = (): ContentItem => ({
+  backgroundActionLink: '',
   category: categoryOptions.value[0] || '未分类',
   categoryId: undefined,
   categoryIds: [],
@@ -1451,6 +1452,14 @@ function handleHomePinnedChange() {
             </ElFormItem>
           </ElCol>
           <template v-if="props.resource === 'banners'">
+            <ElCol :span="24">
+              <ElFormItem label="背景图点击跳转链接">
+                <ElInput
+                  v-model="form.backgroundActionLink"
+                  placeholder="例如 /news/industry-update；不填写则背景图不可点击"
+                />
+              </ElFormItem>
+            </ElCol>
             <ElCol :md="8" :xs="24">
               <ElFormItem label="主按钮文字">
                 <ElInput
