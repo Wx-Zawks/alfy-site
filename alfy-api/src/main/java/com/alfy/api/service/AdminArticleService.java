@@ -201,6 +201,7 @@ public class AdminArticleService {
     }
 
     private void replaceInlineMedia(Long articleId, String contentHtml) {
+        rejectMediaElementsWithoutAddress(contentHtml);
         LinkedHashMap<Long, String> mediaTypesById = extractInlineMediaTypes(contentHtml);
         if (!mediaTypesById.isEmpty()) {
             Map<Long, MediaAsset> mediaById = mediaAssetMapper.selectBatchIds(mediaTypesById.keySet()).stream()
@@ -224,6 +225,28 @@ public class AdminArticleService {
             relation.setUsageType("INLINE");
             relation.setSortOrder(sortOrder++);
             articleMediaMapper.insert(relation);
+        }
+    }
+
+    /**
+     * 拦截正文里 src 属性缺失或值非 alfy-media:<id> 占位符的图片/视频，避免
+     * 历史数据在保存链路中静默丢失地址。每发现一处立即抛出明确错误，便于管理员
+     * 在编辑界面定位缺失的图片并重新上传。
+     */
+    private void rejectMediaElementsWithoutAddress(String contentHtml) {
+        if (contentHtml == null || contentHtml.isBlank()) {
+            return;
+        }
+        for (Element element : Jsoup.parseBodyFragment(contentHtml).select("img, source, video")) {
+            String source = element.attr("src").trim();
+            if (source.isEmpty()) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST,
+                        "正文中的 " + element.tagName() + " 缺少 src 地址，请重新插入后再保存");
+            }
+            if (!source.regionMatches(true, 0, "alfy-media:", 0, "alfy-media:".length())) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST,
+                        "正文中的图片或视频引用了非素材库地址（" + source + "），请使用素材库插入后再保存");
+            }
         }
     }
 

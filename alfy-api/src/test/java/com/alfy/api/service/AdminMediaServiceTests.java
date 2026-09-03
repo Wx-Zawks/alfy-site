@@ -30,8 +30,10 @@ class AdminMediaServiceTests {
     private final MediaAssetMapper mediaAssetMapper = mock(MediaAssetMapper.class);
     private final AdminOperationLogService operationLogService =
             mock(AdminOperationLogService.class);
+    private final ImageOptimizationService imageOptimizationService =
+            mock(ImageOptimizationService.class);
     private final AdminMediaService service =
-            new AdminMediaService(mediaAssetMapper, operationLogService);
+            new AdminMediaService(mediaAssetMapper, operationLogService, imageOptimizationService);
 
     @TempDir
     Path storageRoot;

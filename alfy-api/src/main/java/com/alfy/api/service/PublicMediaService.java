@@ -88,9 +88,18 @@ public class PublicMediaService {
     }
 
     private boolean belongsToPublishedCase(Long mediaId) {
-        return caseProjectMapper.selectCount(new LambdaQueryWrapper<CaseProject>()
+        if (caseProjectMapper.selectCount(new LambdaQueryWrapper<CaseProject>()
                 .eq(CaseProject::getCoverMediaId, mediaId)
-                .eq(CaseProject::getStatus, PUBLISHED)) > 0;
+                .eq(CaseProject::getStatus, PUBLISHED)) > 0) {
+            return true;
+        }
+        // 已发布案例正文以 alfy-media:<id> 占位符引用图片，需要一并识别。后跟 " 或 '
+        // 用于精确匹配 ID 边界，避免 alfy-media:1234 误判为 alfy-media:12。
+        String reference = "alfy-media:" + mediaId;
+        return caseProjectMapper.selectCount(new LambdaQueryWrapper<CaseProject>()
+                .eq(CaseProject::getStatus, PUBLISHED)
+                .and(q -> q.like(CaseProject::getContentHtml, reference + "\"")
+                        .or().like(CaseProject::getContentHtml, reference + "'"))) > 0;
     }
 
     private boolean belongsToPublishedHeroSlide(Long mediaId) {

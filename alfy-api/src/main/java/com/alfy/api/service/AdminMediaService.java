@@ -73,6 +73,7 @@ public class AdminMediaService {
 
     private final MediaAssetMapper mediaAssetMapper;
     private final AdminOperationLogService operationLogService;
+    private final ImageOptimizationService imageOptimizationService;
 
     @Value("${alfy.content-import.storage-root:./data/alfy/uploads}")
     private String storageRoot;
@@ -222,13 +223,27 @@ public class AdminMediaService {
             try (InputStream input = file.getInputStream()) {
                 Files.copy(input, target, StandardCopyOption.REPLACE_EXISTING);
             }
+            // 大图在入库前压缩：无透明通道的 PNG 会转为 JPEG，存储 key 与 MIME 需同步更新。
+            ImageOptimizationService.OptimizedImage optimized =
+                    imageOptimizationService.optimize(target, contentType);
+            if (optimized != null) {
+                if (!optimized.extension().equals(extension(originalFilename))) {
+                    String optimizedKey = storageKey.substring(0, storageKey.length()
+                            - extension(originalFilename).length()) + optimized.extension();
+                    Path optimizedTarget = resolveStoragePath(optimizedKey);
+                    Files.move(target, optimizedTarget, StandardCopyOption.REPLACE_EXISTING);
+                    target = optimizedTarget;
+                    storageKey = optimizedKey;
+                }
+                contentType = optimized.contentType();
+            }
             return new StoredFile(
                     target,
                     storageKey.replace('\\', '/'),
                     originalFilename,
                     contentType,
                     typeOf(contentType),
-                    file.getSize(),
+                    Files.size(target),
                     sha256(target)
             );
         } catch (IOException exception) {

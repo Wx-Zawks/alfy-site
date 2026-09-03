@@ -67,13 +67,44 @@ export function useApiClient() {
   return { baseURL, request, resolveMediaUrl }
 }
 
+/**
+ * 客户端导航短缓存：30 秒内往返同一页面时直接复用数据，
+ * 不再重复回源后端。refreshNuxtData()（内容自动同步）会绕过该缓存，
+ * 因此 CMS 发布的内容仍能按时生效。
+ */
+const CLIENT_CACHE_TTL_MS = 30_000
+const clientDataCache = new Map<string, { data: unknown; expiresAt: number }>()
+
 export async function useApi<T>(
   key: string,
   url: MaybeRefOrGetter<string>,
   options: ApiRequestOptions = {}
 ) {
   const { request } = useApiClient()
-  return await useAsyncData<T | null>(key, () => request<T>(toValue(url), options), {
-    default: () => null
-  })
+  return await useAsyncData<T | null>(
+    key,
+    async () => {
+      const data = await request<T>(toValue(url), options)
+      if (import.meta.client) {
+        clientDataCache.set(key, { data, expiresAt: Date.now() + CLIENT_CACHE_TTL_MS })
+      }
+      return data
+    },
+    {
+      default: () => null,
+      getCachedData: (cacheKey, nuxtApp) => {
+        if (import.meta.client) {
+          const entry = clientDataCache.get(cacheKey)
+          if (entry && entry.expiresAt > Date.now()) {
+            return entry.data as T | null
+          }
+        }
+        // 首次加载（SSR 水合）时复用 payload 中的数据，避免二次请求。
+        if (nuxtApp.payload.data[cacheKey] !== undefined) {
+          return nuxtApp.payload.data[cacheKey] as T | null
+        }
+        return undefined
+      }
+    }
+  )
 }
