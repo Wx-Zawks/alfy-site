@@ -89,11 +89,13 @@ watch(applicationScenes, (items) => {
   if (!items.some(item => item.key === activeSceneKey.value)) activeSceneKey.value = items[0]?.key || ''
 }, { immediate: true })
 
-watch([caseCategories, caseEntries], ([categories, entries]) => {
+watch(caseCategories, (categories) => {
+  if (!categories.length) {
+    activeCaseCategoryKey.value = ''
+    return
+  }
   if (categories.some(category => category.slug === activeCaseCategoryKey.value)) return
-  activeCaseCategoryKey.value = entries.find(({ record }) => record.featured)?.record.categorySlug
-    || categories[0]?.slug
-    || ''
+  activeCaseCategoryKey.value = categories[0].slug
 }, { immediate: true })
 
 function scrollScenes(direction: -1 | 1) {
@@ -127,6 +129,13 @@ const previousHeroSlide = () => { activeHeroSlide.value = (activeHeroSlide.value
 const openHeroBackground = (target?: null | string) => {
   if (target) void navigateTo(target)
 }
+const handleHeroSurfaceClick = (event: MouseEvent) => {
+  const target = currentHeroSlide.value.backgroundActionTarget
+  if (!target) return
+  const element = event.target
+  if (element instanceof Element && element.closest('a, button, input, select, textarea, label')) return
+  void navigateTo(target)
+}
 const startHeroTouch = (event: TouchEvent) => { heroTouchStartX.value = event.changedTouches[0]?.clientX ?? null }
 const endHeroTouch = (event: TouchEvent) => {
   const startX = heroTouchStartX.value
@@ -155,7 +164,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home-page">
-    <section class="home-hero" :class="{ 'has-proof': sectionEnabled('proof') }" @mouseenter="heroPaused = true" @mouseleave="heroPaused = false" @focusin="heroPaused = true" @focusout="heroPaused = false" @touchstart.passive="startHeroTouch" @touchend.passive="endHeroTouch">
+    <section class="home-hero" :class="{ 'has-proof': sectionEnabled('proof'), 'is-clickable': Boolean(currentHeroSlide.backgroundActionTarget) }" @click="handleHeroSurfaceClick" @mouseenter="heroPaused = true" @mouseleave="heroPaused = false" @focusin="heroPaused = true" @focusout="heroPaused = false" @touchstart.passive="startHeroTouch" @touchend.passive="endHeroTouch">
       <div class="hero-slides">
         <button v-for="(slide, index) in heroSlides" :key="slide.id" class="hero-slide" :class="{ active: index === activeHeroSlide, clickable: Boolean(slide.backgroundActionTarget) }" :aria-hidden="index !== activeHeroSlide || !slide.backgroundActionTarget" :disabled="!slide.backgroundActionTarget" type="button" :aria-label="slide.backgroundActionTarget ? `查看 ${slide.title}` : undefined" :tabindex="index === activeHeroSlide && slide.backgroundActionTarget ? 0 : -1" :style="{ backgroundImage: `url(${slide.image})` }" @click="openHeroBackground(slide.backgroundActionTarget)" />
       </div>

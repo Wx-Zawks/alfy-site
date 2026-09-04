@@ -21,7 +21,7 @@ useSeoMeta({
 
 <template>
   <div v-if="item" class="content-detail-page">
-    <PageHero :eyebrow="item.category" :title="item.title" :highlight="item.location" :description="item.summary" :image="item.image" />
+    <PageHero :eyebrow="item.category" :title="item.title" :description="item.summary" :image="item.image" />
     <section v-if="item.contentHtml" class="section"><div class="container"><div class="cms-rich-text article" v-html="item.contentHtml" /></div></section>
   </div>
 </template>
