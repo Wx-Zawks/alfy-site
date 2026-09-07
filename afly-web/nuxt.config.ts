@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     apiInternalBase: '',
     public: {
       apiBase: 'http://localhost:8080/api/v1',
-      contentRefreshIntervalMs: 120000
+      contentRefreshIntervalMs: 30000
     }
   },
   app: {
