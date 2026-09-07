@@ -102,8 +102,6 @@ async function setPinned(item: ContentItem) {
   const shouldCancel = item.homePinned;
   for (const candidate of allCases.value) {
     candidate.homePinned = false;
-    candidate.showOnHome = false;
-    candidate.featured = false;
     if (candidate.id === item.id && !shouldCancel) {
       candidate.homePinned = true;
       candidate.showOnHome = true;
@@ -118,7 +116,7 @@ async function setPinned(item: ContentItem) {
 }
 
 async function handleVisibility(item: ContentItem) {
-  item.homePinned = item.showOnHome;
+  if (!item.showOnHome) item.homePinned = false;
   item.featured = item.showOnHome;
   await persist(item);
   await load();
@@ -191,7 +189,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       :closable="false"
       class="mode-alert"
       show-icon
-      title="仅已发布案例能进入首页；首页最多置顶一个案例，拖动左侧手柄可调整其余卡片顺序。"
+      title="首页展示、置顶与排序仅在此维护；案例管理页只负责案例内容本身。首页最多置顶一个案例，拖动左侧手柄可调整其余卡片顺序。"
       type="info"
     />
 

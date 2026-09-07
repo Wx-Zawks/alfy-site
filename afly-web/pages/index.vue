@@ -34,7 +34,7 @@ const filteredCaseEntries = computed(() => activeCaseCategoryKey.value
   ? caseEntries.value.filter(({ record }) => record.categorySlug === activeCaseCategoryKey.value)
   : caseEntries.value)
 const featuredCaseEntry = computed(() =>
-  filteredCaseEntries.value.find(({ record }) => record.featured) || filteredCaseEntries.value[0]
+  filteredCaseEntries.value.find(({ record }) => record.homePinned) || filteredCaseEntries.value[0]
 )
 const featuredCase = computed(() => featuredCaseEntry.value?.view)
 const caseCards = computed(() => filteredCaseEntries.value

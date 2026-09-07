@@ -46,6 +46,7 @@ export interface ApiCaseListItem {
   categorySlug?: null | string
   coverImageUrl?: null | string
   featured: boolean
+  homePinned: boolean
   id: number
   location?: null | string
   scene?: null | string

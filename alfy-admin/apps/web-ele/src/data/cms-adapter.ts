@@ -41,7 +41,7 @@ export function contentFromBackend(
     // after reload when an older record still has is_featured = 1.
     showOnHome = Boolean(homeSlot);
   } else if (resource === 'cases') {
-    homePinned = Boolean(value.featured);
+    homePinned = Boolean(value.homePinned);
     showOnHome = Boolean(value.featured);
   }
 
@@ -182,7 +182,8 @@ export function contentPayload(
         contentHtml: form.contentHtml || null,
         coverMediaId: common.coverMediaId,
         customerNeed: raw.customerNeed ?? null,
-        featured: form.homePinned || form.showOnHome || form.featured,
+        featured: form.showOnHome,
+        homePinned: form.homePinned,
         implementation: raw.implementation ?? null,
         location: raw.location ?? null,
         productIds: raw.productIds ?? [],

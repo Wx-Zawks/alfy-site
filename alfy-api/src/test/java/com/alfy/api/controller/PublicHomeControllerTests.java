@@ -19,7 +19,7 @@ class PublicHomeControllerTests {
         TechnologyPageService technologyPageService = mock(TechnologyPageService.class);
         PublicApplicationCaseService applicationCaseService = mock(PublicApplicationCaseService.class);
         PublicArticleService articleService = mock(PublicArticleService.class);
-        when(applicationCaseService.listCases(null, null, true, 1, 4)).thenReturn(new Page<>());
+        when(applicationCaseService.listCases(null, null, true, 1, 100)).thenReturn(new Page<>());
 
         PublicHomeController controller = new PublicHomeController(
                 heroSlideService, technologyPageService, applicationCaseService, articleService);

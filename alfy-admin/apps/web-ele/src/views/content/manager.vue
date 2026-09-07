@@ -972,7 +972,7 @@ function homePlacementLabel(value: unknown) {
     if (item.showOnHome) return '首页新闻';
     return '';
   }
-  return item.featured ? '推荐' : '';
+  return props.resource === 'cases' ? '' : item.featured ? '推荐' : '';
 }
 
 function handleHomeVisibilityChange() {
@@ -1006,7 +1006,7 @@ function handleHomePinnedChange() {
     </section>
 
     <ElRow :gutter="16" class="stats-grid">
-      <ElCol :lg="6" :sm="12" :xs="24">
+      <ElCol v-if="props.resource !== 'cases'" :lg="6" :sm="12" :xs="24">
         <ElCard shadow="never">
           <span>全部内容</span><strong>{{ stats.total }}</strong>
         </ElCard>
@@ -1083,6 +1083,7 @@ function handleHomePinnedChange() {
           </template>
         </ElTableColumn>
         <ElTableColumn
+          v-if="props.resource !== 'cases'"
           :label="isHomePlacementResource ? '首页位置' : '推荐'"
           width="90"
         >
@@ -1545,7 +1546,7 @@ function handleHomePinnedChange() {
               </ElFormItem>
             </ElCol>
           </template>
-          <ElCol v-else :md="8" :xs="24">
+          <ElCol v-else-if="props.resource !== 'cases'" :md="8" :xs="24">
             <ElFormItem label="首页推荐">
               <ElSwitch
                 v-model="form.featured"

@@ -22,6 +22,7 @@ public record AdminCaseUpsertRequest(
         String contentHtml,
         Long coverMediaId,
         Boolean featured,
+        Boolean homePinned,
         Integer sortOrder,
         @Size(max = 255) String seoTitle,
         @Size(max = 500) String seoDescription,

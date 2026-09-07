@@ -96,9 +96,11 @@ public class PublicApplicationCaseService {
                 new LambdaQueryWrapper<CaseProject>()
                         .eq(CaseProject::getStatus, PUBLISHED)
                         .in(CaseProject::getCategoryId, enabledCategoryIds)
+                        .eq(featured != null, CaseProject::getIsFeatured, Boolean.TRUE.equals(featured) ? 1 : 0)
                         .eq(categoryId != null, CaseProject::getCategoryId, categoryId)
                         .in(sceneCaseIds != null, CaseProject::getId, sceneCaseIds)
                         .in(productCaseIds != null, CaseProject::getId, productCaseIds)
+                        .orderByDesc(CaseProject::getHomePinned)
                         .orderByDesc(CaseProject::getIsFeatured)
                         .orderByAsc(CaseProject::getSortOrder)
                         .orderByDesc(CaseProject::getPublishedAt)
@@ -224,7 +226,7 @@ public class PublicApplicationCaseService {
         return new PublicCaseListItemResponse(item.getId(), item.getSlug(), item.getTitle(),
                 category == null ? null : category.getName(), category == null ? null : category.getSlug(),
                 scene == null ? null : scene.getName(), scene == null ? null : scene.getSlug(), item.getLocation(),
-                item.getSummary(), mediaUrl(item.getCoverMediaId()), Integer.valueOf(1).equals(item.getIsFeatured()), item.getSortOrder());
+                item.getSummary(), mediaUrl(item.getCoverMediaId()), Integer.valueOf(1).equals(item.getIsFeatured()), Integer.valueOf(1).equals(item.getHomePinned()), item.getSortOrder());
     }
 
     private String mediaUrl(Long mediaId) {

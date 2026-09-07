@@ -12,6 +12,7 @@ public record PublicCaseListItemResponse(
         String summary,
         String coverImageUrl,
         boolean featured,
+        boolean homePinned,
         Integer sortOrder
 ) {
 }

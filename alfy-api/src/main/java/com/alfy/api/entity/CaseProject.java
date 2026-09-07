@@ -33,6 +33,7 @@ public class CaseProject {
     private String contentHtml;
     private Long coverMediaId;
     private Integer isFeatured;
+    private Integer homePinned;
     private Integer sortOrder;
     private String status;
     private String seoTitle;
