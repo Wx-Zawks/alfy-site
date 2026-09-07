@@ -46,6 +46,7 @@ import {
   listMedia,
   listProductCategories,
   saveContent,
+  setCaseHomeDisplay,
   uploadMedia,
 } from '#/api';
 import RichTextEditor from '#/components/rich-text-editor.vue';
@@ -982,6 +983,15 @@ function handleHomeVisibilityChange() {
 function handleHomePinnedChange() {
   if (form.homePinned) form.showOnHome = true;
 }
+
+async function toggleCaseHomeDisplay(value: unknown, visible: boolean) {
+  const item = value as ContentItem;
+  const saved = await setCaseHomeDisplay(item.id, visible);
+  item.showOnHome = Boolean(saved.featured);
+  item.featured = item.showOnHome;
+  item.homePinned = Boolean(saved.homePinned);
+  ElMessage.success(item.showOnHome ? '已加入首页展示' : '已从首页展示中移除');
+}
 </script>
 
 <template>
@@ -1096,8 +1106,15 @@ function handleHomePinnedChange() {
         </ElTableColumn>
         <ElTableColumn label="排序" prop="sortOrder" width="80" />
         <ElTableColumn label="更新时间" min-width="150" prop="updatedAt" />
-        <ElTableColumn fixed="right" label="操作" width="230">
+        <ElTableColumn fixed="right" label="操作" width="320">
           <template #default="{ row }">
+            <ElSwitch
+              v-if="props.resource === 'cases'"
+              :model-value="row.showOnHome"
+              active-text="首页显示"
+              inactive-text="不显示"
+              @change="toggleCaseHomeDisplay(row, Boolean($event))"
+            />
             <ElButton link type="primary" @click="openEdit(row)">编辑</ElButton>
             <ElButton
               v-if="row.status !== 'published'"

@@ -345,6 +345,18 @@ export async function deleteContent(resource: ContentResource, id: number) {
   return requestClient.delete(`/admin/${endpointByResource[resource]}/${id}`);
 }
 
+export function setCaseHomeDisplay(id: number, visible: boolean) {
+  return requestClient.put<BackendContentRecord>(`/admin/cases/${id}/home-display`, { visible });
+}
+
+export function setCaseHomePinned(id: number, pinned: boolean) {
+  return requestClient.put<BackendContentRecord>(`/admin/cases/${id}/home-pinned`, { pinned });
+}
+
+export function updateCaseHomeOrder(items: Array<{ id: number; sortOrder: number }>) {
+  return requestClient.put('/admin/cases/home-order', { items });
+}
+
 export function listTechnologyPages() {
   return requestClient.get<TechnologyPageRecord[]>('/admin/technologies/pages');
 }

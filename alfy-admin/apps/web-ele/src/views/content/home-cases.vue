@@ -16,9 +16,9 @@ import {
   ElTag,
 } from 'element-plus';
 
-import { listCaseCategories, listContent, saveContent } from '#/api';
+import { listCaseCategories, listContent, setCaseHomePinned, updateCaseHomeOrder } from '#/api';
 import { cmsState } from '#/data/cms';
-import { contentFromBackend, contentPayload } from '#/data/cms-adapter';
+import { contentFromBackend } from '#/data/cms-adapter';
 
 const sortContainer = ref<HTMLElement | null>(null);
 const loading = ref(false);
@@ -27,18 +27,21 @@ let sortableInstance: { destroy: () => void } | undefined;
 const allCases = computed(() =>
   cmsState.content.filter((item) => item.resource === 'cases'),
 );
+const homepageCases = computed(() =>
+  allCases.value.filter(
+    (item) => item.status === 'published' && item.showOnHome,
+  ),
+);
 const pinnedCase = computed(() =>
-  allCases.value.find((item) => item.homePinned),
+  homepageCases.value.find((item) => item.homePinned),
 );
 const orderedCases = computed(() =>
-  allCases.value
+  homepageCases.value
     .filter((item) => !item.homePinned)
     .sort((a, b) => a.homeSortOrder - b.homeSortOrder || a.id - b.id),
 );
 const visibleCases = computed(() =>
-  allCases.value.filter(
-    (item) => item.status === 'published' && item.showOnHome,
-  ),
+  homepageCases.value,
 );
 const orderedVisibleCases = computed(() =>
   orderedCases.value.filter(
@@ -78,10 +81,6 @@ async function load() {
   }
 }
 
-async function persist(item: ContentItem) {
-  await saveContent('cases', item.id, contentPayload('cases', item));
-}
-
 function statusLabel(status: ContentItem['status']) {
   if (status === 'published') return '已发布';
   if (status === 'draft') return '草稿';
@@ -100,27 +99,11 @@ async function setPinned(item: ContentItem) {
     return;
   }
   const shouldCancel = item.homePinned;
-  for (const candidate of allCases.value) {
-    candidate.homePinned = false;
-    if (candidate.id === item.id && !shouldCancel) {
-      candidate.homePinned = true;
-      candidate.showOnHome = true;
-      candidate.featured = true;
-    }
-    await persist(candidate);
-  }
+  await setCaseHomePinned(item.id, !shouldCancel);
   await load();
   ElMessage.success(
     shouldCancel ? '已取消首页推荐' : `“${item.title}”已设为首页推荐案例`,
   );
-}
-
-async function handleVisibility(item: ContentItem) {
-  if (!item.showOnHome) item.homePinned = false;
-  item.featured = item.showOnHome;
-  await persist(item);
-  await load();
-  ElMessage.success(item.showOnHome ? '已加入首页展示' : '已从首页展示中移除');
 }
 
 function normalizeOrder(items: ContentItem[]) {
@@ -153,7 +136,9 @@ onMounted(async () => {
       if (!moved) return;
       nextOrder.splice(newIndex, 0, moved);
       normalizeOrder(nextOrder);
-      for (const item of nextOrder) await persist(item);
+      await updateCaseHomeOrder(
+        nextOrder.map((item) => ({ id: item.id, sortOrder: item.sortOrder })),
+      );
       await load();
       ElMessage.success('首页案例顺序已保存到后端');
     },
@@ -170,7 +155,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       <div>
         <p>FEATURED CASES</p>
         <h1>典型案例展示</h1>
-        <span>控制首页案例的大图置顶、展示状态和卡片顺序</span>
+        <span>控制首页案例的大图置顶和卡片顺序</span>
       </div>
       <div class="summary">
         <div>
@@ -189,7 +174,7 @@ onBeforeUnmount(() => sortableInstance?.destroy());
       :closable="false"
       class="mode-alert"
       show-icon
-      title="首页展示、置顶与排序仅在此维护；案例管理页只负责案例内容本身。首页最多置顶一个案例，拖动左侧手柄可调整其余卡片顺序。"
+      title="首页展示在“案例管理”中维护；本页只管理已展示案例的置顶与排序。首页最多置顶一个案例，拖动左侧手柄可调整其余卡片顺序。"
       type="info"
     />
 
@@ -222,11 +207,6 @@ onBeforeUnmount(() => sortableInstance?.destroy());
               <p>{{ pinnedCase.summary }}</p>
             </div>
             <div class="row-actions">
-              <ElSwitch
-                v-model="pinnedCase.showOnHome"
-                active-text="首页显示"
-                @change="handleVisibility(pinnedCase)"
-              />
               <ElButton plain type="danger" @click="setPinned(pinnedCase)">
                 取消置顶
               </ElButton>
@@ -281,13 +261,6 @@ onBeforeUnmount(() => sortableInstance?.destroy());
               </div>
               <span class="sort-value">排序 {{ item.homeSortOrder }}</span>
               <div class="row-actions">
-                <ElSwitch
-                  v-model="item.showOnHome"
-                  :disabled="item.status !== 'published'"
-                  active-text="首页显示"
-                  inactive-text="不显示"
-                  @change="handleVisibility(item)"
-                />
                 <ElButton
                   :disabled="item.status !== 'published'"
                   plain

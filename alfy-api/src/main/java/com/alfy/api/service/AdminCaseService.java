@@ -2,6 +2,7 @@ package com.alfy.api.service;
 
 import com.alfy.api.common.ErrorCode;
 import com.alfy.api.dto.AdminCaseResponse;
+import com.alfy.api.dto.AdminCaseHomeOrderRequest;
 import com.alfy.api.dto.AdminCaseUpsertRequest;
 import com.alfy.api.entity.ApplicationScene;
 import com.alfy.api.entity.CaseCategory;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminCaseService {
     private static final Pattern SLUG_PATTERN = Pattern.compile("[a-z0-9]+(?:-[a-z0-9]+)*");
+    private static final String PUBLISHED = "PUBLISHED";
     private static final Set<String> VALID_STATUSES = Set.of("DRAFT", "PUBLISHED", "OFFLINE");
     private final CaseProjectMapper caseProjectMapper;
     private final CaseCategoryMapper caseCategoryMapper;
@@ -80,6 +83,9 @@ public class AdminCaseService {
     }
     @Transactional public AdminCaseResponse offline(Long id, AdminPrincipal p) { CaseProject item = require(id); item.setStatus("OFFLINE"); caseProjectMapper.updateById(item); operationLogService.record(p.id(), "OFFLINE", "CASE_PROJECT", id, "下线案例"); return get(id); }
     @Transactional public void delete(Long id, AdminPrincipal p) { require(id); caseProjectMapper.deleteById(id); productCaseRelMapper.delete(new LambdaQueryWrapper<ProductCaseRel>().eq(ProductCaseRel::getCaseId, id)); caseSceneRelMapper.delete(new LambdaQueryWrapper<CaseSceneRel>().eq(CaseSceneRel::getCaseId, id)); operationLogService.record(p.id(), "DELETE", "CASE_PROJECT", id, "软删除案例"); }
+    @Transactional public AdminCaseResponse updateHomeDisplay(Long id, boolean visible, AdminPrincipal p) { CaseProject item = require(id); item.setIsFeatured(visible ? 1 : 0); if (!visible) item.setHomePinned(0); caseProjectMapper.updateById(item); operationLogService.record(p.id(), "UPDATE_HOME_DISPLAY", "CASE_PROJECT", id, visible ? "加入首页展示" : "移出首页展示"); return get(id); }
+    @Transactional public AdminCaseResponse updateHomePinned(Long id, boolean pinned, AdminPrincipal p) { CaseProject item = require(id); if (pinned && !PUBLISHED.equals(item.getStatus())) throw new BusinessException(ErrorCode.BAD_REQUEST, "已发布案例才能设为首页置顶"); if (pinned) { clearOtherHomePinned(id); item.setIsFeatured(1); } item.setHomePinned(pinned ? 1 : 0); caseProjectMapper.updateById(item); operationLogService.record(p.id(), "UPDATE_HOME_PINNED", "CASE_PROJECT", id, pinned ? "设为首页置顶" : "取消首页置顶"); return get(id); }
+    @Transactional public void updateHomeOrder(AdminCaseHomeOrderRequest request, AdminPrincipal p) { List<Long> ids = request.items().stream().map(AdminCaseHomeOrderRequest.Item::id).toList(); Set<Long> uniqueIds = new LinkedHashSet<>(ids); if (uniqueIds.size() != ids.size()) throw new BusinessException(ErrorCode.BAD_REQUEST, "首页排序包含重复案例"); Map<Long, CaseProject> cases = caseProjectMapper.selectBatchIds(uniqueIds).stream().collect(Collectors.toMap(CaseProject::getId, item -> item)); if (cases.size() != uniqueIds.size()) throw new BusinessException(ErrorCode.NOT_FOUND, "首页排序包含不存在的案例"); for (AdminCaseHomeOrderRequest.Item entry : request.items()) { CaseProject item = cases.get(entry.id()); if (!PUBLISHED.equals(item.getStatus()) || !Integer.valueOf(1).equals(item.getIsFeatured())) throw new BusinessException(ErrorCode.BAD_REQUEST, "只能排序已发布且在首页展示的案例"); caseProjectMapper.update(null, new LambdaUpdateWrapper<CaseProject>().eq(CaseProject::getId, entry.id()).set(CaseProject::getSortOrder, entry.sortOrder())); } operationLogService.record(p.id(), "UPDATE_HOME_ORDER", "CASE_PROJECT", null, "更新首页案例排序"); }
 
     private Long validate(AdminCaseUpsertRequest r, Long currentId) {
         if (!SLUG_PATTERN.matcher(r.slug().trim()).matches()) throw new BusinessException(ErrorCode.BAD_REQUEST, "slug 仅支持小写字母、数字和连字符");
