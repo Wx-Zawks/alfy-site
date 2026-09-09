@@ -416,6 +416,12 @@
     line-height: 1.14;
   }
 
+  .home-page .section-heading h2 .section-highlight {
+    margin-top: 0.45em;
+    font-size: clamp(1rem, 5vw, 1.35rem);
+    line-height: 1.42;
+  }
+
   .home-page .lead {
     font-size: .96rem;
     line-height: 1.75;

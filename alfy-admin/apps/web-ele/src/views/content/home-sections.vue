@@ -304,9 +304,15 @@ onMounted(load);
                   />
                 </ElFormItem>
               </ElCol>
-              <ElCol :md="6" :xs="24">
+              <ElCol :span="24">
                 <ElFormItem label="强调文字">
-                  <ElInput v-model="activeSection.highlight" maxlength="24" />
+                  <ElInput
+                    v-model="activeSection.highlight"
+                    :rows="2"
+                    maxlength="120"
+                    show-word-limit
+                    type="textarea"
+                  />
                 </ElFormItem>
               </ElCol>
               <ElCol v-if="activeSection.key === 'about'" :span="24">
@@ -675,6 +681,10 @@ onMounted(load);
 
 .preview-copy h3 em {
   display: block;
+  margin-top: 0.3em;
+  overflow-wrap: anywhere;
+  font-size: 0.72em;
+  line-height: 1.35;
   font-style: normal;
   color: #ef624d;
 }

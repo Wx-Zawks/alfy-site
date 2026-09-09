@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
     <section v-if="sectionEnabled('applications')" class="section section-muted applications-section">
       <div class="container">
         <div class="section-heading application-heading">
-          <div><p class="eyebrow">{{ homeSection('applications')?.eyebrow || '应用场景' }}</p><h2>{{ homeSection('applications')?.title || '让材料进入真实场景' }}</h2></div>
+          <div><p class="eyebrow">{{ homeSection('applications')?.eyebrow || '应用场景' }}</p><h2>{{ homeSection('applications')?.title || '让材料进入真实场景' }}<em v-if="homeSection('applications')?.highlightText" class="section-highlight">{{ homeSection('applications')?.highlightText }}</em></h2></div>
           <div v-if="applicationScenes.length" class="application-category-bar" aria-label="应用场景分类">
             <div class="application-category-scroll">
               <button v-for="scene in applicationScenes" :key="scene.key" type="button" :class="{ active: activeSceneKey === scene.key }" :aria-pressed="activeSceneKey === scene.key" @click="selectScene(scene.key)">{{ scene.name }}</button>
@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
     <section v-if="sectionEnabled('cases')" class="section section-muted case-section">
       <div class="container">
         <div class="section-heading case-heading">
-          <div><p class="eyebrow">{{ homeSection('cases')?.eyebrow || '典型案例' }}</p><h2>{{ homeSection('cases')?.title || '用真实项目建立信任' }}</h2></div>
+          <div><p class="eyebrow">{{ homeSection('cases')?.eyebrow || '典型案例' }}</p><h2>{{ homeSection('cases')?.title || '用真实项目建立信任' }}<em v-if="homeSection('cases')?.highlightText" class="section-highlight">{{ homeSection('cases')?.highlightText }}</em></h2></div>
           <div v-if="caseCategories.length" class="application-category-bar case-category-bar" aria-label="典型案例分类筛选">
             <div class="application-category-scroll">
               <button v-for="category in caseCategories" :key="category.slug" type="button" :class="{ active: activeCaseCategoryKey === category.slug }" :aria-pressed="activeCaseCategoryKey === category.slug" @click="activeCaseCategoryKey = category.slug">{{ category.name }}</button>
@@ -309,7 +309,7 @@ onBeforeUnmount(() => {
 
     <section v-if="sectionEnabled('news')" class="section news-section">
       <div class="container">
-        <div class="section-heading"><div><p class="eyebrow">{{ homeSection('news')?.eyebrow || '新闻资讯' }}</p><h2>{{ homeSection('news')?.title || '关注气凝胶产业最新进展' }}</h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 →</NuxtLink></div>
+        <div class="section-heading"><div><p class="eyebrow">{{ homeSection('news')?.eyebrow || '新闻资讯' }}</p><h2>{{ homeSection('news')?.title || '关注气凝胶产业最新进展' }}<em v-if="homeSection('news')?.highlightText" class="section-highlight">{{ homeSection('news')?.highlightText }}</em></h2></div><NuxtLink class="text-link" to="/news">进入新闻中心 →</NuxtLink></div>
         <div v-if="featuredArticle" class="news-showcase">
           <article v-if="featuredArticle" class="news-feature">
             <div class="news-feature-media">

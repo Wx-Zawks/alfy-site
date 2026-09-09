@@ -2113,6 +2113,20 @@ h3 {
   text-wrap: balance;
 }
 
+.home-page .section-heading h2 .section-highlight {
+  display: block;
+  max-width: min(100%, 34em);
+  margin-top: 0.36em;
+  overflow-wrap: anywhere;
+  color: var(--red);
+  font-size: clamp(1.1rem, 1.75vw, 1.65rem);
+  font-style: normal;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -.025em;
+  text-wrap: pretty;
+}
+
 .home-page .text-link {
   padding-bottom: 8px;
   font-size: .94rem;
