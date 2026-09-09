@@ -30,10 +30,10 @@ const team = [
 ]
 
 const facilities = [
-  { name: '湖南省浏阳市研发基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility.webp' },
-  { name: '湖南省浏阳市生产基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility.webp' },
-  { name: '湖南省长沙市天心区销售中心', address: '长沙市天心区天心数谷创芯中心1-2栋', image: '/images/about-facility.webp' },
-  { name: '中南大学科技园办公点', address: '中南大学科技园研发总部1栋四楼407房', image: '/images/about-facility.webp' }
+  { name: '湖南省浏阳市研发基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
+  { name: '湖南省浏阳市生产基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
+  { name: '湖南省长沙市天心区销售中心', address: '长沙市天心区天心数谷创芯中心1-2栋', image: '/images/about-facility-shugu.webp' },
+  { name: '中南大学科技园办公点', address: '中南大学科技园研发总部1栋四楼407房', image: '/images/about-facility-csu.webp' }
 ]
 </script>
 

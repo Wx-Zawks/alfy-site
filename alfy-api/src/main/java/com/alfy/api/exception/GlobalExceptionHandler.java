@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -60,6 +61,18 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getMessage())
                 .orElse(ErrorCode.BAD_REQUEST.getMessage())
                 : ErrorCode.BAD_REQUEST.getMessage();
+        return failure(ErrorCode.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
+        String name = exception.getName();
+        Object value = exception.getValue();
+        String typeName = exception.getRequiredType() == null
+                ? "数值"
+                : exception.getRequiredType().getSimpleName();
+        String message = String.format("参数「%s」的值「%s」不是合法的%s",
+                name, value == null ? "空" : value, typeName);
         return failure(ErrorCode.BAD_REQUEST, message);
     }
 

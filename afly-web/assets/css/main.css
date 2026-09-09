@@ -79,7 +79,7 @@ em { color: var(--red); font-style: normal; }
 .card-body { padding: 24px; }
 .card-body h3 { margin: 13px 0 9px; }
 .card-body p { min-height: 50px; }
-.page-hero { position: relative; display: grid; min-height: 500px; align-items: end; padding: 100px 0 72px; color: var(--white); background: var(--navy); overflow: hidden; }
+.page-hero { position: relative; display: grid; min-height: 440px; align-items: end; padding: 100px 0 72px; color: var(--white); background: var(--navy); overflow: hidden; }
 .page-hero::before { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(4,35,53,.96), rgba(4,35,53,.5)), var(--page-image) center/cover; content: ""; }
 .page-hero-content { position: relative; z-index: 1; max-width: 820px; }
 .page-hero p { color: #d5e1e7; }
@@ -765,7 +765,7 @@ h3 {
 }
 
 .page-hero {
-  min-height: 430px;
+  min-height: 440px;
   padding: 84px 0 62px;
 }
 
@@ -892,7 +892,7 @@ h3 {
 }
 
 .brief-hero {
-  min-height: 360px;
+  min-height: 440px;
   align-items: center;
   padding: 104px 0 56px;
   isolation: isolate;
@@ -917,6 +917,10 @@ h3 {
 .brief-hero .page-hero-content {
   max-width: 1000px;
   text-align: center;
+}
+
+.brief-hero .page-hero-content .button-row {
+  justify-content: center;
 }
 
 .brief-hero .eyebrow {
@@ -1646,10 +1650,6 @@ h3 {
 #history,
 #team {
   scroll-margin-top: 72px;
-}
-
-.about-page .brief-hero {
-  min-height: 430px;
 }
 
 .about-page .brief-hero::before {
@@ -3488,11 +3488,7 @@ h3 {
   }
 
   .brief-hero {
-    min-height: 330px;
-  }
-
-  .about-page .brief-hero {
-    min-height: 360px;
+    min-height: 380px;
   }
 
   .material-type-card > img,

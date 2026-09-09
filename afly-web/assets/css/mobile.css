@@ -145,7 +145,7 @@
   }
 
   .page-hero {
-    min-height: 390px;
+    min-height: 320px;
     padding: 76px 0 52px;
   }
 
@@ -830,12 +830,8 @@
   }
 
   .brief-hero {
-    min-height: 300px;
-    padding: 96px 0 44px;
-  }
-
-  .about-page .brief-hero {
     min-height: 320px;
+    padding: 96px 0 44px;
   }
 
   .brief-hero h1 {
