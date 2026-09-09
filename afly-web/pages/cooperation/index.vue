@@ -26,6 +26,7 @@ useSeoMeta({
   <div v-if="content" class="brief-page cooperation-detail-page">
     <PageHero
       class="brief-hero"
+      page-key="cooperation"
       :eyebrow="pageData.eyebrow || 'OPEN COLLABORATION'"
       :title="content.title"
       :highlight="pageData.highlightText || ''"

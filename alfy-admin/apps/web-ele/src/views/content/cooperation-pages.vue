@@ -4,6 +4,7 @@ import type { ContentPageRecord, MediaRecord } from '#/api';
 import { computed, reactive, ref } from 'vue';
 
 import {
+  ElAlert,
   ElButton,
   ElCard,
   ElCol,
@@ -95,7 +96,7 @@ interface MediaOption {
 
 const definitions: PageDefinition[] = [
   {
-    description: '合作栏目入口，维护主视觉、子导航名称与富文本正文。',
+    description: '合作栏目入口，维护正文、SEO 与子导航；顶部首屏请在站点结构中管理。',
     fallbackTitle: '开放共赢，共建',
     key: 'cooperation',
     label: '合作总览',
@@ -523,9 +524,16 @@ void load();
       width="900px"
     >
       <ElForm :model="form" label-position="top">
+        <ElAlert
+          v-if="form.pageKey === 'cooperation'"
+          :closable="false"
+          show-icon
+          title="合作总览的顶部首屏由“站点结构 → 页面首屏 → cooperation”统一管理；此处的正文、SEO 和子导航编辑不会覆盖官网首屏。"
+          type="info"
+        />
         <ElRow :gutter="18">
           <ElCol :md="12" :xs="24">
-            <ElFormItem label="页面标题" required>
+            <ElFormItem :label="form.pageKey === 'cooperation' ? '页面标题（SEO/正文）' : '页面标题'" required>
               <ElInput v-model="form.title" maxlength="80" show-word-limit />
             </ElFormItem>
           </ElCol>
@@ -539,12 +547,12 @@ void load();
               <ElInput :model-value="form.pageKey" disabled />
             </ElFormItem>
           </ElCol>
-          <ElCol :md="12" :xs="24">
+          <ElCol v-if="form.pageKey !== 'cooperation'" :md="12" :xs="24">
             <ElFormItem label="栏目小标题">
               <ElInput v-model="form.eyebrow" maxlength="40" show-word-limit />
             </ElFormItem>
           </ElCol>
-          <ElCol :md="12" :xs="24">
+          <ElCol v-if="form.pageKey !== 'cooperation'" :md="12" :xs="24">
             <ElFormItem label="红色强调标题">
               <ElInput
                 v-model="form.highlightText"
@@ -554,7 +562,7 @@ void load();
             </ElFormItem>
           </ElCol>
           <ElCol :span="24">
-            <ElFormItem label="页面简介" required>
+            <ElFormItem :label="form.pageKey === 'cooperation' ? '页面简介（SEO/正文摘要）' : '页面简介'" required>
               <ElInput
                 v-model="form.summary"
                 :rows="3"
@@ -564,7 +572,7 @@ void load();
               />
             </ElFormItem>
           </ElCol>
-          <ElCol :md="16" :xs="24">
+          <ElCol v-if="form.pageKey !== 'cooperation'" :md="16" :xs="24">
             <ElFormItem label="主视觉图片">
               <ElSelect
                 v-model="form.coverMediaId"
@@ -592,7 +600,7 @@ void load();
               />
             </ElFormItem>
           </ElCol>
-          <ElCol v-if="coverPreview" :span="24">
+          <ElCol v-if="form.pageKey !== 'cooperation' && coverPreview" :span="24">
             <ElImage
               :preview-src-list="[coverPreview]"
               :src="coverPreview"
@@ -610,7 +618,7 @@ void load();
             placeholder="请输入页面正文；可设置字体、字号、颜色、对齐方式，并从工具栏插入图片"
           />
         </ElFormItem>
-        <ElFormItem label="咨询按钮文字">
+        <ElFormItem v-if="form.pageKey !== 'cooperation'" label="咨询按钮文字">
           <ElInput v-model="form.actionLabel" placeholder="发起合作咨询" />
         </ElFormItem>
 
