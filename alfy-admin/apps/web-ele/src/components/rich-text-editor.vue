@@ -304,7 +304,7 @@ function normalizeEditorMarkup() {
     if (span.attributes.length === 0) span.replaceWith(...span.childNodes);
   }
 
-  normalizeStructuralContainers(editor);
+  normalizeRichTextStructure(editor);
 }
 
 function isStructuralContainer(element: HTMLElement) {
@@ -365,6 +365,50 @@ function normalizeStructuralContainers(editor: HTMLElement) {
     }
     container.replaceWith(fragment);
   }
+}
+
+function normalizeMalformedFigures(editor: HTMLElement) {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const figures = [...editor.querySelectorAll<HTMLElement>('figure')].reverse();
+    for (const figure of figures) {
+      const meaningfulChildren = [...figure.childNodes].filter(
+        (child) =>
+          child.nodeType !== Node.TEXT_NODE || Boolean(child.textContent?.trim()),
+      );
+      const hasDirectMedia = [...figure.children].some((child) =>
+        ['IMG', 'VIDEO'].includes(child.tagName),
+      );
+      if (
+        meaningfulChildren.length > 0 &&
+        !hasDirectMedia &&
+        meaningfulChildren.every(
+          (child) =>
+            child.nodeType === Node.ELEMENT_NODE &&
+            ['FIGURE', 'P'].includes((child as HTMLElement).tagName),
+        )
+      ) {
+        figure.replaceWith(...meaningfulChildren);
+        changed = true;
+        continue;
+      }
+
+      // Figures are media blocks. Legacy editor output could wrap a label in
+      // one, causing a label's alignment to propagate to neighbouring media.
+      if (!figure.querySelector('img, video')) {
+        const paragraph = document.createElement('p');
+        paragraph.replaceChildren(...figure.childNodes);
+        figure.replaceWith(paragraph);
+        changed = true;
+      }
+    }
+  }
+}
+
+function normalizeRichTextStructure(editor: HTMLElement) {
+  normalizeMalformedFigures(editor);
+  normalizeStructuralContainers(editor);
 }
 
 function runCommand(command: string, value?: string) {
@@ -751,6 +795,7 @@ function toggleSourceMode() {
       const safeHtml = cleanPastedHtml(sourceValue.value);
       sourceValue.value = safeHtml;
       editorRef.value.innerHTML = renderMediaReferences(safeHtml);
+      normalizeRichTextStructure(editorRef.value);
       emitEditorHtml();
       editorRef.value.focus();
     });
@@ -778,7 +823,7 @@ watch(
     }
     if (editorRef.value && serializeEditorHtml(editorRef.value) !== nextValue) {
       editorRef.value.innerHTML = renderMediaReferences(nextValue);
-      normalizeStructuralContainers(editorRef.value);
+      normalizeRichTextStructure(editorRef.value);
       emitEditorHtml();
     }
   },
@@ -798,7 +843,7 @@ watch(
 onMounted(() => {
   if (editorRef.value) {
     editorRef.value.innerHTML = renderMediaReferences(props.modelValue || '');
-    normalizeStructuralContainers(editorRef.value);
+    normalizeRichTextStructure(editorRef.value);
     emitEditorHtml();
   }
   document.addEventListener('selectionchange', rememberSelection);

@@ -209,6 +209,28 @@ describe('rich text editor managed media previews', () => {
     );
   });
 
+  it('converts labels and nested media figures into independent blocks', () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<div><figure><b>项目实拍②</b></figure><figure><figure><img src="/second.jpg" alt="第二张"></figure><figure><b>项目实拍③</b></figure><figure><figure><img src="/third.jpg" alt="第三张"></figure></figure></figure></div>',
+      },
+    });
+
+    const editor = wrapper.get('.rich-text-content');
+    expect(editor.findAll('div')).toHaveLength(0);
+    expect(editor.findAll('figure')).toHaveLength(2);
+    expect(editor.findAll('p')).toHaveLength(2);
+    expect(editor.findAll('p')[0]?.text()).toBe('项目实拍②');
+    expect(editor.findAll('p')[1]?.text()).toBe('项目实拍③');
+    expect(editor.get('figure:nth-of-type(1) img').attributes('src')).toBe(
+      '/second.jpg',
+    );
+    expect(editor.get('figure:nth-of-type(2) img').attributes('src')).toBe(
+      '/third.jpg',
+    );
+  });
+
   it('applies an alignment only to the selected blocks', async () => {
     const wrapper = mount(RichTextEditor, {
       props: {
