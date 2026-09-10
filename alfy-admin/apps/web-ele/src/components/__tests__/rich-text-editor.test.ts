@@ -21,6 +21,31 @@ async function applyAlignment(
     .setValue(value);
 }
 
+async function applyAlignmentToLooseText(
+  wrapper: ReturnType<typeof mount>,
+  text: string,
+  value: 'justifyCenter' | 'justifyLeft' | 'justifyRight',
+) {
+  const editor = wrapper.get('.rich-text-content').element;
+  const textNode = [...editor.childNodes].find(
+    (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.includes(text),
+  );
+  if (!textNode?.textContent) throw new Error(`找不到裸文本：${text}`);
+
+  const start = textNode.textContent.indexOf(text);
+  const range = document.createRange();
+  range.setStart(textNode, start);
+  range.setEnd(textNode, start + text.length);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  document.dispatchEvent(new Event('selectionchange'));
+
+  await wrapper
+    .get('select[aria-label="对齐方式"]')
+    .setValue(value);
+}
+
 describe('rich text editor managed media previews', () => {
   it('requests a managed video from the toolbar', async () => {
     const wrapper = mount(RichTextEditor, {
@@ -138,6 +163,24 @@ describe('rich text editor managed media previews', () => {
         'data-align',
       ),
     ).toBe('center');
+  });
+
+  it('wraps a selected loose text line before applying alignment', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<div data-align="center">项目实拍①</div><br>项目实拍②<br><figure><img src="/image.jpg" alt=""></figure>',
+      },
+    });
+
+    await applyAlignmentToLooseText(wrapper, '项目实拍②', 'justifyCenter');
+
+    const editor = wrapper.get('.rich-text-content');
+    expect(editor.get('div').attributes('data-align')).toBe('center');
+    expect(editor.get('p').text()).toBe('项目实拍②');
+    expect(editor.get('p').attributes('data-align')).toBe('center');
+    expect(editor.html()).toContain('<br>');
+    expect(editor.get('figure img').attributes('src')).toBe('/image.jpg');
   });
 
   it('applies an alignment only to the selected blocks', async () => {

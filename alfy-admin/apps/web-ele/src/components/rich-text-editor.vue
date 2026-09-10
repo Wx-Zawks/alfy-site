@@ -336,22 +336,43 @@ function closestAlignableBlock(node: Node, editor: HTMLElement) {
   return undefined;
 }
 
+function wrapLooseContentInParagraph(node: Node, editor: HTMLElement) {
+  let topLevelNode = node;
+  while (topLevelNode.parentNode && topLevelNode.parentNode !== editor) {
+    topLevelNode = topLevelNode.parentNode;
+  }
+  if (topLevelNode.parentNode !== editor) return undefined;
+
+  const paragraph = document.createElement('p');
+  editor.insertBefore(paragraph, topLevelNode);
+  paragraph.append(topLevelNode);
+  return paragraph;
+}
+
 function selectedAlignableBlocks(range: Range, editor: HTMLElement) {
   const blocks = new Set<HTMLElement>();
 
   if (range.collapsed) {
-    const block = closestAlignableBlock(range.startContainer, editor);
+    const block =
+      closestAlignableBlock(range.startContainer, editor) ||
+      wrapLooseContentInParagraph(range.startContainer, editor);
     if (block) blocks.add(block);
     return blocks;
   }
 
   const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  const selectedTextNodes: Node[] = [];
   let textNode: Node | null;
   while ((textNode = walker.nextNode())) {
-    if (!textNode.textContent?.trim() || !range.intersectsNode(textNode)) {
-      continue;
+    if (textNode.textContent?.trim() && range.intersectsNode(textNode)) {
+      selectedTextNodes.push(textNode);
     }
-    const block = closestAlignableBlock(textNode, editor);
+  }
+
+  for (const selectedTextNode of selectedTextNodes) {
+    const block =
+      closestAlignableBlock(selectedTextNode, editor) ||
+      wrapLooseContentInParagraph(selectedTextNode, editor);
     if (block) blocks.add(block);
   }
 
@@ -359,8 +380,12 @@ function selectedAlignableBlocks(range: Range, editor: HTMLElement) {
   // which has a text node for the walker to find. Preserve the expected
   // paragraph-level behaviour for those selections as well.
   if (blocks.size === 0) {
-    const startBlock = closestAlignableBlock(range.startContainer, editor);
-    const endBlock = closestAlignableBlock(range.endContainer, editor);
+    const startBlock =
+      closestAlignableBlock(range.startContainer, editor) ||
+      wrapLooseContentInParagraph(range.startContainer, editor);
+    const endBlock =
+      closestAlignableBlock(range.endContainer, editor) ||
+      wrapLooseContentInParagraph(range.endContainer, editor);
     if (startBlock) blocks.add(startBlock);
     if (endBlock) blocks.add(endBlock);
   }
