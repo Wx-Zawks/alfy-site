@@ -77,6 +77,23 @@ const ALIGNABLE_TAGS = new Set([
   'LI',
   'P',
 ]);
+const STRUCTURAL_BLOCK_TAGS = new Set([
+  'BLOCKQUOTE',
+  'FIGURE',
+  'H1',
+  'H2',
+  'H3',
+  'H4',
+  'H5',
+  'H6',
+  'HR',
+  'LI',
+  'OL',
+  'P',
+  'PRE',
+  'TABLE',
+  'UL',
+]);
 
 const allowedPasteTags = new Set([
   'A',
@@ -285,6 +302,68 @@ function normalizeEditorMarkup() {
 
   for (const span of editor.querySelectorAll('span')) {
     if (span.attributes.length === 0) span.replaceWith(...span.childNodes);
+  }
+
+  normalizeStructuralContainers(editor);
+}
+
+function isStructuralContainer(element: HTMLElement) {
+  if (element.tagName !== 'DIV') return false;
+  return [...element.children].some(
+    (child) =>
+      child.tagName === 'BR' || STRUCTURAL_BLOCK_TAGS.has(child.tagName),
+  );
+}
+
+/**
+ * Older imported content can be a single <div> containing titles, <br>s and
+ * figures. text-align on that wrapper is inherited by every child, so one
+ * title cannot be formatted independently. Split it into semantic siblings
+ * and carry a legacy wrapper alignment to the first text paragraph only.
+ */
+function normalizeStructuralContainers(editor: HTMLElement) {
+  const containers = [...editor.querySelectorAll<HTMLElement>('div')]
+    .filter(isStructuralContainer)
+    .reverse();
+
+  for (const container of containers) {
+    const fragment = document.createDocumentFragment();
+    const inheritedAlignment = container.dataset.align;
+    let activeParagraph: HTMLParagraphElement | undefined;
+    let firstTextParagraph: HTMLParagraphElement | undefined;
+
+    for (const child of [...container.childNodes]) {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const element = child as HTMLElement;
+        if (element.tagName === 'BR') {
+          activeParagraph = undefined;
+          continue;
+        }
+        if (STRUCTURAL_BLOCK_TAGS.has(element.tagName)) {
+          activeParagraph = undefined;
+          if (element.tagName === 'P') {
+            firstTextParagraph ||= element as HTMLParagraphElement;
+          }
+          fragment.append(element);
+          continue;
+        }
+      }
+
+      if (child.nodeType === Node.TEXT_NODE && !child.textContent?.trim()) {
+        continue;
+      }
+      if (!activeParagraph) {
+        activeParagraph = document.createElement('p');
+        firstTextParagraph ||= activeParagraph;
+        fragment.append(activeParagraph);
+      }
+      activeParagraph.append(child);
+    }
+
+    if (inheritedAlignment && firstTextParagraph && !firstTextParagraph.dataset.align) {
+      firstTextParagraph.dataset.align = inheritedAlignment;
+    }
+    container.replaceWith(fragment);
   }
 }
 
@@ -699,6 +778,8 @@ watch(
     }
     if (editorRef.value && serializeEditorHtml(editorRef.value) !== nextValue) {
       editorRef.value.innerHTML = renderMediaReferences(nextValue);
+      normalizeStructuralContainers(editorRef.value);
+      emitEditorHtml();
     }
   },
 );
@@ -717,6 +798,8 @@ watch(
 onMounted(() => {
   if (editorRef.value) {
     editorRef.value.innerHTML = renderMediaReferences(props.modelValue || '');
+    normalizeStructuralContainers(editorRef.value);
+    emitEditorHtml();
   }
   document.addEventListener('selectionchange', rememberSelection);
 });

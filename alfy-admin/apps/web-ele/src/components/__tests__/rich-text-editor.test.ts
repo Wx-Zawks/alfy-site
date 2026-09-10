@@ -176,11 +176,37 @@ describe('rich text editor managed media previews', () => {
     await applyAlignmentToLooseText(wrapper, '项目实拍②', 'justifyCenter');
 
     const editor = wrapper.get('.rich-text-content');
+    const paragraphs = editor.findAll('p');
     expect(editor.get('div').attributes('data-align')).toBe('center');
-    expect(editor.get('p').text()).toBe('项目实拍②');
-    expect(editor.get('p').attributes('data-align')).toBe('center');
+    expect(paragraphs[0]?.text()).toBe('项目实拍②');
+    expect(paragraphs[0]?.attributes('data-align')).toBe('center');
     expect(editor.html()).toContain('<br>');
     expect(editor.get('figure img').attributes('src')).toBe('/image.jpg');
+  });
+
+  it('splits a legacy wrapper so aligning one title cannot align figures', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<div data-align="center"><p>项目实拍①</p><br><p>项目实拍②</p><br><figure><img src="/first.jpg" alt="第一张"></figure><br><p>项目实拍③</p><figure><img src="/second.jpg" alt="第二张"></figure></div>',
+      },
+    });
+
+    await applyAlignment(wrapper, 'p:nth-of-type(3)', 'justifyRight');
+
+    const editor = wrapper.get('.rich-text-content');
+    const paragraphs = editor.findAll('p');
+    expect(editor.findAll('div')).toHaveLength(0);
+    expect(paragraphs[0]?.attributes('data-align')).toBe('center');
+    expect(paragraphs[1]?.attributes('data-align')).toBeUndefined();
+    expect(paragraphs[2]?.attributes('data-align')).toBe('right');
+    expect(editor.findAll('figure')).toHaveLength(2);
+    expect(editor.get('figure:nth-of-type(1) img').attributes('src')).toBe(
+      '/first.jpg',
+    );
+    expect(editor.get('figure:nth-of-type(2) img').attributes('src')).toBe(
+      '/second.jpg',
+    );
   });
 
   it('applies an alignment only to the selected blocks', async () => {
