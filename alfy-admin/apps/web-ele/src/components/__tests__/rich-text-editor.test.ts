@@ -3,6 +3,24 @@ import { describe, expect, it } from 'vitest';
 
 import RichTextEditor from '../rich-text-editor.vue';
 
+async function applyAlignment(
+  wrapper: ReturnType<typeof mount>,
+  selector: string,
+  value: 'justifyCenter' | 'justifyLeft' | 'justifyRight',
+) {
+  const target = wrapper.get(selector).element;
+  const range = document.createRange();
+  range.selectNodeContents(target);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  document.dispatchEvent(new Event('selectionchange'));
+
+  await wrapper
+    .get('select[aria-label="对齐方式"]')
+    .setValue(value);
+}
+
 describe('rich text editor managed media previews', () => {
   it('requests a managed video from the toolbar', async () => {
     const wrapper = mount(RichTextEditor, {
@@ -57,5 +75,51 @@ describe('rich text editor managed media previews', () => {
     expect(wrapper.get('.rich-text-content img').attributes('src')).toBe(
       'blob:http://localhost:5777/new-media-2',
     );
+  });
+
+  it('keeps alignment independent for consecutive rich-text paragraphs', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<p>项目实拍①</p><p>项目实拍②</p><p>项目实拍③&nbsp;</p>',
+      },
+    });
+
+    await applyAlignment(wrapper, 'p:nth-of-type(2)', 'justifyCenter');
+    await applyAlignment(wrapper, 'p:nth-of-type(3)', 'justifyCenter');
+
+    const paragraphs = wrapper.findAll('.rich-text-content p');
+    expect(paragraphs[0]?.attributes('data-align')).toBeUndefined();
+    expect(paragraphs[1]?.attributes('data-align')).toBe('center');
+    expect(paragraphs[2]?.attributes('data-align')).toBe('center');
+
+    const html = String(wrapper.emitted('update:modelValue')?.at(-1)?.[0]);
+    expect(html).toContain('<p data-align="center">项目实拍②</p>');
+    expect(html).toContain('data-align="center">项目实拍③&nbsp;</p>');
+  });
+
+  it('applies an alignment only to the selected blocks', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<h2 data-align="center">已有标题</h2><p>第一段</p><p>第二段</p>',
+      },
+    });
+
+    await applyAlignment(wrapper, 'p:nth-of-type(1)', 'justifyRight');
+
+    expect(
+      wrapper.get('.rich-text-content h2').attributes('data-align'),
+    ).toBe('center');
+    expect(
+      wrapper.get('.rich-text-content p:nth-of-type(1)').attributes(
+        'data-align',
+      ),
+    ).toBe('right');
+    expect(
+      wrapper.get('.rich-text-content p:nth-of-type(2)').attributes(
+        'data-align',
+      ),
+    ).toBeUndefined();
   });
 });

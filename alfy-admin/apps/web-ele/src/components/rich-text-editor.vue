@@ -297,9 +297,79 @@ function applyColor(event: Event, command: 'backColor' | 'foreColor') {
   (event.target as HTMLSelectElement).value = '';
 }
 
+function closestAlignableBlock(node: Node, editor: HTMLElement) {
+  let current =
+    node.nodeType === Node.ELEMENT_NODE
+      ? (node as HTMLElement)
+      : node.parentElement;
+
+  while (current && current !== editor) {
+    if (ALIGNABLE_TAGS.has(current.tagName)) return current;
+    current = current.parentElement;
+  }
+  return undefined;
+}
+
+function selectedAlignableBlocks(range: Range, editor: HTMLElement) {
+  const blocks = new Set<HTMLElement>();
+
+  if (range.collapsed) {
+    const block = closestAlignableBlock(range.startContainer, editor);
+    if (block) blocks.add(block);
+    return blocks;
+  }
+
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  let textNode: Node | null;
+  while ((textNode = walker.nextNode())) {
+    if (!textNode.textContent?.trim() || !range.intersectsNode(textNode)) {
+      continue;
+    }
+    const block = closestAlignableBlock(textNode, editor);
+    if (block) blocks.add(block);
+  }
+
+  // A selection can contain an empty block or an embedded element, neither of
+  // which has a text node for the walker to find. Preserve the expected
+  // paragraph-level behaviour for those selections as well.
+  if (blocks.size === 0) {
+    const startBlock = closestAlignableBlock(range.startContainer, editor);
+    const endBlock = closestAlignableBlock(range.endContainer, editor);
+    if (startBlock) blocks.add(startBlock);
+    if (endBlock) blocks.add(endBlock);
+  }
+  return blocks;
+}
+
 function applyAlignment(event: Event) {
   const value = (event.target as HTMLSelectElement).value;
-  if (value) runCommand(value);
+  const alignmentByCommand: Record<string, string> = {
+    justifyCenter: 'center',
+    justifyFull: 'justify',
+    justifyLeft: 'left',
+    justifyRight: 'right',
+  };
+  const alignment = alignmentByCommand[value];
+  const editor = editorRef.value;
+
+  if (alignment && editor && !props.disabled && !sourceMode.value) {
+    editor.focus();
+    restoreSelection();
+    const selection = window.getSelection();
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
+    if (range && isEditorSelection(range)) {
+      for (const block of selectedAlignableBlocks(range, editor)) {
+        // Do not rely on document.execCommand('justify*'): browser engines can
+        // merge or rewrite adjacent blocks, making one paragraph's alignment
+        // unexpectedly reset another's. Persist one explicit value per block.
+        block.removeAttribute('align');
+        block.style.removeProperty('text-align');
+        if (alignment === 'left') delete block.dataset.align;
+        else block.dataset.align = alignment;
+      }
+      emitEditorHtml();
+    }
+  }
   (event.target as HTMLSelectElement).value = '';
 }
 
