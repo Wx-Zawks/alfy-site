@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import RichTextEditor from '../rich-text-editor.vue';
 
@@ -96,6 +96,48 @@ describe('rich text editor managed media previews', () => {
     const html = String(wrapper.emitted('update:modelValue')?.at(-1)?.[0]);
     expect(html).toContain('<p data-align="center">项目实拍②</p>');
     expect(html).toContain('data-align="center">项目实拍③&nbsp;</p>');
+  });
+
+  it('preserves the selected paragraph when toolbar focus collapses selection', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue: '<p>项目实拍①</p><p>项目实拍②</p>',
+      },
+    });
+    const originalFocus = HTMLElement.prototype.focus;
+    const focusSpy = vi
+      .spyOn(HTMLElement.prototype, 'focus')
+      .mockImplementation(function (this: HTMLElement) {
+        originalFocus.call(this);
+        if (!this.classList.contains('rich-text-content')) return;
+
+        const firstParagraph = this.querySelector('p');
+        if (!firstParagraph) return;
+        const range = document.createRange();
+        range.selectNodeContents(firstParagraph);
+        range.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+      });
+
+    try {
+      await applyAlignment(wrapper, 'p:nth-of-type(2)', 'justifyCenter');
+    } finally {
+      focusSpy.mockRestore();
+    }
+
+    expect(
+      wrapper.get('.rich-text-content p:nth-of-type(1)').attributes(
+        'data-align',
+      ),
+    ).toBeUndefined();
+    expect(
+      wrapper.get('.rich-text-content p:nth-of-type(2)').attributes(
+        'data-align',
+      ),
+    ).toBe('center');
   });
 
   it('applies an alignment only to the selected blocks', async () => {

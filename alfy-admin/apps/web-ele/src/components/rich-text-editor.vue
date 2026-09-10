@@ -148,6 +148,33 @@ function restoreSelection() {
   selection?.addRange(savedRange);
 }
 
+/**
+ * Toolbar controls can move focus away from contenteditable. Some browsers
+ * synchronously collapse that selection while focus is moving, so capture the
+ * range before focusing and restore the independent copy afterwards.
+ */
+function focusAndRestoreEditorSelection() {
+  const editor = editorRef.value;
+  if (!editor) return undefined;
+  const range =
+    savedRange && isEditorSelection(savedRange)
+      ? savedRange.cloneRange()
+      : undefined;
+
+  editor.focus();
+  if (range) {
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    return range;
+  }
+
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return undefined;
+  const currentRange = selection.getRangeAt(0);
+  return isEditorSelection(currentRange) ? currentRange : undefined;
+}
+
 function normalizeHtml(editor: HTMLElement) {
   const hasMedia = Boolean(editor.querySelector('img, video, figure'));
   return editor.textContent?.trim() || hasMedia ? editor.innerHTML : '';
@@ -263,8 +290,7 @@ function normalizeEditorMarkup() {
 
 function runCommand(command: string, value?: string) {
   if (props.disabled || sourceMode.value) return;
-  editorRef.value?.focus();
-  restoreSelection();
+  focusAndRestoreEditorSelection();
   document.execCommand(command, false, value);
   normalizeEditorMarkup();
   emitEditorHtml();
@@ -353,11 +379,8 @@ function applyAlignment(event: Event) {
   const editor = editorRef.value;
 
   if (alignment && editor && !props.disabled && !sourceMode.value) {
-    editor.focus();
-    restoreSelection();
-    const selection = window.getSelection();
-    const range = selection?.rangeCount ? selection.getRangeAt(0) : undefined;
-    if (range && isEditorSelection(range)) {
+    const range = focusAndRestoreEditorSelection();
+    if (range) {
       for (const block of selectedAlignableBlocks(range, editor)) {
         // Do not rely on document.execCommand('justify*'): browser engines can
         // merge or rewrite adjacent blocks, making one paragraph's alignment
@@ -605,8 +628,7 @@ function handlePaste(event: ClipboardEvent) {
 
 function insertHtml(html: string) {
   if (props.disabled || sourceMode.value) return;
-  editorRef.value?.focus();
-  restoreSelection();
+  focusAndRestoreEditorSelection();
   document.execCommand(
     'insertHTML',
     false,
