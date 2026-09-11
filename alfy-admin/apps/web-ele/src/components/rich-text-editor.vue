@@ -266,6 +266,8 @@ function normalizeEditorMarkup() {
   const editor = editorRef.value;
   if (!editor) return;
 
+  removeMediaElementsWithoutSource(editor);
+
   for (const font of editor.querySelectorAll('font')) {
     const span = document.createElement('span');
     const face = font.getAttribute('face');
@@ -305,6 +307,27 @@ function normalizeEditorMarkup() {
   }
 
   normalizeRichTextStructure(editor);
+}
+
+/**
+ * Older editor output can contain an empty image placeholder after its source
+ * address was stripped. It cannot render and blocks saves, so remove only the
+ * empty placeholder and its otherwise empty paragraph or figure.
+ */
+function removeMediaElementsWithoutSource(editor: HTMLElement) {
+  for (const media of [...editor.querySelectorAll<HTMLElement>('img, source')]) {
+    if (media.getAttribute('src')?.trim()) continue;
+    const parent = media.parentElement;
+    media.remove();
+    if (
+      parent &&
+      ['FIGURE', 'P'].includes(parent.tagName) &&
+      !parent.textContent?.trim() &&
+      !parent.querySelector('img, video, source')
+    ) {
+      parent.remove();
+    }
+  }
 }
 
 function isStructuralContainer(element: HTMLElement) {
@@ -795,7 +818,7 @@ function toggleSourceMode() {
       const safeHtml = cleanPastedHtml(sourceValue.value);
       sourceValue.value = safeHtml;
       editorRef.value.innerHTML = renderMediaReferences(safeHtml);
-      normalizeRichTextStructure(editorRef.value);
+      normalizeEditorMarkup();
       emitEditorHtml();
       editorRef.value.focus();
     });
@@ -824,6 +847,7 @@ watch(
     if (editorRef.value && serializeEditorHtml(editorRef.value) !== nextValue) {
       editorRef.value.innerHTML = renderMediaReferences(nextValue);
       normalizeRichTextStructure(editorRef.value);
+      removeMediaElementsWithoutSource(editorRef.value);
       emitEditorHtml();
     }
   },
@@ -844,6 +868,7 @@ onMounted(() => {
   if (editorRef.value) {
     editorRef.value.innerHTML = renderMediaReferences(props.modelValue || '');
     normalizeRichTextStructure(editorRef.value);
+    removeMediaElementsWithoutSource(editorRef.value);
     emitEditorHtml();
   }
   document.addEventListener('selectionchange', rememberSelection);

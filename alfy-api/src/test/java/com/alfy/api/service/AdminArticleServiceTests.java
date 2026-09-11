@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.mock;
@@ -91,6 +92,22 @@ class AdminArticleServiceTests {
         assertThat(relationCaptor.getValue().getMediaId()).isEqualTo(42L);
         assertThat(relationCaptor.getValue().getUsageType()).isEqualTo("INLINE");
         assertThat(savedArticle.get().getContentHtml()).contains("src=\"alfy-media:42\"");
+    }
+
+    @Test
+    void reportsAnExternalImageAddressBeforeSanitizationStripsIt() {
+        when(articleMapper.selectOne(any())).thenReturn(null);
+        when(articleCategoryMapper.selectCount(any())).thenReturn(1L);
+        AdminArticleUpsertRequest request = new AdminArticleUpsertRequest(
+                "新闻标题", "news-title", "新闻摘要",
+                "<figure><img src=\"https://example.com/news.jpg\"></figure>",
+                null, null, "编辑", null, null, List.of(3L), 0, false,
+                null, 0, null, null, null, null
+        );
+
+        assertThatThrownBy(() -> service.create(request, new AdminPrincipal(1L, "admin", "content_admin")))
+                .hasMessageContaining("非素材库地址")
+                .hasMessageNotContaining("缺少 src");
     }
 
     @Test

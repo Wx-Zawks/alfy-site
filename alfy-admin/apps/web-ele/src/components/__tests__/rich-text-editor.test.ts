@@ -47,6 +47,24 @@ async function applyAlignmentToLooseText(
 }
 
 describe('rich text editor managed media previews', () => {
+  it('removes legacy image placeholders that have no source address', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<p>正文开头</p><p><img>&nbsp;</p><figure><img src="alfy-media:2" alt="现场图"></figure>',
+      },
+    });
+
+    await wrapper.vm.$nextTick();
+
+    const html = wrapper.get('.rich-text-content').html();
+    expect(html).not.toContain('<img>');
+    expect(html).toContain('src="alfy-media:2"');
+    expect(wrapper.emitted('update:modelValue')?.at(-1)?.[0]).not.toContain(
+      '<img>',
+    );
+  });
+
   it('requests a managed video from the toolbar', async () => {
     const wrapper = mount(RichTextEditor, {
       props: {

@@ -86,6 +86,7 @@ public class AdminArticleService {
     @Transactional
     public AdminArticleResponse create(AdminArticleUpsertRequest request, AdminPrincipal principal) {
         validateRequest(request, null);
+        rejectMediaElementsWithoutAddress(request.contentHtml());
         Article article = new Article();
         applyRequest(article, request);
         article.setStatus("DRAFT");
@@ -104,6 +105,7 @@ public class AdminArticleService {
             throw new BusinessException(ErrorCode.CONFLICT, "文章已被其他管理员修改，请刷新后重试");
         }
         validateRequest(request, id);
+        rejectMediaElementsWithoutAddress(request.contentHtml());
         applyRequest(article, request);
         int updated = articleMapper.updateById(article);
         if (updated != 1) {
@@ -201,7 +203,6 @@ public class AdminArticleService {
     }
 
     private void replaceInlineMedia(Long articleId, String contentHtml) {
-        rejectMediaElementsWithoutAddress(contentHtml);
         LinkedHashMap<Long, String> mediaTypesById = extractInlineMediaTypes(contentHtml);
         if (!mediaTypesById.isEmpty()) {
             Map<Long, MediaAsset> mediaById = mediaAssetMapper.selectBatchIds(mediaTypesById.keySet()).stream()
@@ -229,15 +230,17 @@ public class AdminArticleService {
     }
 
     /**
-     * 拦截正文里 src 属性缺失或值非 alfy-media:<id> 占位符的图片/视频，避免
-     * 历史数据在保存链路中静默丢失地址。每发现一处立即抛出明确错误，便于管理员
-     * 在编辑界面定位缺失的图片并重新上传。
+     * 在白名单清洗前校验媒体地址，避免非法地址先被清洗为无 src 后才报出误导性错误。
+     * video 可以通过子元素 source 提供地址，此时自身无需 src 属性。
      */
     private void rejectMediaElementsWithoutAddress(String contentHtml) {
         if (contentHtml == null || contentHtml.isBlank()) {
             return;
         }
         for (Element element : Jsoup.parseBodyFragment(contentHtml).select("img, source, video")) {
+            if ("video".equals(element.tagName()) && !element.select("source[src]").isEmpty()) {
+                continue;
+            }
             String source = element.attr("src").trim();
             if (source.isEmpty()) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST,
