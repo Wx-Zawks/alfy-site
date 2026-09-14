@@ -118,9 +118,16 @@ public class PublicMediaService {
     }
 
     private boolean belongsToPublishedTechnologyPage(Long mediaId) {
-        return technologyPageMapper.selectCount(new LambdaQueryWrapper<TechnologyPage>()
+        if (technologyPageMapper.selectCount(new LambdaQueryWrapper<TechnologyPage>()
                 .eq(TechnologyPage::getHeroMediaId, mediaId)
-                .eq(TechnologyPage::getStatus, PUBLISHED)) > 0;
+                .eq(TechnologyPage::getStatus, PUBLISHED)) > 0) {
+            return true;
+        }
+        String reference = "alfy-media:" + mediaId;
+        return technologyPageMapper.selectCount(new LambdaQueryWrapper<TechnologyPage>()
+                .eq(TechnologyPage::getStatus, PUBLISHED)
+                .and(q -> q.like(TechnologyPage::getContentHtml, reference + "\"")
+                        .or().like(TechnologyPage::getContentHtml, reference + "'"))) > 0;
     }
 
     private boolean belongsToPublishedContentPage(Long mediaId) {

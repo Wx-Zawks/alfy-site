@@ -20,11 +20,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class TechnologyPageService {
 
+    private static final Pattern INLINE_MEDIA_REFERENCE = Pattern.compile(
+            "src=([\"'])alfy-media:([1-9]\\d*)\\1", Pattern.CASE_INSENSITIVE);
     private static final String OVERVIEW_KEY = "technology";
     private static final List<String> DETAIL_KEYS = List.of(
             "aerogel-material",
@@ -228,7 +232,7 @@ public class TechnologyPageService {
                 new ActionResponse(page.getCtaLabel(), page.getCtaTarget()),
                 readBlocksWithMediaUrls(page.getCapabilityRowsJson()),
                 read(page.getPillarsJson()),
-                page.getContentHtml(),
+                replaceInlineMediaUrls(page.getContentHtml()),
                 page.getSeoTitle(),
                 page.getSeoDescription(),
                 page.getSeoKeywords(),
@@ -277,6 +281,16 @@ public class TechnologyPageService {
             }
         });
         return blocks;
+    }
+
+    /** 将技术正文中的受管理媒体占位符转换为浏览器可访问的公开地址。 */
+    private static String replaceInlineMediaUrls(String contentHtml) {
+        if (contentHtml == null || contentHtml.isBlank()) {
+            return contentHtml;
+        }
+        Matcher matcher = INLINE_MEDIA_REFERENCE.matcher(contentHtml);
+        return matcher.replaceAll(result -> "src=" + result.group(1)
+                + mediaUrl(Long.parseLong(result.group(2))) + result.group(1));
     }
 
     private static String mediaUrl(Long mediaId) {
