@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { ApiTechnologyPage } from '~/types/api'
+import { computed } from 'vue'
 import { useApiClient } from '~/composables/useApi'
-import { normalizeDocumentTitle } from '~/composables/useContentMapper'
+import { normalizeDocumentTitle, resolveRichTextHtml } from '~/composables/useContentMapper'
 
 interface TechnologyBlock {
   description: string
@@ -27,6 +28,9 @@ if (!page.value) {
 }
 
 const { resolveMediaUrl } = useApiClient()
+const resolvedContentHtml = computed(() =>
+  resolveRichTextHtml(page.value?.contentHtml, resolveMediaUrl),
+)
 const pageDefaults: Record<string, { image: string; label: string }> = {
   'aerogel-material': { image: '/images/aerogel-block.jpg', label: '气凝胶材料技术' },
   'aerogel-composite': { image: '/images/dispersion.png', label: '气凝胶复合产品技术' },
@@ -105,7 +109,7 @@ useSeoMeta({
     </section>
 
     <section v-if="page.contentHtml" class="brief-section technology-rich-section">
-      <article class="container article cms-rich-text" v-html="page.contentHtml" />
+      <article class="container article cms-rich-text" v-html="resolvedContentHtml" />
     </section>
 
     <section v-if="pillars.length" class="brief-section technology-pillar-section">

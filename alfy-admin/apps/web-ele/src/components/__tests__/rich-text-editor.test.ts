@@ -249,6 +249,43 @@ describe('rich text editor managed media previews', () => {
     );
   });
 
+  it('places the caret at the start of the next block when clicking an image', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue:
+          '<figure><img src="/image.jpg" alt="产品图"></figure><p>已有文字</p>',
+      },
+    });
+
+    await wrapper.get('.rich-text-content img').trigger('mousedown');
+
+    const selection = window.getSelection();
+    expect(selection?.rangeCount).toBe(1);
+    const range = selection!.getRangeAt(0);
+    const block = (range.startContainer as HTMLElement).closest('p');
+    expect(block?.textContent).toBe('已有文字');
+    expect(range.startOffset).toBe(0);
+  });
+
+  it('creates an empty paragraph after a trailing figure when its image is clicked', async () => {
+    const wrapper = mount(RichTextEditor, {
+      props: {
+        modelValue: '<figure><img src="/image.jpg" alt="产品图"></figure>',
+      },
+    });
+
+    await wrapper.get('.rich-text-content img').trigger('mousedown');
+
+    const editor = wrapper.get('.rich-text-content');
+    const paragraphs = editor.findAll('p');
+    expect(paragraphs).toHaveLength(1);
+    expect(paragraphs[0]?.element.querySelector('br')).not.toBeNull();
+    const selection = window.getSelection();
+    expect(selection?.rangeCount).toBe(1);
+    const range = selection!.getRangeAt(0);
+    expect(paragraphs[0]?.element.contains(range.startContainer)).toBe(true);
+  });
+
   it('applies an alignment only to the selected blocks', async () => {
     const wrapper = mount(RichTextEditor, {
       props: {

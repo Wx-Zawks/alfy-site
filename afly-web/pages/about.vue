@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { ApiContentPage } from '~/types/api'
+import { computed } from 'vue'
+import { useApiClient } from '~/composables/useApi'
+import { resolveRichTextHtml } from '~/composables/useContentMapper'
 
 const { data: content } = await useApi<ApiContentPage>('public-page-about', '/public/pages/about', { optional: true })
+const { resolveMediaUrl } = useApiClient()
+const resolvedContentHtml = computed(() =>
+  resolveRichTextHtml(content.value?.contentHtml, resolveMediaUrl),
+)
 useSeoMeta({
   title: () => content.value?.seoTitle || content.value?.title || '关于我们',
   description: () => content.value?.seoDescription || content.value?.summary || '了解湖南奥飞新材料有限公司、气凝胶研发历程、核心团队与产业布局。',
@@ -42,7 +49,7 @@ const facilities = [
     <PageHero class="brief-hero" page-key="about" eyebrow="关于我们" title="中南大学气凝胶成果转化核心平台" image="/images/about-hero.webp" />
 
     <section v-if="content?.contentHtml" class="brief-section">
-      <article class="container article cms-rich-text" v-html="content.contentHtml" />
+      <article class="container article cms-rich-text" v-html="resolvedContentHtml" />
     </section>
 
     <template v-else>

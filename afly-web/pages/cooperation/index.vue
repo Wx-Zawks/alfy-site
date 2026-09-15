@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useApiClient } from '~/composables/useApi'
+import { resolveRichTextHtml } from '~/composables/useContentMapper'
 import { useCooperationPages } from '~/composables/useCooperationPages'
 
 const { entries, navItems } = await useCooperationPages()
@@ -14,6 +16,9 @@ if (!content.value) {
 const { open } = useInquiryDialog()
 const { resolveMediaUrl } = useApiClient()
 const pageData = computed(() => content.value?.contentData ?? {})
+const resolvedContentHtml = computed(() =>
+  resolveRichTextHtml(content.value?.contentHtml, resolveMediaUrl),
+)
 
 useSeoMeta({
   title: () => content.value?.seoTitle || content.value?.title || '商务合作',
@@ -46,7 +51,7 @@ useSeoMeta({
       <article
         v-if="content.contentHtml"
         class="container article cms-rich-text"
-        v-html="content.contentHtml"
+        v-html="resolvedContentHtml"
       />
       <article v-else class="container article">
         <p>{{ content.summary }}</p>

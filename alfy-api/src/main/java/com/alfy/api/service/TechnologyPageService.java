@@ -28,7 +28,10 @@ import java.util.regex.Pattern;
 public class TechnologyPageService {
 
     private static final Pattern INLINE_MEDIA_REFERENCE = Pattern.compile(
-            "src=([\"'])alfy-media:([1-9]\\d*)\\1", Pattern.CASE_INSENSITIVE);
+            "src=([\"'])(?:alfy-media:([1-9]\\d*)|/api/v1/public/media/([1-9]\\d*))\\1",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern PUBLIC_MEDIA_PATH = Pattern.compile(
+            "src=([\"'])/api/v1/public/media/([1-9]\\d*)\\1", Pattern.CASE_INSENSITIVE);
     private static final String OVERVIEW_KEY = "technology";
     private static final List<String> DETAIL_KEYS = List.of(
             "aerogel-material",
@@ -53,7 +56,7 @@ public class TechnologyPageService {
     }
 
     public TechnologyPageResponse getAdmin(String pageKey) {
-        return toResponse(require(pageKey));
+        return toResponse(require(pageKey), true);
     }
 
     public List<TechnologyPageResponse> listAdmin() {
@@ -62,7 +65,7 @@ public class TechnologyPageService {
                         .orderByAsc(TechnologyPage::getSortOrder)
                         .orderByAsc(TechnologyPage::getId))
                 .stream()
-                .map(this::toResponse)
+                .map(page -> toResponse(page, true))
                 .toList();
     }
 
@@ -79,7 +82,7 @@ public class TechnologyPageService {
         if (page == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "技术页面不存在或尚未发布");
         }
-        return toResponse(page);
+        return toResponse(page, false);
     }
 
     public List<TechnologyPageResponse> listPublicDetails() {
@@ -89,7 +92,7 @@ public class TechnologyPageService {
                         .orderByAsc(TechnologyPage::getSortOrder)
                         .orderByAsc(TechnologyPage::getId))
                 .stream()
-                .map(this::toResponse)
+                .map(page -> toResponse(page, false))
                 .toList();
     }
 
@@ -97,7 +100,7 @@ public class TechnologyPageService {
         TechnologyPage page = technologyPageMapper.selectOne(new LambdaQueryWrapper<TechnologyPage>()
                 .eq(TechnologyPage::getPageKey, OVERVIEW_KEY)
                 .eq(TechnologyPage::getStatus, "PUBLISHED"));
-        return page == null ? null : toResponse(page);
+        return page == null ? null : toResponse(page, false);
     }
 
     @Transactional
@@ -219,7 +222,13 @@ public class TechnologyPageService {
         );
     }
 
-    private TechnologyPageResponse toResponse(TechnologyPage page) {
+    private TechnologyPageResponse toResponse(TechnologyPage page, boolean editable) {
+        String contentHtml = page.getContentHtml();
+        if (editable) {
+            contentHtml = restoreInlineMediaPlaceholders(contentHtml);
+        } else {
+            contentHtml = replaceInlineMediaUrls(contentHtml);
+        }
         return new TechnologyPageResponse(
                 page.getId(),
                 page.getPageKey(),
@@ -232,7 +241,7 @@ public class TechnologyPageService {
                 new ActionResponse(page.getCtaLabel(), page.getCtaTarget()),
                 readBlocksWithMediaUrls(page.getCapabilityRowsJson()),
                 read(page.getPillarsJson()),
-                replaceInlineMediaUrls(page.getContentHtml()),
+                contentHtml,
                 page.getSeoTitle(),
                 page.getSeoDescription(),
                 page.getSeoKeywords(),
@@ -289,8 +298,21 @@ public class TechnologyPageService {
             return contentHtml;
         }
         Matcher matcher = INLINE_MEDIA_REFERENCE.matcher(contentHtml);
+        return matcher.replaceAll(result -> {
+            String quote = result.group(1);
+            String mediaId = result.group(2) != null ? result.group(2) : result.group(3);
+            return "src=" + quote + mediaUrl(Long.parseLong(mediaId)) + quote;
+        });
+    }
+
+    /** 将公开媒体地址还原为编辑器使用的占位符，保证再次编辑保存时格式一致。 */
+    private static String restoreInlineMediaPlaceholders(String contentHtml) {
+        if (contentHtml == null || contentHtml.isBlank()) {
+            return contentHtml;
+        }
+        Matcher matcher = PUBLIC_MEDIA_PATH.matcher(contentHtml);
         return matcher.replaceAll(result -> "src=" + result.group(1)
-                + mediaUrl(Long.parseLong(result.group(2))) + result.group(1));
+                + "alfy-media:" + result.group(2) + result.group(1));
     }
 
     private static String mediaUrl(Long mediaId) {

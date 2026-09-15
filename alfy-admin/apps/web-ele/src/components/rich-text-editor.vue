@@ -170,6 +170,33 @@ function restoreSelection() {
  * synchronously collapse that selection while focus is moving, so capture the
  * range before focusing and restore the independent copy afterwards.
  */
+function handleEditorMouseDown(event: MouseEvent) {
+  if (props.disabled || sourceMode.value) return;
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+  if (target.tagName !== 'IMG' && target.tagName !== 'VIDEO') return;
+  const editor = editorRef.value;
+  const figure = target.closest('figure');
+  if (!figure || !editor || !editor.contains(figure)) return;
+  // The browser would otherwise select the image itself and leave the caret
+  // outside the editor, making it impossible to type right after the image.
+  event.preventDefault();
+  editor.focus();
+  if (!figure.nextElementSibling) {
+    const paragraph = document.createElement('p');
+    paragraph.appendChild(document.createElement('br'));
+    figure.parentNode?.insertBefore(paragraph, figure.nextSibling);
+  }
+  const range = document.createRange();
+  const nextBlock = figure.nextElementSibling as HTMLElement;
+  range.setStart(nextBlock, 0);
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  rememberSelection();
+}
+
 function focusAndRestoreEditorSelection() {
   const editor = editorRef.value;
   if (!editor) return undefined;
@@ -1167,6 +1194,7 @@ defineExpose({ insertHtml });
       @blur="emitEditorHtml"
       @input="emitEditorHtml"
       @keyup="rememberSelection"
+      @mousedown="handleEditorMouseDown"
       @paste="handlePaste"
     ></div>
   </div>
@@ -1341,6 +1369,31 @@ defineExpose({ insertHtml });
 .rich-text-content :deep(ol) {
   padding-left: 2em;
   margin: 18px 0;
+  list-style-position: outside;
+}
+
+.rich-text-content :deep(ul) {
+  list-style-type: disc;
+}
+
+.rich-text-content :deep(ol) {
+  list-style-type: decimal;
+}
+
+.rich-text-content :deep(ul ul) {
+  list-style-type: circle;
+}
+
+.rich-text-content :deep(ul ul ul) {
+  list-style-type: square;
+}
+
+.rich-text-content :deep(ol ol) {
+  list-style-type: lower-alpha;
+}
+
+.rich-text-content :deep(ol ol ol) {
+  list-style-type: lower-roman;
 }
 
 .rich-text-content :deep(li) {
