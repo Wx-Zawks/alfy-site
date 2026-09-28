@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiContentPage } from '~/types/api'
+import type { ApiAboutContentData, ApiContentPage } from '~/types/api'
 import { computed } from 'vue'
 import { useApiClient } from '~/composables/useApi'
 import { resolveRichTextHtml } from '~/composables/useContentMapper'
@@ -20,13 +20,45 @@ const teamTrack = ref<HTMLElement | null>(null)
 const scrollTimeline = (direction: number) => timelineTrack.value?.scrollBy({ left: direction * 360, behavior: 'smooth' })
 const scrollTeam = (direction: number) => teamTrack.value?.scrollBy({ left: direction * 360, behavior: 'smooth' })
 
-const milestones = [
-  { date: '2026年1月', title: '新一代气凝胶常压干燥技术发布', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/launch-1.jpg' },
-  { date: '2024年6月', title: '新一代气凝胶常压干燥技术突破', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/launch-1.jpg' },
-  { date: '2019年4月', title: '气凝胶柔性复合材料中试', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/launch-1.jpg' },
-  { date: '2015年6月', title: '气凝胶分散体技术开发', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/launch-1.jpg' },
-  { date: '2022年7月', title: '奥飞公司成立及产业化验证', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/launch-1.jpg' }
+interface TimelineItem {
+  date: string
+  image: string
+  text: string
+  title: string
+}
+
+// 作为 CMS 数据尚未初始化时的安全回退。文字沿用原页面，仅替换公司提供的图片。
+const defaultMilestones: TimelineItem[] = [
+  { date: '2026年1月', title: '新一代气凝胶常压干燥技术发布', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/about-history-01.jpg' },
+  { date: '2024年6月', title: '新一代气凝胶常压干燥技术突破', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/about-history-02.png' },
+  { date: '2019年4月', title: '气凝胶柔性复合材料中试', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/about-history-03.png' },
+  { date: '2015年6月', title: '气凝胶分散体技术开发', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/about-history-04.jpg' },
+  { date: '2022年7月', title: '奥飞公司成立及产业化验证', text: '“新一代气凝胶及其复合材料技术发布暨产业发展签约大会”在湖南长沙隆重举行。', image: '/images/about-history-05.png' },
+  { date: '2026年', title: '', text: '', image: '/images/about-history-06.jpg' }
 ]
+
+const milestones = computed<TimelineItem[]>(() => {
+  const aboutData = content.value?.contentData as ApiAboutContentData | null | undefined
+  if (!Array.isArray(aboutData?.historyItems) || aboutData.historyItems.length === 0) {
+    return defaultMilestones
+  }
+
+  return aboutData.historyItems
+    .map((item, index) => {
+      const fallback = defaultMilestones[index]
+      const mediaId = Number(item.imageMediaId)
+      const image = Number.isSafeInteger(mediaId) && mediaId > 0
+        ? `/api/v1/public/media/${mediaId}`
+        : item.imageUrl || fallback?.image || ''
+      return {
+        date: item.date?.trim() || fallback?.date || '',
+        image: resolveMediaUrl(image),
+        text: item.text?.trim() || fallback?.text || '',
+        title: item.title?.trim() || fallback?.title || ''
+      }
+    })
+    .filter((item) => item.date || item.title || item.text || item.image)
+})
 
 const team = [
   { role: '技术带头人', name: '周科朝', text: '教授、博士生导师，原中南大学副校长，粉末冶金全国重点实验室主任。', image: '/images/team-5.jpg' },
@@ -84,11 +116,11 @@ const facilities = [
           </div>
         </div>
         <div ref="timelineTrack" class="brief-carousel-track milestone-track">
-          <article v-for="item in milestones" :key="item.date" class="milestone-card">
-            <p class="milestone-title">{{ item.title }}</p>
-            <h3>{{ item.date }}</h3>
-            <p>{{ item.text }}</p>
-            <img :src="item.image" :alt="item.title" decoding="async" loading="lazy">
+          <article v-for="(item, index) in milestones" :key="`${item.date}-${item.title}-${index}`" class="milestone-card">
+            <p v-if="item.title" class="milestone-title">{{ item.title }}</p>
+            <h3 v-if="item.date">{{ item.date }}</h3>
+            <p v-if="item.text">{{ item.text }}</p>
+            <img :src="item.image" :alt="item.title || item.date || '发展历程图片'" decoding="async" loading="lazy">
           </article>
         </div>
       </div>

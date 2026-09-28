@@ -242,7 +242,7 @@ export interface ApiPageHero {
 
 export interface ApiContentPage {
   category?: null | string
-  contentData?: null | ApiCooperationContentData
+  contentData?: ApiAboutContentData & ApiCooperationContentData | null
   contentHtml?: null | string
   coverImageUrl?: null | string
   pageKey: string
@@ -251,6 +251,18 @@ export interface ApiContentPage {
   seoTitle?: null | string
   summary?: null | string
   title: string
+}
+
+export interface ApiAboutHistoryItem {
+  date?: null | string
+  imageMediaId?: null | number
+  imageUrl?: null | string
+  text?: null | string
+  title?: null | string
+}
+
+export interface ApiAboutContentData {
+  historyItems?: null | ApiAboutHistoryItem[]
 }
 
 export interface ApiContentBlock {

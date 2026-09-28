@@ -11,6 +11,7 @@ const productCategories = () =>
   import('#/views/content/product-categories.vue');
 const technologyPages = () => import('#/views/content/technology-pages.vue');
 const cooperationPages = () => import('#/views/content/cooperation-pages.vue');
+const aboutPage = () => import('#/views/content/about-page.vue');
 
 const routes: RouteRecordRaw[] = [
   {
@@ -160,6 +161,12 @@ const routes: RouteRecordRaw[] = [
     name: 'PagesContent',
     path: '/pages-content',
     children: [
+      {
+        component: aboutPage,
+        meta: { icon: 'lucide:landmark', title: '关于我们' },
+        name: 'AboutPage',
+        path: '/pages-content/about',
+      },
       {
         component: cooperationPages,
         meta: { icon: 'lucide:handshake', title: '合作页面' },
