@@ -131,9 +131,18 @@ public class PublicMediaService {
     }
 
     private boolean belongsToPublishedContentPage(Long mediaId) {
-        return contentPageMapper.selectCount(new LambdaQueryWrapper<ContentPage>()
+        if (contentPageMapper.selectCount(new LambdaQueryWrapper<ContentPage>()
                 .eq(ContentPage::getCoverMediaId, mediaId)
-                .eq(ContentPage::getStatus, PUBLISHED)) > 0;
+                .eq(ContentPage::getStatus, PUBLISHED)) > 0) {
+            return true;
+        }
+        // 单页的结构化内容（例如“关于我们”的发展历程）同样可以引用素材库。
+        // 仅匹配完整数字 ID，避免 imageMediaId: 6460 误将素材 646 暴露为公开资源。
+        String jsonMediaId = "\"imageMediaId\"[[:space:]]*:[[:space:]]*"
+                + mediaId + "([^0-9]|$)";
+        return contentPageMapper.selectCount(new LambdaQueryWrapper<ContentPage>()
+                .eq(ContentPage::getStatus, PUBLISHED)
+                .and(query -> query.apply("content_json REGEXP {0}", jsonMediaId))) > 0;
     }
 
     private boolean belongsToSiteSetting(Long mediaId) {
