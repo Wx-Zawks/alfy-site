@@ -108,6 +108,27 @@ export interface ContentPageRecord extends BackendContentRecord {
   title: string;
 }
 
+export interface TeamMemberRecord extends BackendContentRecord {
+  bio?: null | string;
+  enabled: boolean;
+  name: string;
+  photoMediaId?: null | number;
+  photoUrl?: null | string;
+  role: string;
+  sortOrder: number;
+  updatedAt?: null | string;
+}
+
+export interface BaseFacilityRecord extends BackendContentRecord {
+  address?: null | string;
+  enabled: boolean;
+  imageMediaId?: null | number;
+  imageUrl?: null | string;
+  name: string;
+  sortOrder: number;
+  updatedAt?: null | string;
+}
+
 export interface InquiryRecord {
   adminNote?: string;
   company?: string;
@@ -415,6 +436,40 @@ export function changeContentPageStatus(
   return requestClient.post<ContentPageRecord>(
     `/admin/pages/${id}/${status === 'published' ? 'publish' : 'offline'}`,
   );
+}
+
+export function listTeamMembers() {
+  return requestClient.get<TeamMemberRecord[]>('/admin/about/team-members');
+}
+
+export function saveTeamMember(
+  id: null | number,
+  payload: Record<string, unknown>,
+) {
+  return id
+    ? requestClient.put<TeamMemberRecord>(`/admin/about/team-members/${id}`, payload)
+    : requestClient.post<TeamMemberRecord>('/admin/about/team-members', payload);
+}
+
+export function deleteTeamMember(id: number) {
+  return requestClient.delete(`/admin/about/team-members/${id}`);
+}
+
+export function listBaseFacilities() {
+  return requestClient.get<BaseFacilityRecord[]>('/admin/about/base-facilities');
+}
+
+export function saveBaseFacility(
+  id: null | number,
+  payload: Record<string, unknown>,
+) {
+  return id
+    ? requestClient.put<BaseFacilityRecord>(`/admin/about/base-facilities/${id}`, payload)
+    : requestClient.post<BaseFacilityRecord>('/admin/about/base-facilities', payload);
+}
+
+export function deleteBaseFacility(id: number) {
+  return requestClient.delete(`/admin/about/base-facilities/${id}`);
 }
 
 export async function listProductCategories() {
