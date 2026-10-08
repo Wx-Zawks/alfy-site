@@ -5,6 +5,7 @@ import com.alfy.api.entity.Article;
 import com.alfy.api.entity.ArticleMedia;
 import com.alfy.api.entity.ApplicationScene;
 import com.alfy.api.entity.CaseProject;
+import com.alfy.api.entity.BaseFacility;
 import com.alfy.api.entity.ContentPage;
 import com.alfy.api.entity.MediaAsset;
 import com.alfy.api.entity.Product;
@@ -12,10 +13,12 @@ import com.alfy.api.entity.HeroSlide;
 import com.alfy.api.entity.PageHero;
 import com.alfy.api.entity.SiteSetting;
 import com.alfy.api.entity.TechnologyPage;
+import com.alfy.api.entity.TeamMember;
 import com.alfy.api.exception.BusinessException;
 import com.alfy.api.mapper.ArticleMapper;
 import com.alfy.api.mapper.ArticleMediaMapper;
 import com.alfy.api.mapper.ApplicationSceneMapper;
+import com.alfy.api.mapper.BaseFacilityMapper;
 import com.alfy.api.mapper.CaseProjectMapper;
 import com.alfy.api.mapper.ContentPageMapper;
 import com.alfy.api.mapper.MediaAssetMapper;
@@ -23,6 +26,7 @@ import com.alfy.api.mapper.ProductMapper;
 import com.alfy.api.mapper.HeroSlideMapper;
 import com.alfy.api.mapper.PageHeroMapper;
 import com.alfy.api.mapper.SiteSettingMapper;
+import com.alfy.api.mapper.TeamMemberMapper;
 import com.alfy.api.mapper.TechnologyPageMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -50,13 +54,16 @@ public class PublicMediaService {
     private final SiteSettingMapper siteSettingMapper;
     private final TechnologyPageMapper technologyPageMapper;
     private final ContentPageMapper contentPageMapper;
+    private final TeamMemberMapper teamMemberMapper;
+    private final BaseFacilityMapper baseFacilityMapper;
 
     public MediaAsset getPublicMedia(Long mediaId) {
         MediaAsset media = mediaAssetMapper.selectById(mediaId);
         if (media == null || (!belongsToPublishedArticle(mediaId) && !belongsToPublishedProduct(mediaId)
                 && !belongsToPublishedScene(mediaId) && !belongsToPublishedCase(mediaId) && !belongsToPublishedHeroSlide(mediaId)
                 && !belongsToPublishedPageHero(mediaId) && !belongsToPublishedTechnologyPage(mediaId)
-                && !belongsToPublishedContentPage(mediaId) && !belongsToSiteSetting(mediaId))) {
+                && !belongsToPublishedContentPage(mediaId) && !belongsToSiteSetting(mediaId)
+                && !belongsToAboutPage(mediaId))) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "媒体资源不存在或尚未公开");
         }
         return media;
@@ -148,5 +155,15 @@ public class PublicMediaService {
     private boolean belongsToSiteSetting(Long mediaId) {
         return siteSettingMapper.selectCount(new LambdaQueryWrapper<SiteSetting>()
                 .and(q -> q.eq(SiteSetting::getLogoMediaId, mediaId).or().eq(SiteSetting::getWechatQrMediaId, mediaId))) > 0;
+    }
+
+    /** 关于我们页面的团队成员头像与产业布局图片，启用即公开。 */
+    private boolean belongsToAboutPage(Long mediaId) {
+        return teamMemberMapper.selectCount(new LambdaQueryWrapper<TeamMember>()
+                        .eq(TeamMember::getPhotoMediaId, mediaId)
+                        .eq(TeamMember::getEnabled, 1)) > 0
+                || baseFacilityMapper.selectCount(new LambdaQueryWrapper<BaseFacility>()
+                        .eq(BaseFacility::getImageMediaId, mediaId)
+                        .eq(BaseFacility::getEnabled, 1)) > 0;
     }
 }

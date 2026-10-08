@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import type { ApiAboutContentData, ApiContentPage } from '~/types/api'
+import type { ApiAboutContentData, ApiBaseFacility, ApiContentPage, ApiTeamMember } from '~/types/api'
 import { computed } from 'vue'
 import { useApiClient } from '~/composables/useApi'
 import { resolveRichTextHtml } from '~/composables/useContentMapper'
 
 const { data: content } = await useApi<ApiContentPage>('public-page-about', '/public/pages/about', { optional: true })
+const { data: apiTeam } = await useApi<ApiTeamMember[]>('public-about-team', '/public/about/team-members', { optional: true })
+const { data: apiFacilities } = await useApi<ApiBaseFacility[]>('public-about-facilities', '/public/about/base-facilities', { optional: true })
 const { resolveMediaUrl } = useApiClient()
 const resolvedContentHtml = computed(() =>
   resolveRichTextHtml(content.value?.contentHtml, resolveMediaUrl),
@@ -60,20 +62,58 @@ const milestones = computed<TimelineItem[]>(() => {
     .filter((item) => item.date || item.title || item.text || item.image)
 })
 
-const team = [
-  { role: '技术带头人', name: '周科朝', text: '教授、博士生导师，原中南大学副校长，粉末冶金全国重点实验室主任。', image: '/images/team-5.jpg' },
-  { role: '首席科学家', name: '宋淼', text: '中南大学特聘教授、博士生导师、升华学者、国家级高层次青年人才。', image: '/images/team-4.jpg' },
-  { role: '技术总监', name: '张丁日', text: '中南大学博士、奥飞新材董事长、湖南省“优秀创新创业导师”。', image: '/images/team-2.jpg' },
-  { role: '技术顾问', name: '宋祁朋', text: '西安电子科技大学副教授，硕士生导师，西安电子科技大学“华山菁英学者”人才基金获得者。', image: '/images/team-3.jpg' },
-  { role: '技术顾问', name: '蔡圳阳', text: '中南大学副教授、青年科协秘书长，中国有色金属产业联盟专家委员会委员等。', image: '/images/team-6.jpg' }
-]
+// 后台尚未维护数据时的兜底内容（与迁移前页面展示一致）；
+// 后台配置后以 /public/about 接口返回为准，图片未配置时按名称回退到原有静态图。
+const legacyTeamImages: Record<string, string> = {
+  周科朝: '/images/team-5.jpg',
+  宋淼: '/images/team-4.jpg',
+  张丁日: '/images/team-2.jpg',
+  宋祁朋: '/images/team-3.jpg',
+  蔡圳阳: '/images/team-6.jpg'
+}
 
-const facilities = [
-  { name: '湖南省浏阳市研发基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
-  { name: '湖南省浏阳市生产基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
-  { name: '湖南省长沙市天心区销售中心', address: '长沙市天心区天心数谷创芯中心1-2栋', image: '/images/about-facility-shugu.webp' },
-  { name: '中南大学科技园办公点', address: '中南大学科技园研发总部1栋四楼407房', image: '/images/about-facility-csu.webp' }
-]
+const legacyFacilityImages: Record<string, string> = {
+  湖南省浏阳市研发基地: '/images/about-facility-liuyang.webp',
+  湖南省浏阳市生产基地: '/images/about-facility-liuyang.webp',
+  湖南省长沙市天心区销售中心: '/images/about-facility-shugu.webp',
+  中南大学科技园办公点: '/images/about-facility-csu.webp'
+}
+
+const team = computed(() => {
+  const list = apiTeam.value
+  if (list && list.length > 0) {
+    return list.map((member) => ({
+      role: member.role,
+      name: member.name,
+      text: member.bio || '',
+      image: member.photoUrl ? resolveMediaUrl(member.photoUrl) : legacyTeamImages[member.name] ?? ''
+    }))
+  }
+  return [
+    { role: '技术带头人', name: '周科朝', text: '教授、博士生导师，原中南大学副校长，粉末冶金全国重点实验室主任。', image: '/images/team-5.jpg' },
+    { role: '首席科学家', name: '宋淼', text: '中南大学特聘教授、博士生导师、升华学者、国家级高层次青年人才。', image: '/images/team-4.jpg' },
+    { role: '技术总监', name: '张丁日', text: '中南大学博士、奥飞新材董事长、湖南省“优秀创新创业导师”。', image: '/images/team-2.jpg' },
+    { role: '技术顾问', name: '宋祁朋', text: '西安电子科技大学副教授，硕士生导师，西安电子科技大学“华山菁英学者”人才基金获得者。', image: '/images/team-3.jpg' },
+    { role: '技术顾问', name: '蔡圳阳', text: '中南大学副教授、青年科协秘书长，中国有色金属产业联盟专家委员会委员等。', image: '/images/team-6.jpg' }
+  ]
+})
+
+const facilities = computed(() => {
+  const list = apiFacilities.value
+  if (list && list.length > 0) {
+    return list.map((facility) => ({
+      name: facility.name,
+      address: facility.address || '',
+      image: facility.imageUrl ? resolveMediaUrl(facility.imageUrl) : legacyFacilityImages[facility.name] ?? ''
+    }))
+  }
+  return [
+    { name: '湖南省浏阳市研发基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
+    { name: '湖南省浏阳市生产基地', address: '湖南省浏阳市永安镇星辰·尚东产业小镇', image: '/images/about-facility-liuyang.webp' },
+    { name: '湖南省长沙市天心区销售中心', address: '长沙市天心区天心数谷创芯中心1-2栋', image: '/images/about-facility-shugu.webp' },
+    { name: '中南大学科技园办公点', address: '中南大学科技园研发总部1栋四楼407房', image: '/images/about-facility-csu.webp' }
+  ]
+})
 </script>
 
 <template>

@@ -265,6 +265,21 @@ export interface ApiAboutContentData {
   historyItems?: null | ApiAboutHistoryItem[]
 }
 
+export interface ApiTeamMember {
+  bio?: null | string
+  id: number
+  name: string
+  photoUrl?: null | string
+  role: string
+}
+
+export interface ApiBaseFacility {
+  address?: null | string
+  id: number
+  imageUrl?: null | string
+  name: string
+}
+
 export interface ApiContentBlock {
   description: string
   title: string
