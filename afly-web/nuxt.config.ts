@@ -29,6 +29,11 @@ export default defineNuxtConfig({
       titleTemplate: '%s｜奥飞新材',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
       meta: [
+        // Keep this tag after verification so Baidu can recheck site ownership.
+        {
+          name: 'baidu-site-verification',
+          content: 'codeva-FZFaN7QKDC'
+        },
         {
           name: 'description',
           content: '奥飞新材新一代气凝胶及其复合产品技术'
