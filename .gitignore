@@ -24,6 +24,11 @@
 **/uploads/
 **/logs/
 
+# TLS certificate downloads and server-only private key material
+/SSL-Nginx-Certificaiton/
+/deploy/nginx/certs/
+*.key
+
 # Editor and operating-system files
 .idea/
 .vscode/
