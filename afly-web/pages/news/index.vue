@@ -3,7 +3,10 @@ import type { ApiArticleCategory, ApiArticleListItem, PageResult } from '~/types
 import { useApiClient } from '~/composables/useApi'
 import { mapArticle } from '~/composables/useContentMapper'
 
-useSeoMeta({ title: '新闻资讯', description: '奥飞新材公司新闻、行业新闻与技术动态。' })
+await usePageSeo({
+  title: '新闻资讯',
+  description: '奥飞新材公司新闻、行业新闻与技术动态。'
+})
 const { resolveMediaUrl } = useApiClient()
 const [{ data: categoryData }, { data: articleData }] = await Promise.all([
   useApi<ApiArticleCategory[]>('public-article-categories', '/public/article-categories'),

@@ -3,7 +3,10 @@ import type { ApiCaseCategory, ApiCaseListItem, PageResult } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
 import { mapCase } from '~/composables/useContentMapper'
 
-useSeoMeta({ title: '应用与案例', description: '奥飞新材建筑节能、工业节能、石油石化等领域的典型应用案例。' })
+await usePageSeo({
+  title: '应用与案例',
+  description: '奥飞新材建筑节能、工业节能、石油石化等领域的典型应用案例。'
+})
 
 const route = useRoute()
 const router = useRouter()

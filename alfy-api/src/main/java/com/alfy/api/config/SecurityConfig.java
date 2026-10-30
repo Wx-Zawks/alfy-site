@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -50,6 +51,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/health", "/api/v1/public/**", "/error").permitAll()
                         .requestMatchers("/api/v1/admin/auth/login", "/api/v1/admin/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/admin/seo/settings").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/admin/users/**", "/api/v1/admin/operation-logs/**",
                                 "/api/v1/admin/not-found-logs/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("SUPER_ADMIN", "CONTENT_ADMIN")

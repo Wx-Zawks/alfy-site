@@ -69,7 +69,7 @@ watch(() => route.fullPath, () => {
         :to="item.target"
         :class="{ active: isActive(item.target), highlighted: item.highlighted }"
       >{{ item.label }}</NuxtLink>
-      <button class="button button-primary button-small nav-cta" type="button" @click="open">获取方案 <span>→</span></button>
+      <button class="button button-primary button-small nav-cta" data-cta="header-inquiry" data-position="header" type="button" @click="open">获取方案 <span>→</span></button>
     </nav>
   </header>
 </template>

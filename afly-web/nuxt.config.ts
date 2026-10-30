@@ -20,6 +20,9 @@ export default defineNuxtConfig({
     apiInternalBase: '',
     public: {
       apiBase: 'http://localhost:8080/api/v1',
+      siteOrigin: 'https://alfy.com.cn',
+      // 本地、测试和预发布环境应通过环境变量设为 false；正式站发布时显式设为 true。
+      siteIndexEnabled: true,
       contentRefreshIntervalMs: 30000
     }
   },

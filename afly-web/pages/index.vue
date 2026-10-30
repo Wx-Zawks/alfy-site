@@ -3,7 +3,10 @@ import type { ApiHome, ApiHomeSection } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
 import { mapArticle, mapCase, mapScene } from '~/composables/useContentMapper'
 
-useSeoMeta({ title: '新一代气凝胶及其复合产品技术', description: '奥飞新材面向建筑节能、工业节能等场景提供气凝胶材料、复合产品与应用方案。' })
+await usePageSeo({
+  title: '新一代气凝胶及其复合产品技术',
+  description: '奥飞新材面向建筑节能、工业节能等场景提供气凝胶材料、复合产品与应用方案。'
+})
 
 const { open } = useInquiryDialog()
 const { resolveMediaUrl } = useApiClient()

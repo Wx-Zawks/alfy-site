@@ -43,7 +43,15 @@ npm.cmd run preview    # 预览生产构建
 
 ```env
 NUXT_PUBLIC_API_BASE=http://localhost:8080/api/v1
+NUXT_API_INTERNAL_BASE=http://localhost:8080/api/v1
+NUXT_PUBLIC_SITE_ORIGIN=https://alfy.com.cn
+NUXT_PUBLIC_SITE_INDEX_ENABLED=false
 ```
+
+- `NUXT_PUBLIC_API_BASE`：浏览器访问的公开 API 地址；生产建议使用同源 `/api/v1`。
+- `NUXT_API_INTERNAL_BASE`：SSR 服务端访问 Spring Boot 的地址；Docker 网络中通常填写 API 服务名。
+- `NUXT_PUBLIC_SITE_ORIGIN`：canonical、sitemap 与结构化数据使用的正式 HTTPS 域名。
+- `NUXT_PUBLIC_SITE_INDEX_ENABLED`：环境级索引总开关。本地、测试和预发布必须为 `false`；正式站确认域名与内容无误后显式设为 `true`。后台“允许索引”关闭时，即使这里为 `true` 也不会开放索引。
 
 本地调试时先启动 `alfy-api`（默认 `8080`），再启动本项目。后台内容只有在状态为“已发布”后才会出现在官网；保存为草稿或下线的内容不会公开展示。发布后刷新官网即可看到更新。
 

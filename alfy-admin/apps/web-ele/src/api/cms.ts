@@ -199,8 +199,14 @@ export interface HomeSectionRecord {
 
 export interface RedirectRecord {
   enabled: boolean;
+  hitCount: number;
   id: number;
+  lastHitAt?: null | string;
+  note?: null | string;
+  preserveQuery: boolean;
+  sourceHost: string;
   sourcePath: string;
+  statusCode: 301 | 308;
   targetUrl: string;
   updatedAt: string;
   version: number;
@@ -367,14 +373,22 @@ export async function deleteContent(resource: ContentResource, id: number) {
 }
 
 export function setCaseHomeDisplay(id: number, visible: boolean) {
-  return requestClient.put<BackendContentRecord>(`/admin/cases/${id}/home-display`, { visible });
+  return requestClient.put<BackendContentRecord>(
+    `/admin/cases/${id}/home-display`,
+    { visible },
+  );
 }
 
 export function setCaseHomePinned(id: number, pinned: boolean) {
-  return requestClient.put<BackendContentRecord>(`/admin/cases/${id}/home-pinned`, { pinned });
+  return requestClient.put<BackendContentRecord>(
+    `/admin/cases/${id}/home-pinned`,
+    { pinned },
+  );
 }
 
-export function updateCaseHomeOrder(items: Array<{ id: number; sortOrder: number }>) {
+export function updateCaseHomeOrder(
+  items: Array<{ id: number; sortOrder: number }>,
+) {
   return requestClient.put('/admin/cases/home-order', { items });
 }
 
@@ -447,8 +461,14 @@ export function saveTeamMember(
   payload: Record<string, unknown>,
 ) {
   return id
-    ? requestClient.put<TeamMemberRecord>(`/admin/about/team-members/${id}`, payload)
-    : requestClient.post<TeamMemberRecord>('/admin/about/team-members', payload);
+    ? requestClient.put<TeamMemberRecord>(
+        `/admin/about/team-members/${id}`,
+        payload,
+      )
+    : requestClient.post<TeamMemberRecord>(
+        '/admin/about/team-members',
+        payload,
+      );
 }
 
 export function deleteTeamMember(id: number) {
@@ -456,7 +476,9 @@ export function deleteTeamMember(id: number) {
 }
 
 export function listBaseFacilities() {
-  return requestClient.get<BaseFacilityRecord[]>('/admin/about/base-facilities');
+  return requestClient.get<BaseFacilityRecord[]>(
+    '/admin/about/base-facilities',
+  );
 }
 
 export function saveBaseFacility(
@@ -464,8 +486,14 @@ export function saveBaseFacility(
   payload: Record<string, unknown>,
 ) {
   return id
-    ? requestClient.put<BaseFacilityRecord>(`/admin/about/base-facilities/${id}`, payload)
-    : requestClient.post<BaseFacilityRecord>('/admin/about/base-facilities', payload);
+    ? requestClient.put<BaseFacilityRecord>(
+        `/admin/about/base-facilities/${id}`,
+        payload,
+      )
+    : requestClient.post<BaseFacilityRecord>(
+        '/admin/about/base-facilities',
+        payload,
+      );
 }
 
 export function deleteBaseFacility(id: number) {
@@ -550,7 +578,8 @@ export async function listMedia(
   keyword = '',
   options: { page?: number; size?: number } = {},
 ) {
-  return (await listMediaPage(keyword, options)).records;
+  const page = await listMediaPage(keyword, options);
+  return page.records;
 }
 
 export function uploadMedia(file: File, altText = '') {

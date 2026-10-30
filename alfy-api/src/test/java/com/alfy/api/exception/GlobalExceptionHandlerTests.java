@@ -32,13 +32,13 @@ class GlobalExceptionHandlerTests {
     private MultipartProperties multipartProperties;
 
     @Test
-    void multipartLimitsMatchMediaUploadLimit() {
+    void multipartLimitsAllowVideoUploads() {
         org.junit.jupiter.api.Assertions.assertEquals(
-                DataSize.ofMegabytes(30),
+                DataSize.ofMegabytes(200),
                 multipartProperties.getMaxFileSize()
         );
         org.junit.jupiter.api.Assertions.assertEquals(
-                DataSize.ofMegabytes(35),
+                DataSize.ofMegabytes(205),
                 multipartProperties.getMaxRequestSize()
         );
     }

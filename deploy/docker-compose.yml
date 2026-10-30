@@ -49,6 +49,8 @@ services:
       # through the public Nginx reverse proxy.
       NUXT_API_INTERNAL_BASE: http://api:8080/api/v1
       NUXT_PUBLIC_API_BASE: /api/v1
+      NUXT_PUBLIC_SITE_ORIGIN: ${NUXT_PUBLIC_SITE_ORIGIN:-https://alfy.com.cn}
+      NUXT_PUBLIC_SITE_INDEX_ENABLED: ${NUXT_PUBLIC_SITE_INDEX_ENABLED:-true}
       NUXT_PUBLIC_CONTENT_REFRESH_INTERVAL_MS: 30000
 
   admin:

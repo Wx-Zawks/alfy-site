@@ -3,7 +3,10 @@ import type { ApiProductCategory, ApiProductListItem, PageResult } from '~/types
 import { useApiClient } from '~/composables/useApi'
 import { mapProduct } from '~/composables/useContentMapper'
 
-useSeoMeta({ title: '产品中心', description: '奥飞新材气凝胶材料、气凝胶涂料、气凝胶毡板及配套复合产品。' })
+await usePageSeo({
+  title: '产品中心',
+  description: '奥飞新材气凝胶材料、气凝胶涂料、气凝胶毡板及配套复合产品。'
+})
 
 const route = useRoute()
 const router = useRouter()

@@ -2,6 +2,7 @@
 import type { ApiCaseDetail } from '~/types/api'
 import { useApiClient } from '~/composables/useApi'
 import { mapCase } from '~/composables/useContentMapper'
+import { breadcrumbJsonLd } from '~/utils/json-ld'
 
 const route = useRoute()
 const { resolveMediaUrl } = useApiClient()
@@ -12,10 +13,29 @@ const { data } = await useApi<ApiCaseDetail>(
 )
 if (!data.value) throw createError({ statusCode: 404, statusMessage: '案例不存在或尚未发布' })
 const item = computed(() => data.value ? mapCase(data.value, resolveMediaUrl) : null)
-useSeoMeta({
+const { settings: globalSeo } = await useGlobalSeo()
+await usePageSeo({
   title: () => item.value?.seo?.title || item.value?.title || '案例详情',
   description: () => item.value?.seo?.description || item.value?.summary || '',
-  keywords: () => item.value?.seo?.keywords || ''
+  keywords: () => item.value?.seo?.keywords || '',
+  image: () => item.value?.image || '',
+  type: 'article',
+  jsonLd: () => item.value ? [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: item.value.title,
+      description: item.value.summary,
+      image: item.value.image ? [new URL(item.value.image, globalSeo.value.canonicalOrigin).toString()] : undefined,
+      mainEntityOfPage: new URL(route.path, globalSeo.value.canonicalOrigin).toString(),
+      publisher: { '@id': `${globalSeo.value.canonicalOrigin}/#organization` }
+    },
+    breadcrumbJsonLd(globalSeo.value.canonicalOrigin, [
+      { name: '首页', path: '/' },
+      { name: '应用与案例', path: '/applications' },
+      { name: item.value.title, path: route.path }
+    ])
+  ] : null
 })
 </script>
 

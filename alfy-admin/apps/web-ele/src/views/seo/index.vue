@@ -9,8 +9,10 @@ import {
   ElFormItem,
   ElInput,
   ElMessage,
+  ElOption,
   ElPopconfirm,
   ElProgress,
+  ElSelect,
   ElSwitch,
   ElTable,
   ElTableColumn,
@@ -29,14 +31,23 @@ import {
 import { cmsState } from '#/data/cms';
 import { contentFromBackend } from '#/data/cms-adapter';
 
-const activeTab = ref('meta');
+import SeoGlobalSettings from './components/SeoGlobalSettings.vue';
+import SeoRouteSettings from './components/SeoRouteSettings.vue';
+
+const activeTab = ref('global');
 const dialogVisible = ref(false);
 const loading = ref(false);
 const saving = ref(false);
 const form = reactive({
   enabled: true,
+  hitCount: 0,
   id: 0,
+  lastHitAt: '' as null | string,
+  note: '',
+  preserveQuery: false,
   source: '',
+  sourceHost: '',
+  statusCode: 301 as 301 | 308,
   target: '',
   version: undefined as number | undefined,
 });
@@ -94,8 +105,14 @@ async function load() {
       cmsState.redirects.length,
       ...redirects.map((item) => ({
         enabled: item.enabled,
+        hitCount: item.hitCount,
         id: item.id,
+        lastHitAt: item.lastHitAt,
+        note: item.note || '',
+        preserveQuery: item.preserveQuery,
         source: item.sourcePath,
+        sourceHost: item.sourceHost,
+        statusCode: item.statusCode,
         target: item.targetUrl,
         updatedAt: item.updatedAt,
         version: item.version,
@@ -109,8 +126,14 @@ async function load() {
 function openCreate() {
   Object.assign(form, {
     enabled: true,
+    hitCount: 0,
     id: 0,
+    lastHitAt: null,
+    note: '',
+    preserveQuery: false,
     source: '',
+    sourceHost: '',
+    statusCode: 301,
     target: '',
     version: undefined,
   });
@@ -120,8 +143,14 @@ function openCreate() {
 function openEdit(value: unknown) {
   const item = value as {
     enabled: boolean;
+    hitCount?: number;
     id: number;
+    lastHitAt?: null | string;
+    note?: string;
+    preserveQuery?: boolean;
     source: string;
+    sourceHost?: string;
+    statusCode?: 301 | 308;
     target: string;
     version?: number;
   };
@@ -132,8 +161,14 @@ function openEdit(value: unknown) {
 async function persistRedirect(
   value: {
     enabled: boolean;
+    hitCount?: number;
     id: number;
+    lastHitAt?: null | string;
+    note?: string;
+    preserveQuery?: boolean;
     source: string;
+    sourceHost?: string;
+    statusCode?: 301 | 308;
     target: string;
     version?: number;
   },
@@ -141,7 +176,11 @@ async function persistRedirect(
 ) {
   const saved = await saveRedirect(value.id || null, {
     enabled: value.enabled,
+    note: value.note || '',
+    preserveQuery: Boolean(value.preserveQuery),
+    sourceHost: value.sourceHost || '',
     sourcePath: value.source,
+    statusCode: value.statusCode || 301,
     targetUrl: value.target,
     version: value.version,
   });
@@ -167,8 +206,14 @@ async function save() {
 async function toggleRedirect(input: unknown) {
   const value = input as {
     enabled: boolean;
+    hitCount?: number;
     id: number;
+    lastHitAt?: null | string;
+    note?: string;
+    preserveQuery?: boolean;
     source: string;
+    sourceHost?: string;
+    statusCode?: 301 | 308;
     target: string;
     version?: number;
   };
@@ -191,7 +236,7 @@ onMounted(load);
       <div>
         <p>SEARCH VISIBILITY</p>
         <h1>SEO 管理</h1>
-        <span>检查页面元数据、管理旧域名跳转并跟踪 404 访问</span>
+        <span>维护全局规则、固定页面元数据、内容 SEO、旧 URL 跳转和 404 记录</span>
       </div>
       <div class="score">
         <strong>{{ averageScore }}</strong><span>平均完整度</span>
@@ -199,6 +244,12 @@ onMounted(load);
     </section>
     <ElCard class="seo-card" shadow="never" v-loading="loading">
       <ElTabs v-model="activeTab">
+        <ElTabPane label="全局配置" name="global">
+          <SeoGlobalSettings />
+        </ElTabPane>
+        <ElTabPane label="固定页面" name="routes">
+          <SeoRouteSettings />
+        </ElTabPane>
         <ElTabPane label="页面 SEO" name="meta">
           <div class="tab-intro">
             <div>
@@ -243,8 +294,16 @@ onMounted(load);
             <ElButton type="primary" @click="openCreate">新增规则</ElButton>
           </div>
           <ElTable :data="cmsState.redirects">
+            <ElTableColumn label="来源主机" min-width="180">
+              <template #default="{ row }">
+                {{ row.sourceHost || '全部主机' }}
+              </template>
+            </ElTableColumn>
             <ElTableColumn label="来源路径" min-width="260" prop="source" />
             <ElTableColumn label="目标地址" min-width="320" prop="target" />
+            <ElTableColumn label="状态码" prop="statusCode" width="90" />
+            <ElTableColumn label="命中" prop="hitCount" width="90" />
+            <ElTableColumn label="最后命中" min-width="170" prop="lastHitAt" />
             <ElTableColumn label="启用" width="90">
               <template #default="{ row }">
                 <ElSwitch v-model="row.enabled" @change="toggleRedirect(row)" />
@@ -305,12 +364,33 @@ onMounted(load);
       width="560px"
     >
       <ElForm label-position="top">
+        <ElFormItem label="来源主机（留空表示全部主机）">
+          <ElInput
+            v-model="form.sourceHost"
+            placeholder="例如 alfy.cn，不含协议和路径"
+          />
+        </ElFormItem>
         <ElFormItem label="来源路径">
           <ElInput v-model="form.source" placeholder="/old/path" />
 </ElFormItem><ElFormItem label="目标地址">
           <ElInput
             v-model="form.target"
             placeholder="/new/path 或完整网址"
+          />
+</ElFormItem><ElFormItem label="永久跳转状态码">
+          <ElSelect v-model="form.statusCode">
+            <ElOption :value="301" label="301 Moved Permanently" />
+            <ElOption :value="308" label="308 Permanent Redirect" />
+          </ElSelect>
+</ElFormItem><ElFormItem label="保留原请求查询参数">
+          <ElSwitch v-model="form.preserveQuery" />
+</ElFormItem><ElFormItem label="备注">
+          <ElInput
+            v-model="form.note"
+            :rows="2"
+            maxlength="500"
+            show-word-limit
+            type="textarea"
           />
 </ElFormItem><ElFormItem label="是否启用">
           <ElSwitch v-model="form.enabled" />

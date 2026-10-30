@@ -117,8 +117,14 @@ export interface MediaAsset {
 
 export interface RedirectRule {
   enabled: boolean;
+  hitCount?: number;
   id: number;
+  lastHitAt?: null | string;
+  note?: string;
+  preserveQuery?: boolean;
   source: string;
+  sourceHost?: string;
+  statusCode?: 301 | 308;
   target: string;
   updatedAt: string;
   version?: number;

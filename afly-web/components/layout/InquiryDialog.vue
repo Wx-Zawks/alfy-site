@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
             <button class="button button-primary" type="button" @click="closeDialog">完成</button>
           </div>
 
-          <form v-else class="inquiry-form" @submit.prevent="submit">
+          <form v-else class="inquiry-form clarity-mask" data-clarity-mask="true" @submit.prevent="submit">
             <label>姓名<input v-model.trim="form.name" required maxlength="64" placeholder="请输入姓名"></label>
             <label>手机<input v-model.trim="form.phone" inputmode="tel" maxlength="32" placeholder="请输入手机号"></label>
             <label>邮箱<input v-model.trim="form.email" type="email" maxlength="128" placeholder="请输入邮箱"></label>

@@ -116,7 +116,7 @@ const {
           :to="group.target || group.links[0]?.target || '/'"
         >{{ group.label }} <span>→</span></NuxtLink>
       </nav>
-      <button class="button button-primary footer-mobile-cta" type="button" @click="open">
+      <button class="button button-primary footer-mobile-cta" data-cta="footer-inquiry" data-position="footer-mobile" type="button" @click="open">
         获取产品资料或项目方案 <span>→</span>
       </button>
     </div>
@@ -126,7 +126,7 @@ const {
         <img class="footer-qr" :src="wechatQrUrl" :alt="`${companyName}联系二维码`" decoding="async" loading="lazy">
         <a class="footer-contact-detail" :href="`tel:${servicePhone}`"><b>企业电话：</b>{{ servicePhone }}</a>
         <a class="footer-contact-detail" :href="`mailto:${serviceEmail}`"><b>企业邮箱：</b>{{ serviceEmail }}</a>
-        <button class="footer-contact-link" type="button" @click="open">立即咨询 <span>→</span></button>
+        <button class="footer-contact-link" data-cta="footer-inquiry" data-position="footer" type="button" @click="open">立即咨询 <span>→</span></button>
       </div>
       <div v-for="group in footerGroups" :key="group.id" class="footer-links">
         <h3><NuxtLink v-if="group.target" :to="group.target">{{ group.label }}</NuxtLink><template v-else>{{ group.label }}</template></h3>
@@ -138,7 +138,7 @@ const {
           <b>咨询已提交</b>
           <span>咨询编号：{{ inquiryResult.inquiryNo }}</span>
         </div>
-        <form v-else class="footer-inquiry-form" @submit.prevent="submitInquiry">
+        <form v-else class="footer-inquiry-form clarity-mask" data-clarity-mask="true" @submit.prevent="submitInquiry">
           <label><span>姓名</span><input v-model.trim="inquiryForm.name" required maxlength="64" autocomplete="name" placeholder="请输入姓名"></label>
           <label><span>手机号</span><input v-model.trim="inquiryForm.phone" required inputmode="tel" maxlength="32" autocomplete="tel" placeholder="请输入手机号"></label>
           <label><span>需求描述</span><textarea v-model.trim="inquiryForm.message" required maxlength="5000" rows="3" placeholder="请简单描述应用场景或项目需求" /></label>

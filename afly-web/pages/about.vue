@@ -11,10 +11,21 @@ const { resolveMediaUrl } = useApiClient()
 const resolvedContentHtml = computed(() =>
   resolveRichTextHtml(content.value?.contentHtml, resolveMediaUrl),
 )
-useSeoMeta({
+const { settings: globalSeo } = await useGlobalSeo()
+await usePageSeo({
   title: () => content.value?.seoTitle || content.value?.title || '关于我们',
   description: () => content.value?.seoDescription || content.value?.summary || '了解湖南奥飞新材料有限公司、气凝胶研发历程、核心团队与产业布局。',
-  keywords: () => content.value?.seoKeywords || ''
+  keywords: () => content.value?.seoKeywords || '',
+  image: () => content.value?.coverImageUrl || '',
+  jsonLd: () => ({
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: content.value?.title || '关于我们',
+    description: content.value?.summary || '',
+    url: new URL('/about', globalSeo.value.canonicalOrigin).toString(),
+    isPartOf: { '@id': `${globalSeo.value.canonicalOrigin}/#website` },
+    about: { '@id': `${globalSeo.value.canonicalOrigin}/#organization` }
+  })
 })
 
 const timelineTrack = ref<HTMLElement | null>(null)

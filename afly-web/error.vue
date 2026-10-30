@@ -11,6 +11,11 @@ const route = useRoute()
 const { request } = useApiClient()
 const isNotFound = computed(() => props.error.statusCode === 404)
 
+useSeoMeta({
+  title: () => isNotFound.value ? '页面不存在' : '页面暂时不可用',
+  robots: 'noindex,nofollow'
+})
+
 onMounted(() => {
   if (!isNotFound.value) return
   request('/public/not-found', {

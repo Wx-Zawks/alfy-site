@@ -3,6 +3,7 @@ import type { ApiTechnologyPage } from '~/types/api'
 import { computed } from 'vue'
 import { useApiClient } from '~/composables/useApi'
 import { normalizeDocumentTitle, resolveRichTextHtml } from '~/composables/useContentMapper'
+import { breadcrumbJsonLd } from '~/utils/json-ld'
 
 interface TechnologyBlock {
   description: string
@@ -61,11 +62,33 @@ const capabilityRows = computed(() => normalizeBlocks(page.value?.capabilityRows
 const pillars = computed(() => normalizeBlocks(page.value?.pillars))
 const fallback = pageDefaults[slug]!
 const heroImage = computed(() => resolveMediaUrl(page.value?.heroImageUrl, fallback.image))
-
-useSeoMeta({
+const { settings: globalSeo } = await useGlobalSeo()
+await usePageSeo({
   title: () => normalizeDocumentTitle(page.value?.seoTitle || page.value?.title, fallback.label),
   description: () => page.value?.seoDescription || page.value?.summary || '',
-  keywords: () => page.value?.seoKeywords || '奥飞新材,气凝胶'
+  keywords: () => page.value?.seoKeywords || '奥飞新材,气凝胶',
+  image: heroImage,
+  type: 'article',
+  publishedTime: () => page.value?.publishedAt || '',
+  modifiedTime: () => page.value?.updatedAt || '',
+  jsonLd: () => page.value ? [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: page.value.title,
+      description: page.value.summary || '',
+      image: heroImage.value ? [new URL(heroImage.value, globalSeo.value.canonicalOrigin).toString()] : undefined,
+      datePublished: page.value.publishedAt || undefined,
+      dateModified: page.value.updatedAt || page.value.publishedAt || undefined,
+      mainEntityOfPage: new URL(route.path, globalSeo.value.canonicalOrigin).toString(),
+      publisher: { '@id': `${globalSeo.value.canonicalOrigin}/#organization` }
+    },
+    breadcrumbJsonLd(globalSeo.value.canonicalOrigin, [
+      { name: '首页', path: '/' },
+      { name: '技术创新', path: '/technology' },
+      { name: page.value.title, path: route.path }
+    ])
+  ] : null
 })
 </script>
 

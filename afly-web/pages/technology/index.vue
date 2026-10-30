@@ -12,10 +12,11 @@ const [
   useApi<PageResult<ApiProductListItem>>('public-products', '/public/products?page=1&size=100')
 ])
 
-useSeoMeta({
+await usePageSeo({
   title: () => normalizeDocumentTitle(technology.value?.seoTitle || technology.value?.title, '核心技术'),
   description: () => technology.value?.seoDescription || '奥飞新材气凝胶双纳米结构、常压干燥与复合材料制备技术。',
-  keywords: () => technology.value?.seoKeywords || '奥飞新材,气凝胶,核心技术'
+  keywords: () => technology.value?.seoKeywords || '奥飞新材,气凝胶,核心技术',
+  image: () => technology.value?.heroImageUrl || ''
 })
 
 const materialTypes = [

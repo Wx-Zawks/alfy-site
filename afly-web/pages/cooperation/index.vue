@@ -20,10 +20,11 @@ const resolvedContentHtml = computed(() =>
   resolveRichTextHtml(content.value?.contentHtml, resolveMediaUrl),
 )
 
-useSeoMeta({
+await usePageSeo({
   title: () => content.value?.seoTitle || content.value?.title || '商务合作',
   description: () => content.value?.seoDescription || content.value?.summary || '奥飞新材商务合作介绍。',
-  keywords: () => content.value?.seoKeywords || ''
+  keywords: () => content.value?.seoKeywords || '',
+  image: () => content.value?.coverImageUrl || ''
 })
 </script>
 
@@ -39,7 +40,7 @@ useSeoMeta({
       :image="resolveMediaUrl(content.coverImageUrl, '/images/news-1.jpeg')"
     >
       <div class="button-row">
-        <button class="button button-primary" type="button" @click="open">
+        <button class="button button-primary" data-cta="cooperation-inquiry" data-position="cooperation-hero" type="button" @click="open">
           {{ pageData.actionLabel || '发起合作咨询' }} →
         </button>
       </div>
@@ -64,7 +65,7 @@ useSeoMeta({
           <p class="eyebrow eyebrow-light">合作咨询</p>
           <h2>围绕双方资源，共同明确合作路径</h2>
         </div>
-        <button class="button button-light" type="button" @click="open">
+        <button class="button button-light" data-cta="cooperation-inquiry" data-position="cooperation-footer" type="button" @click="open">
           {{ pageData.actionLabel || '发起合作咨询' }} →
         </button>
       </div>
