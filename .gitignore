@@ -28,6 +28,8 @@
 /SSL-Nginx-Certificaiton/
 /deploy/nginx/certs/
 *.key
+/.codex-backups/
+/.seo-release-*/
 
 # Editor and operating-system files
 .idea/
