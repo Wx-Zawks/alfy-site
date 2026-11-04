@@ -34,8 +34,15 @@ export default defineNuxtConfig({
       meta: [
         // Keep this tag after verification so Baidu can recheck site ownership.
         {
+          key: 'baidu-site-verification-codeva-FZFaN7QKDC',
           name: 'baidu-site-verification',
           content: 'codeva-FZFaN7QKDC'
+        },
+        // The HTTPS root domain has a separate verification code from the www site.
+        {
+          key: 'baidu-site-verification-codeva-EE0Gqbqv6h',
+          name: 'baidu-site-verification',
+          content: 'codeva-EE0Gqbqv6h'
         },
         {
           name: 'description',

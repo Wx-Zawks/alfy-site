@@ -31,7 +31,11 @@ useHead(() => {
   }
   const verificationMeta = [
     settings.value.baiduSiteVerification
-      ? { name: 'baidu-site-verification', content: settings.value.baiduSiteVerification }
+      ? {
+          key: `baidu-site-verification-${settings.value.baiduSiteVerification}`,
+          name: 'baidu-site-verification',
+          content: settings.value.baiduSiteVerification
+        }
       : null,
     settings.value.googleSiteVerification
       ? { name: 'google-site-verification', content: settings.value.googleSiteVerification }
